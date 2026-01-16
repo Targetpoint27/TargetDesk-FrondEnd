@@ -1,0 +1,143 @@
+<div class="dashboard-layout">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M9 9h6v6H9z"/>
+        </svg>
+        <h2>TargetDesk</h2>
+      </div>
+
+      <div class="header-actions">
+        <div class="user-menu">
+          <button class="user-profile-btn" (click)="toggleUserDropdown()" type="button">
+            <div class="user-avatar">
+              @if (currentUser$ | async; as user) {
+                {{ user.getDisplayName().substring(0, 2).toUpperCase() }}
+              } @else {
+                US
+              }
+            </div>
+            <svg class="dropdown-icon" [class.rotated]="isUserDropdownOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6,9 12,15 18,9"></polyline>
+            </svg>
+          </button>
+
+          <div class="user-dropdown" [class.show]="isUserDropdownOpen">
+            <div class="dropdown-header">
+              <div class="user-avatar-large">
+                @if (currentUser$ | async; as user) {
+                  {{ user.getDisplayName().charAt(0).toUpperCase() }}
+                } @else {
+                  U
+                }
+              </div>
+              <div class="user-details">
+                <div class="user-name">
+                  @if (currentUser$ | async; as user) {
+                    {{ user.getDisplayName() }}
+                  } @else {
+                    Utilisateur
+                  }
+                </div>
+                <div class="user-email">
+                  @if (currentUser$ | async; as user) {
+                    {{ user.email }}
+                  } @else {
+                    utilisateur@example.com
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <div class="dropdown-menu">
+              <button class="dropdown-item" (click)="onProfileClick()" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>Mon Profil</span>
+              </button>
+
+              <button class="dropdown-item logout" (click)="onLogout()" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16,17 21,12 16,7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span>Déconnexion</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="dashboard-body">
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar">
+      <nav class="sidebar-nav">
+        <ul class="nav-menu">
+          @for (menuItem of menuItems; track menuItem.id) {
+            <li class="nav-item">
+              <button
+                class="nav-link"
+                [class.active]="menuItem.active"
+                (click)="onMenuClick(menuItem)"
+                type="button"
+              >
+                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  @if (menuItem.icon === 'dashboard') {
+                    <rect x="3" y="3" width="7" height="9"/>
+                    <rect x="14" y="3" width="7" height="5"/>
+                    <rect x="14" y="12" width="7" height="9"/>
+                    <rect x="3" y="16" width="7" height="5"/>
+                  }
+                  @if (menuItem.icon === 'people') {
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  }
+                  @if (menuItem.icon === 'business') {
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                    <line x1="12" y1="17" x2="12" y2="21"/>
+                  }
+                  @if (menuItem.icon === 'contacts') {
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  }
+                  @if (menuItem.icon === 'category') {
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                  }
+                </svg>
+                <span class="nav-label">{{ menuItem.label }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="dashboard-footer">
+    <div class="footer-content">
+      <p>&copy; 2024 TargetDesk. Tous droits réservés.</p>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,52 @@
+<div class="toast"
+     [class.toast--visible]="visible"
+     [class.toast--success]="data.type === 'success'"
+     [class.toast--error]="data.type === 'error'"
+     [class.toast--warning]="data.type === 'warning'"
+     [class.toast--info]="data.type === 'info'"
+     [class.toast--top-left]="position === 'top-left'"
+     [class.toast--top-right]="position === 'top-right'"
+     [class.toast--bottom-left]="position === 'bottom-left'"
+     [class.toast--bottom-right]="position === 'bottom-right'"
+     [class.toast--top-center]="position === 'top-center'"
+     [class.toast--bottom-center]="position === 'bottom-center'"
+     role="alert"
+     [attr.aria-live]="data.type === 'error' ? 'assertive' : 'polite'"
+     (mouseenter)="stopAutoClose()"
+     (mouseleave)="resumeAutoClose()">
+
+  <div class="toast__content">
+    <div class="toast__icon" [attr.aria-label]="data.type || 'info'">
+      {{ iconForType }}
+    </div>
+
+    <div class="toast__body">
+      <div *ngIf="data.title" class="toast__title">
+        {{ data.title }}
+      </div>
+
+      <div class="toast__message">
+        {{ data.message }}
+      </div>
+
+      <div *ngIf="data.actions && data.actions.length > 0" class="toast__actions">
+        <button *ngFor="let action of data.actions; trackBy: trackByFn"
+                type="button"
+                class="toast__action"
+                [class.toast__action--primary]="action.style === 'primary'"
+                [class.toast__action--secondary]="action.style === 'secondary'"
+                (click)="onActionClick(action)">
+          {{ action.label }}
+        </button>
+      </div>
+    </div>
+
+    <button *ngIf="!data.persistent"
+            type="button"
+            class="toast__close"
+            aria-label="Fermer la notification"
+            (click)="close()">
+      ✕
+    </button>
+  </div>
+</div>

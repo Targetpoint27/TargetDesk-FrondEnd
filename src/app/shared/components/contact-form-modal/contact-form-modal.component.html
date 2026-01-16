@@ -1,0 +1,340 @@
+@if (isOpen) {
+  <div class="modal-overlay" (click)="onOverlayClick($event)">
+    <div class="modal-content" (click)="preventDefault($event)">
+      <div class="modal-header">
+        <h2>{{ modalTitle }}</h2>
+        <button type="button" class="close-btn" (click)="onClose()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="contact-form">
+        <div class="modal-body">
+          <!-- Bannière d'erreur -->
+          @if (error) {
+            <div class="error-banner">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+              <span>{{ error }}</span>
+            </div>
+          }
+
+
+          <!-- Section Sélection d'entité (uniquement en mode création) -->
+          @if (showEntitySelection) {
+            <div class="form-section">
+              <h3>Associer à une entité *</h3>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="entityType">Type d'entité *</label>
+                  <select
+                    id="entityType"
+                    formControlName="entityType"
+                    class="form-select"
+                    [class.error]="isFieldInvalid('entityType')"
+                    (change)="onEntityTypeChange($event)"
+                  >
+                    <option value="">Sélectionner le type...</option>
+                    <option value="client">Client</option>
+                    <option value="supplier">Fournisseur</option>
+                  </select>
+                  @if (isFieldInvalid('entityType')) {
+                    <span class="error-text">{{ getFieldError('entityType') }}</span>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="entityId">{{ contactForm.get('entityType')?.value === 'client' ? 'Client' : 'Fournisseur' }} *</label>
+                  <select
+                    id="entityId"
+                    formControlName="entityId"
+                    class="form-select"
+                    [class.error]="isFieldInvalid('entityId')"
+                    [disabled]="!contactForm.get('entityType')?.value"
+                  >
+                    <option value="">{{ contactForm.get('entityType')?.value ? 'Sélectionner...' : 'Sélectionner d\'abord le type' }}</option>
+                    @if (contactForm.get('entityType')?.value === 'client') {
+                      @for (client of clients$ | async; track client.id) {
+                        <option [value]="client.id">{{ client.name }}</option>
+                      }
+                    }
+                    @if (contactForm.get('entityType')?.value === 'supplier') {
+                      @for (supplier of suppliers$ | async; track supplier.id) {
+                        <option [value]="supplier.id">{{ supplier.name }}</option>
+                      }
+                    }
+                  </select>
+                  @if (isFieldInvalid('entityId')) {
+                    <span class="error-text">{{ getFieldError('entityId') }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Informations personnelles -->
+          <div class="form-section">
+            <h3>Informations personnelles</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="civility">Civilité</label>
+                <select
+                  id="civility"
+                  formControlName="civility"
+                  class="form-select"
+                  [class.error]="isFieldInvalid('civility')"
+                >
+                  <option value="">Sélectionner...</option>
+                  @for (option of civilityOptions; track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+                @if (isFieldInvalid('civility')) {
+                  <span class="error-text">{{ getFieldError('civility') }}</span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="first_name">Prénom *</label>
+                <input
+                  type="text"
+                  id="first_name"
+                  formControlName="first_name"
+                  class="form-input"
+                  [class.error]="isFieldInvalid('first_name')"
+                  placeholder="Prénom"
+                />
+                @if (isFieldInvalid('first_name')) {
+                  <span class="error-text">{{ getFieldError('first_name') }}</span>
+                }
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="last_name">Nom *</label>
+                <input
+                  type="text"
+                  id="last_name"
+                  formControlName="last_name"
+                  class="form-input"
+                  [class.error]="isFieldInvalid('last_name')"
+                  placeholder="Nom de famille"
+                />
+                @if (isFieldInvalid('last_name')) {
+                  <span class="error-text">{{ getFieldError('last_name') }}</span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="function">Fonction</label>
+                <input
+                  type="text"
+                  id="function"
+                  formControlName="function"
+                  class="form-input"
+                  [class.error]="isFieldInvalid('function')"
+                  placeholder="Fonction/poste"
+                />
+                @if (isFieldInvalid('function')) {
+                  <span class="error-text">{{ getFieldError('function') }}</span>
+                }
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="department">Département</label>
+              <input
+                type="text"
+                id="department"
+                formControlName="department"
+                class="form-input"
+                [class.error]="isFieldInvalid('department')"
+                placeholder="Service/département"
+              />
+              @if (isFieldInvalid('department')) {
+                <span class="error-text">{{ getFieldError('department') }}</span>
+              }
+            </div>
+          </div>
+
+          <!-- Section Emails -->
+          <div class="form-section">
+            <div class="section-header">
+              <h3>Emails *</h3>
+              <button type="button" class="btn-secondary btn-small" (click)="addEmail()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14m-7-7h14"/>
+                </svg>
+                Ajouter
+              </button>
+            </div>
+
+            <div formArrayName="emails" class="dynamic-list">
+              @for (emailControl of emails.controls; track $index; let i = $index) {
+                <div [formGroupName]="i" class="dynamic-item">
+                  <div class="dynamic-item-content">
+                    <div class="form-row">
+                      <div class="form-group flex-2">
+                        <label [for]="'email-' + i">Email</label>
+                        <input
+                          type="email"
+                          [id]="'email-' + i"
+                          formControlName="email"
+                          class="form-input"
+                          [class.error]="isEmailInvalid(i, 'email')"
+                          placeholder="adresse@email.com"
+                        />
+                        @if (isEmailInvalid(i, 'email')) {
+                          <span class="error-text">{{ getEmailError(i, 'email') }}</span>
+                        }
+                      </div>
+
+                      <div class="form-group">
+                        <label [for]="'email-type-' + i">Type</label>
+                        <select
+                          [id]="'email-type-' + i"
+                          formControlName="type"
+                          class="form-select"
+                        >
+                          @for (option of emailTypeOptions; track option.value) {
+                            <option [value]="option.value">{{ option.label }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                          <input
+                            type="checkbox"
+                            formControlName="is_primary"
+                            (change)="onEmailPrimaryChange(i)"
+                          />
+                          <span class="checkmark"></span>
+                          Principal
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  @if (emails.length > 1) {
+                    <button
+                      type="button"
+                      class="remove-btn"
+                      (click)="removeEmail(i)"
+                      title="Supprimer cet email"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Section Téléphones -->
+          <div class="form-section">
+            <div class="section-header">
+              <h3>Téléphones</h3>
+              <button type="button" class="btn-secondary btn-small" (click)="addPhone()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14m-7-7h14"/>
+                </svg>
+                Ajouter
+              </button>
+            </div>
+
+            <div formArrayName="phones" class="dynamic-list">
+              @if (phones.length === 0) {
+                <p class="empty-message">Aucun téléphone ajouté</p>
+              }
+
+              @for (phoneControl of phones.controls; track $index; let i = $index) {
+                <div [formGroupName]="i" class="dynamic-item">
+                  <div class="dynamic-item-content">
+                    <div class="form-row">
+                      <div class="form-group flex-2">
+                        <label [for]="'phone-' + i">Téléphone</label>
+                        <input
+                          type="tel"
+                          [id]="'phone-' + i"
+                          formControlName="phone"
+                          class="form-input"
+                          [class.error]="isPhoneInvalid(i, 'phone')"
+                          placeholder="0123456789"
+                        />
+                        @if (isPhoneInvalid(i, 'phone')) {
+                          <span class="error-text">{{ getPhoneError(i, 'phone') }}</span>
+                        }
+                      </div>
+
+                      <div class="form-group">
+                        <label [for]="'phone-type-' + i">Type</label>
+                        <select
+                          [id]="'phone-type-' + i"
+                          formControlName="type"
+                          class="form-select"
+                        >
+                          @for (option of phoneTypeOptions; track option.value) {
+                            <option [value]="option.value">{{ option.label }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                          <input
+                            type="checkbox"
+                            formControlName="is_primary"
+                            (change)="onPhonePrimaryChange(i)"
+                          />
+                          <span class="checkmark"></span>
+                          Principal
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="remove-btn"
+                    (click)="removePhone(i)"
+                    title="Supprimer ce téléphone"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="onClose()" [disabled]="isLoading">
+            Annuler
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="isLoading || contactForm.invalid">
+            @if (isLoading) {
+              <div class="spinner"></div>
+            }
+            {{ submitButtonText }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

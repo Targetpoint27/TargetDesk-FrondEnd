@@ -1,0 +1,75 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M9 9h6v6H9z"/>
+        </svg>
+      </div>
+      <h1 class="auth-title">Connexion</h1>
+      <p class="auth-subtitle">Accédez à votre espace TargetDesk</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <!-- Success and error messages are now handled by MessageService globally -->
+
+      <div class="form-group">
+        <label for="email" class="form-label">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-input"
+          [class.form-input--error]="isFieldInvalid('email')"
+          placeholder="votre@email.com"
+          autocomplete="email"
+        />
+        @if (getFieldError('email')) {
+          <span class="form-error">{{ getFieldError('email') }}</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Mot de passe</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-input"
+          [class.form-input--error]="isFieldInvalid('password')"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        />
+        @if (getFieldError('password')) {
+          <span class="form-error">{{ getFieldError('password') }}</span>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="loginForm.invalid || loginForm.disabled"
+      >
+        @if (isLoading$ | async) {
+          <svg class="btn-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="31.416">
+              <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+              <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+          Connexion en cours...
+        } @else {
+          Se connecter
+        }
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p class="auth-link-text">
+        Pas encore de compte ?
+        <a [routerLink]="['/register']" class="auth-link">S'inscrire</a>
+      </p>
+    </div>
+  </div>
+</div>

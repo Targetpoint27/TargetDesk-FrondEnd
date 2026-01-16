@@ -1,0 +1,77 @@
+<div class="pagination-wrapper">
+  @if (showInfo) {
+    <div class="pagination-info">
+      Affichage {{ startItem }} à {{ endItem }} de {{ totalItems }} résultats
+    </div>
+  }
+
+  <div class="pagination-controls">
+    @if (showSizeSelector) {
+      <div class="pagination-size">
+        <label for="page-size" class="pagination-size-label">
+          Afficher:
+        </label>
+        <select
+          id="page-size"
+          class="pagination-size-select"
+          [value]="pageSize"
+          (change)="onPageSizeChange(+$any($event).target.value)"
+        >
+          @for (size of pageSizeOptions; track size) {
+            <option [value]="size">{{ size }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    <nav class="pagination" role="navigation" aria-label="Navigation par pages">
+      <button
+        class="pagination-btn pagination-btn-first"
+        [disabled]="!canGoPrevious"
+        (click)="onFirstClick()"
+        aria-label="Première page"
+      >
+        ⟪
+      </button>
+
+      <button
+        class="pagination-btn pagination-btn-prev"
+        [disabled]="!canGoPrevious"
+        (click)="onPreviousClick()"
+        aria-label="Page précédente"
+      >
+        ⟨
+      </button>
+
+      @for (page of visiblePages; track page) {
+        <button
+          class="pagination-btn pagination-btn-page"
+          [class.pagination-btn-current]="page === currentPage"
+          (click)="onPageClick(page)"
+          [attr.aria-label]="'Page ' + page"
+          [attr.aria-current]="page === currentPage ? 'page' : null"
+        >
+          {{ page }}
+        </button>
+      }
+
+      <button
+        class="pagination-btn pagination-btn-next"
+        [disabled]="!canGoNext"
+        (click)="onNextClick()"
+        aria-label="Page suivante"
+      >
+        ⟩
+      </button>
+
+      <button
+        class="pagination-btn pagination-btn-last"
+        [disabled]="!canGoNext"
+        (click)="onLastClick()"
+        aria-label="Dernière page"
+      >
+        ⟫
+      </button>
+    </nav>
+  </div>
+</div>

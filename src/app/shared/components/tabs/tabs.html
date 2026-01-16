@@ -1,0 +1,29 @@
+<div class="tabs"
+     [class.tabs--pills]="variant === 'pills'"
+     [class.tabs--underline]="variant === 'underline'"
+     [class.tabs--sm]="size === 'sm'"
+     [class.tabs--lg]="size === 'lg'"
+     [class.tabs--full-width]="fullWidth"
+     role="tablist">
+
+  <button *ngFor="let tab of items; trackBy: trackByFn"
+          type="button"
+          class="tabs__tab"
+          [class.tabs__tab--active]="isActive(tab.id)"
+          [class.tabs__tab--disabled]="tab.disabled"
+          [attr.aria-selected]="isActive(tab.id)"
+          [attr.aria-disabled]="tab.disabled"
+          [attr.id]="'tab-' + tab.id"
+          [attr.aria-controls]="'panel-' + tab.id"
+          role="tab"
+          (click)="selectTab(tab.id, tab.disabled)"
+          (keydown.enter)="selectTab(tab.id, tab.disabled)"
+          (keydown.space)="selectTab(tab.id, tab.disabled)">
+
+    <span *ngIf="tab.icon" class="tabs__tab-icon" [attr.aria-label]="tab.icon">
+      {{ tab.icon }}
+    </span>
+
+    <span class="tabs__tab-label">{{ tab.label }}</span>
+  </button>
+</div>

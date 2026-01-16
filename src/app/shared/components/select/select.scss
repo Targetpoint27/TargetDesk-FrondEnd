@@ -1,0 +1,200 @@
+.select-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  width: 100%;
+  position: relative;
+}
+
+.select-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-700);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+
+  &.select-label-required .select-required {
+    color: var(--color-error);
+  }
+
+  &.select-label-error {
+    color: var(--color-error);
+  }
+}
+
+.select-required {
+  font-size: var(--font-size-sm);
+}
+
+.select-container {
+  position: relative;
+}
+
+.select-field {
+  width: 100%;
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-normal);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  background-color: var(--color-white);
+  color: var(--color-gray-800);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  &:hover:not(.select-disabled) {
+    border-color: var(--color-gray-400);
+  }
+
+  &.select-focused {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+  }
+
+  &.select-disabled {
+    background-color: var(--color-gray-100);
+    color: var(--color-gray-500);
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  // Sizes
+  &.select-sm {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+    height: 2rem;
+  }
+
+  &.select-md {
+    padding: var(--spacing-3) var(--spacing-4);
+    font-size: var(--font-size-base);
+    height: 2.5rem;
+  }
+
+  &.select-lg {
+    padding: var(--spacing-4) var(--spacing-5);
+    font-size: var(--font-size-lg);
+    height: 3rem;
+  }
+
+  // Error state
+  &.select-error {
+    border-color: var(--color-error);
+
+    &.select-focused {
+      border-color: var(--color-error);
+      box-shadow: 0 0 0 3px rgb(239 68 68 / 0.1);
+    }
+  }
+}
+
+.select-value {
+  flex: 1;
+  text-align: left;
+}
+
+.select-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.select-clear {
+  background: none;
+  border: none;
+  color: var(--color-gray-400);
+  cursor: pointer;
+  padding: 0;
+  width: 1rem;
+  height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast);
+
+  &:hover {
+    color: var(--color-gray-600);
+    background-color: var(--color-gray-100);
+  }
+}
+
+.select-arrow {
+  color: var(--color-gray-400);
+  font-size: var(--font-size-xs);
+  transition: transform var(--transition-normal);
+
+  &.select-arrow-open {
+    transform: rotate(180deg);
+  }
+}
+
+.select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: var(--spacing-1);
+}
+
+.select-option {
+  padding: var(--spacing-3);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  font-size: var(--font-size-sm);
+
+  &:hover:not(.select-option-disabled) {
+    background-color: var(--color-gray-50);
+  }
+
+  &.select-option-selected {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+
+    &:hover {
+      background-color: var(--color-primary-dark);
+    }
+  }
+
+  &.select-option-disabled {
+    color: var(--color-gray-400);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.select-empty {
+  padding: var(--spacing-3);
+  color: var(--color-gray-500);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  font-style: italic;
+}
+
+.select-messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.select-error-message {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  font-weight: var(--font-weight-medium);
+}
+
+.select-hint-message {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+}

@@ -1,0 +1,110 @@
+<div class="menu"
+     [class.menu--open]="isOpen"
+     [class.menu--dropdown]="variant === 'dropdown'"
+     [class.menu--context]="variant === 'context'"
+     [class.menu--sidebar]="variant === 'sidebar'"
+     [class.menu--position-left]="position === 'left'"
+     [class.menu--position-right]="position === 'right'"
+     [class.menu--position-center]="position === 'center'"
+     role="menu"
+     [attr.aria-hidden]="!isOpen">
+
+  <div class="menu__content">
+    <ng-container *ngFor="let item of items; trackBy: trackByFn">
+
+      <!-- Divider -->
+      <div *ngIf="item.divider" class="menu__divider" role="separator"></div>
+
+      <!-- Regular menu item -->
+      <div *ngIf="!item.divider" class="menu__item-wrapper">
+        <a *ngIf="item.url && !item.disabled; else buttonTemplate"
+           [routerLink]="item.url"
+           class="menu__item"
+           [class.menu__item--disabled]="item.disabled"
+           [class.menu__item--has-children]="item.children && item.children.length > 0"
+           role="menuitem"
+           [attr.aria-disabled]="item.disabled"
+           (click)="onItemClick(item, $event)">
+
+          <span *ngIf="item.icon" class="menu__item-icon" [attr.aria-label]="item.icon">
+            {{ item.icon }}
+          </span>
+
+          <span class="menu__item-label">{{ item.label }}</span>
+
+          <span *ngIf="item.children && item.children.length > 0"
+                class="menu__item-arrow"
+                [class.menu__item-arrow--open]="isSubmenuOpen(item.id)">
+            ➤
+          </span>
+        </a>
+
+        <ng-template #buttonTemplate>
+          <button type="button"
+                  class="menu__item"
+                  [class.menu__item--disabled]="item.disabled"
+                  [class.menu__item--has-children]="item.children && item.children.length > 0"
+                  role="menuitem"
+                  [attr.aria-disabled]="item.disabled"
+                  [attr.aria-expanded]="item.children && item.children.length > 0 ? isSubmenuOpen(item.id) : null"
+                  (click)="onItemClick(item, $event)">
+
+            <span *ngIf="item.icon" class="menu__item-icon" [attr.aria-label]="item.icon">
+              {{ item.icon }}
+            </span>
+
+            <span class="menu__item-label">{{ item.label }}</span>
+
+            <span *ngIf="item.children && item.children.length > 0"
+                  class="menu__item-arrow"
+                  [class.menu__item-arrow--open]="isSubmenuOpen(item.id)">
+              ➤
+            </span>
+          </button>
+        </ng-template>
+
+        <!-- Submenu -->
+        <div *ngIf="item.children && item.children.length > 0 && isSubmenuOpen(item.id)"
+             class="menu__submenu"
+             role="menu">
+          <ng-container *ngFor="let childItem of item.children; trackBy: trackByFn">
+
+            <div *ngIf="childItem.divider" class="menu__divider" role="separator"></div>
+
+            <a *ngIf="!childItem.divider && childItem.url && !childItem.disabled; else childButtonTemplate"
+               [routerLink]="childItem.url"
+               class="menu__item menu__item--child"
+               [class.menu__item--disabled]="childItem.disabled"
+               role="menuitem"
+               [attr.aria-disabled]="childItem.disabled"
+               (click)="onItemClick(childItem, $event)">
+
+              <span *ngIf="childItem.icon" class="menu__item-icon" [attr.aria-label]="childItem.icon">
+                {{ childItem.icon }}
+              </span>
+
+              <span class="menu__item-label">{{ childItem.label }}</span>
+            </a>
+
+            <ng-template #childButtonTemplate>
+              <button *ngIf="!childItem.divider"
+                      type="button"
+                      class="menu__item menu__item--child"
+                      [class.menu__item--disabled]="childItem.disabled"
+                      role="menuitem"
+                      [attr.aria-disabled]="childItem.disabled"
+                      (click)="onItemClick(childItem, $event)">
+
+                <span *ngIf="childItem.icon" class="menu__item-icon" [attr.aria-label]="childItem.icon">
+                  {{ childItem.icon }}
+                </span>
+
+                <span class="menu__item-label">{{ childItem.label }}</span>
+              </button>
+            </ng-template>
+          </ng-container>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

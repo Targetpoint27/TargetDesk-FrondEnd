@@ -1,0 +1,9 @@
+<div [class]="getSpinnerClasses()" [style.color]="color" role="status" [attr.aria-label]="label">
+  <svg viewBox="0 0 50 50">
+    <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="78.54" stroke-dashoffset="78.54">
+      <animate attributeName="stroke-dasharray" dur="1.5s" values="0 78.54;39.27 78.54;0 78.54" repeatCount="indefinite"/>
+      <animate attributeName="stroke-dashoffset" dur="1.5s" values="0;-19.635;-39.27" repeatCount="indefinite"/>
+    </circle>
+  </svg>
+  <span class="sr-only">{{ label }}</span>
+</div>

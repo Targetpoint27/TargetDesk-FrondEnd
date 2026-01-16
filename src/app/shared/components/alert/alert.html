@@ -1,0 +1,41 @@
+<div class="alert"
+     [class.alert--success]="type === 'success'"
+     [class.alert--error]="type === 'error'"
+     [class.alert--warning]="type === 'warning'"
+     [class.alert--info]="type === 'info'"
+     [class.alert--filled]="variant === 'filled'"
+     [class.alert--outlined]="variant === 'outlined'"
+     [class.alert--subtle]="variant === 'subtle'"
+     role="alert"
+     [attr.aria-live]="type === 'error' ? 'assertive' : 'polite'">
+
+  <div class="alert__content">
+    <div class="alert__icon" [attr.aria-label]="type">
+      {{ iconForType }}
+    </div>
+
+    <div class="alert__body">
+      <div *ngIf="title" class="alert__title">{{ title }}</div>
+      <div class="alert__message">{{ message }}</div>
+
+      <div *ngIf="actions && actions.length > 0" class="alert__actions">
+        <button *ngFor="let action of actions; trackBy: trackByFn"
+                type="button"
+                class="alert__action"
+                [class.alert__action--primary]="action.style === 'primary'"
+                [class.alert__action--secondary]="action.style === 'secondary'"
+                (click)="onActionClick(action)">
+          {{ action.label }}
+        </button>
+      </div>
+    </div>
+
+    <button *ngIf="dismissible"
+            type="button"
+            class="alert__dismiss"
+            aria-label="Fermer l'alerte"
+            (click)="onDismiss()">
+      ✕
+    </button>
+  </div>
+</div>

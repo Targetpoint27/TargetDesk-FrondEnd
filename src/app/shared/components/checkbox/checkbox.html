@@ -1,0 +1,14 @@
+<div class="checkbox-wrapper">
+  <label [class]="getLabelClasses()" (click)="toggle()">
+    <div [class]="getCheckboxClasses()" (focus)="onFocus()" (blur)="onBlur()" tabindex="0">
+      <span *ngIf="checked && !indeterminate" class="checkbox-check">✓</span>
+      <span *ngIf="indeterminate" class="checkbox-indeterminate-mark">−</span>
+    </div>
+    <span *ngIf="label" class="checkbox-text">{{ label }}</span>
+  </label>
+
+  <div class="checkbox-messages" *ngIf="error || hint">
+    <span *ngIf="error" class="checkbox-error-message">{{ error }}</span>
+    <span *ngIf="hint && !error" class="checkbox-hint-message">{{ hint }}</span>
+  </div>
+</div>

@@ -1,0 +1,273 @@
+<div class="profile-page">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Mon Profil</h1>
+      <p class="page-subtitle">Gérez vos informations personnelles et paramètres de sécurité</p>
+    </div>
+  </div>
+
+  @if (currentUser$ | async; as user) {
+    <div class="profile-content">
+
+      <!-- Profile Overview Card -->
+      <div class="profile-overview-card">
+        <div class="profile-header">
+          <div class="profile-avatar">
+            {{ getUserInitials(user) }}
+          </div>
+          <div class="profile-info">
+            <h2 class="user-name">{{ user.getDisplayName() }}</h2>
+            <p class="user-email">{{ user.email }}</p>
+            <div class="user-meta">
+              <span class="meta-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                Membre depuis {{ formatDate(user.createdAt) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Information Card -->
+      <div class="profile-card">
+        <div class="card-header">
+          <h3 class="card-title">Informations personnelles</h3>
+          @if (!isEditingProfile) {
+            <button type="button" class="btn btn-secondary" (click)="onEditProfile()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              Modifier
+            </button>
+          }
+        </div>
+
+        <form [formGroup]="profileForm" (ngSubmit)="onSaveProfile()" class="profile-form">
+          <div class="form-grid">
+            <!-- First Name -->
+            <div class="form-group">
+              <label class="form-label" for="firstName">Prénom</label>
+              <input
+                type="text"
+                id="firstName"
+                formControlName="firstName"
+                class="form-input"
+                [class.error]="firstNameControl?.touched && firstNameControl?.errors"
+                [readonly]="!isEditingProfile"
+              />
+              @if (getValidationError('firstName')) {
+                <span class="form-error">{{ getValidationError('firstName') }}</span>
+              }
+            </div>
+
+            <!-- Last Name -->
+            <div class="form-group">
+              <label class="form-label" for="lastName">Nom</label>
+              <input
+                type="text"
+                id="lastName"
+                formControlName="lastName"
+                class="form-input"
+                [class.error]="lastNameControl?.touched && lastNameControl?.errors"
+                [readonly]="!isEditingProfile"
+              />
+              @if (getValidationError('lastName')) {
+                <span class="form-error">{{ getValidationError('lastName') }}</span>
+              }
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+              <label class="form-label" for="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                formControlName="email"
+                class="form-input"
+                [class.error]="emailControl?.touched && emailControl?.errors"
+                [readonly]="!isEditingProfile"
+              />
+              @if (getValidationError('email')) {
+                <span class="form-error">{{ getValidationError('email') }}</span>
+              }
+            </div>
+
+            <!-- Phone -->
+            <div class="form-group">
+              <label class="form-label" for="phone">Téléphone</label>
+              <input
+                type="tel"
+                id="phone"
+                formControlName="phone"
+                class="form-input"
+                [class.error]="phoneControl?.touched && phoneControl?.errors"
+                [readonly]="!isEditingProfile"
+                placeholder="Optionnel"
+              />
+              @if (getValidationError('phone')) {
+                <span class="form-error">{{ getValidationError('phone') }}</span>
+              }
+            </div>
+
+            <!-- Company -->
+            <div class="form-group">
+              <label class="form-label" for="company">Entreprise</label>
+              <input
+                type="text"
+                id="company"
+                formControlName="company"
+                class="form-input"
+                [class.error]="companyControl?.touched && companyControl?.errors"
+                [readonly]="!isEditingProfile"
+                placeholder="Optionnel"
+              />
+              @if (getValidationError('company')) {
+                <span class="form-error">{{ getValidationError('company') }}</span>
+              }
+            </div>
+
+            <!-- Position -->
+            <div class="form-group">
+              <label class="form-label" for="position">Poste</label>
+              <input
+                type="text"
+                id="position"
+                formControlName="position"
+                class="form-input"
+                [class.error]="positionControl?.touched && positionControl?.errors"
+                [readonly]="!isEditingProfile"
+                placeholder="Optionnel"
+              />
+              @if (getValidationError('position')) {
+                <span class="form-error">{{ getValidationError('position') }}</span>
+              }
+            </div>
+          </div>
+
+          @if (isEditingProfile) {
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" (click)="onCancelEditProfile()" [disabled]="isUpdatingProfile">
+                Annuler
+              </button>
+              <button type="submit" class="btn btn-primary" [disabled]="isUpdatingProfile || profileForm.invalid">
+                @if (isUpdatingProfile) {
+                  <span class="spinner"></span>
+                  Enregistrement...
+                } @else {
+                  Enregistrer
+                }
+              </button>
+            </div>
+          }
+        </form>
+      </div>
+
+      <!-- Security Card -->
+      <div class="profile-card">
+        <div class="card-header">
+          <h3 class="card-title">Sécurité</h3>
+          @if (!showPasswordForm) {
+            <button type="button" class="btn btn-secondary" (click)="onShowPasswordForm()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <circle cx="12" cy="16" r="1"></circle>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              Changer le mot de passe
+            </button>
+          }
+        </div>
+
+        @if (!showPasswordForm) {
+          <div class="security-info">
+            <div class="security-item">
+              <div class="security-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <circle cx="12" cy="16" r="1"></circle>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <div class="security-content">
+                <h4>Mot de passe</h4>
+                <p>Dernière modification il y a plus de 30 jours</p>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (showPasswordForm) {
+          <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="password-form">
+            <div class="form-group">
+              <label class="form-label" for="currentPassword">Mot de passe actuel</label>
+              <input
+                type="password"
+                id="currentPassword"
+                formControlName="currentPassword"
+                class="form-input"
+                [class.error]="currentPasswordControl?.touched && currentPasswordControl?.errors"
+              />
+              @if (getValidationError('currentPassword', 'password')) {
+                <span class="form-error">{{ getValidationError('currentPassword', 'password') }}</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newPassword">Nouveau mot de passe</label>
+              <input
+                type="password"
+                id="newPassword"
+                formControlName="newPassword"
+                class="form-input"
+                [class.error]="newPasswordControl?.touched && newPasswordControl?.errors"
+              />
+              @if (getValidationError('newPassword', 'password')) {
+                <span class="form-error">{{ getValidationError('newPassword', 'password') }}</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="confirmPassword">Confirmer le mot de passe</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                formControlName="confirmPassword"
+                class="form-input"
+                [class.error]="confirmPasswordControl?.touched && confirmPasswordControl?.errors"
+              />
+              @if (getValidationError('confirmPassword', 'password')) {
+                <span class="form-error">{{ getValidationError('confirmPassword', 'password') }}</span>
+              }
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" (click)="onHidePasswordForm()" [disabled]="isUpdatingPassword">
+                Annuler
+              </button>
+              <button type="submit" class="btn btn-primary" [disabled]="isUpdatingPassword || passwordForm.invalid">
+                @if (isUpdatingPassword) {
+                  <span class="spinner"></span>
+                  Modification...
+                } @else {
+                  Changer le mot de passe
+                }
+              </button>
+            </div>
+          </form>
+        }
+      </div>
+
+    </div>
+  } @else {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement du profil...</p>
+    </div>
+  }
+</div>

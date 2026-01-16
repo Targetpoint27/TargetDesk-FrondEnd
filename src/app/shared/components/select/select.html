@@ -1,0 +1,46 @@
+<div class="select-wrapper">
+  <label *ngIf="label" [class]="getLabelClasses()">
+    {{ label }}
+    <span *ngIf="required" class="select-required">*</span>
+  </label>
+
+  <div class="select-container">
+    <div [class]="getSelectClasses()" (click)="toggleDropdown()">
+      <span class="select-value">
+        {{ getSelectedOption()?.label || placeholder }}
+      </span>
+
+      <div class="select-actions">
+        <button
+          *ngIf="clearable && value !== null"
+          type="button"
+          class="select-clear"
+          (click)="clearSelection(); $event.stopPropagation()"
+        >
+          ×
+        </button>
+        <span class="select-arrow" [class.select-arrow-open]="isOpen">▼</span>
+      </div>
+    </div>
+
+    <div *ngIf="isOpen" class="select-dropdown">
+      <div
+        *ngFor="let option of options"
+        class="select-option"
+        [class.select-option-selected]="option.value === value"
+        [class.select-option-disabled]="option.disabled"
+        (click)="selectOption(option)"
+      >
+        {{ option.label }}
+      </div>
+      <div *ngIf="options.length === 0" class="select-empty">
+        Aucune option disponible
+      </div>
+    </div>
+  </div>
+
+  <div class="select-messages" *ngIf="error || hint">
+    <span *ngIf="error" class="select-error-message">{{ error }}</span>
+    <span *ngIf="hint && !error" class="select-hint-message">{{ hint }}</span>
+  </div>
+</div>

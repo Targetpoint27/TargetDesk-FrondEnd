@@ -1,0 +1,25 @@
+<div class="input-wrapper">
+  <label *ngIf="label" [class]="getLabelClasses()">
+    {{ label }}
+    <span *ngIf="required" class="input-required">*</span>
+  </label>
+
+  <div class="input-container">
+    <input
+      [type]="type"
+      [placeholder]="placeholder"
+      [disabled]="disabled"
+      [readonly]="readonly"
+      [value]="value"
+      [class]="getInputClasses()"
+      (input)="onInput($event)"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+    />
+  </div>
+
+  <div class="input-messages" *ngIf="error || hint">
+    <span *ngIf="error" class="input-error-message">{{ error }}</span>
+    <span *ngIf="hint && !error" class="input-hint-message">{{ hint }}</span>
+  </div>
+</div>

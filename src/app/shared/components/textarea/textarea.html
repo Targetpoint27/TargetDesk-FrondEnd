@@ -1,0 +1,30 @@
+<div class="textarea-wrapper">
+  <label *ngIf="label" [class]="getLabelClasses()">
+    {{ label }}
+    <span *ngIf="required" class="textarea-required">*</span>
+  </label>
+
+  <div class="textarea-container">
+    <textarea
+      [placeholder]="placeholder"
+      [disabled]="disabled"
+      [readonly]="readonly"
+      [rows]="rows"
+      [maxLength]="maxLength"
+      [value]="value"
+      [class]="getTextareaClasses()"
+      (input)="onInput($event)"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+    ></textarea>
+
+    <div *ngIf="maxLength" class="textarea-counter">
+      {{ getCurrentLength() }}/{{ maxLength }}
+    </div>
+  </div>
+
+  <div class="textarea-messages" *ngIf="error || hint">
+    <span *ngIf="error" class="textarea-error-message">{{ error }}</span>
+    <span *ngIf="hint && !error" class="textarea-hint-message">{{ hint }}</span>
+  </div>
+</div>

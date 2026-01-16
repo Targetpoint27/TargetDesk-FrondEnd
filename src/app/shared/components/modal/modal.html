@@ -1,0 +1,44 @@
+<div class="ui-modal__backdrop" (click)="onBackdropClick()" (keydown)="onKeyDown($event)" [attr.tabindex]="-1">
+  <div
+    #modalDialog
+    class="ui-modal__dialog"
+    (click)="onDialogClick($event)"
+    [attr.tabindex]="0">
+
+    <!-- Loading overlay -->
+    <div class="ui-modal__loading-overlay" *ngIf="loading">
+      <div class="ui-modal__spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="ui-modal__header" *ngIf="showHeader">
+      <div class="ui-modal__title-section">
+        <h2 id="modal-title" class="ui-modal__title" *ngIf="title">{{ title }}</h2>
+        <ng-content select="[slot=title]"></ng-content>
+      </div>
+
+      <div class="ui-modal__header-actions">
+        <ng-content select="[slot=header-actions]"></ng-content>
+        <button
+          *ngIf="closable"
+          type="button"
+          class="ui-modal__close-button"
+          (click)="close()"
+          [disabled]="loading"
+          aria-label="Close modal">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="ui-modal__content">
+      <ng-content></ng-content>
+    </div>
+
+    <!-- Footer -->
+    <div class="ui-modal__footer" *ngIf="showFooter">
+      <ng-content select="[slot=footer]"></ng-content>
+    </div>
+  </div>
+</div>

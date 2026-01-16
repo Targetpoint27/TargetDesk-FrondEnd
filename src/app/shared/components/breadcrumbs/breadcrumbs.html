@@ -1,0 +1,27 @@
+<nav class="breadcrumbs" role="navigation" aria-label="Fil d'Ariane">
+  <ol class="breadcrumbs-list">
+    @for (item of breadcrumbItems; track $index) {
+      <li class="breadcrumbs-item" [class.breadcrumbs-item-last]="isLastItem($index)">
+        @if (item.url && !isLastItem($index)) {
+          <a [routerLink]="item.url" class="breadcrumbs-link">
+            @if (item.icon) {
+              <span class="breadcrumbs-icon" [innerHTML]="item.icon"></span>
+            }
+            {{ item.label }}
+          </a>
+        } @else {
+          <span class="breadcrumbs-current" [attr.aria-current]="isLastItem($index) ? 'page' : null">
+            @if (item.icon) {
+              <span class="breadcrumbs-icon" [innerHTML]="item.icon"></span>
+            }
+            {{ item.label }}
+          </span>
+        }
+
+        @if (!isLastItem($index)) {
+          <span class="breadcrumbs-separator" aria-hidden="true">{{ separator }}</span>
+        }
+      </li>
+    }
+  </ol>
+</nav>

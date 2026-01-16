@@ -1,0 +1,360 @@
+<!-- Categories Management Page Template -->
+<div class="categories-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+       
+        <div>
+          <h1>Gestion des Catégories</h1>
+          <p class="page-description">Organisez et gérez la hiérarchie des catégories pour vos clients</p>
+        </div>
+      </div>
+     
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="openCreateForm()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14m-7-7h14"/>
+        </svg>
+        Nouvelle catégorie
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  @if ((state$ | async)?.error) {
+    <div class="error-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+      <span>{{ (state$ | async)?.error }}</span>
+      <button (click)="clearError()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  }
+
+  <!-- Filters and Controls -->
+  <div class="controls-section">
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label for="type-filter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+          Type de catégorie
+        </label>
+        <select
+          id="type-filter"
+          class="form-select"
+          [value]="(state$ | async)?.selectedType"
+          (change)="onTypeFilterChange(($any($event.target)).value)">
+          @for (option of TYPE_OPTIONS; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categories List -->
+  <div class="categories-container">
+    @if ((state$ | async)?.isLoading) {
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Chargement des catégories...</p>
+      </div>
+    } @else {
+      @if ((state$ | async)?.filteredCategories?.length) {
+        <div class="table-container">
+          <table class="categories-table">
+            <thead>
+              <tr>
+                <th>Catégorie</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Hiérarchie</th>
+                <th class="text-center">Sous-catégories</th>
+                <th class="actions-column">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (category of (state$ | async)?.filteredCategories; track category.id) {
+                <tr class="category-row"
+                    [class.has-children]="(category.children_count || 0) > 0"
+                    [class.is-child]="!!category.parent_id"
+                    [attr.data-depth]="category.depth_level || 0">
+                  <!-- Catégorie -->
+                  <td class="category-cell">
+                    <div class="category-info">
+                      <!-- Hierarchical connector in cascade style -->
+                      @if (category.parent_id) {
+                        <div class="hierarchy-connector">
+                          @if (category.depth_level === 1) {
+                            <span class="connector">├─ </span>
+                          } @else if (category.depth_level === 2) {
+                            <span class="connector">│&nbsp;&nbsp;├─ </span>
+                          } @else if (category.depth_level === 3) {
+                            <span class="connector">│&nbsp;&nbsp;│&nbsp;&nbsp;├─ </span>
+                          } @else {
+                            <span class="connector">└─ </span>
+                          }
+                        </div>
+                      }
+
+                      <div class="type-indicator" [style.backgroundColor]="category.color">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                          @switch (category.type) {
+                            @case ('secteur') {
+                              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            }
+                            @case ('taille') {
+                              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                            }
+                            @case ('priorite') {
+                              <circle cx="12" cy="12" r="1"/>
+                              <circle cx="19" cy="12" r="1"/>
+                              <circle cx="5" cy="12" r="1"/>
+                            }
+                            @case ('origine') {
+                              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            }
+                            @default {
+                              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v11z"/>
+                            }
+                          }
+                        </svg>
+                      </div>
+                      <span class="category-name"
+                            [class.root-category]="!category.parent_id"
+                            [class.child-category]="!!category.parent_id">{{ category.name }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Type -->
+                  <td>
+                    <span class="type-badge" [attr.data-type]="category.type">{{ category.formatted_type || formatCategoryType(category.type) }}</span>
+                  </td>
+
+                  <!-- Description -->
+                  <td class="description-cell">
+                    <span class="description-text" [title]="category.description">{{ category.description || '-' }}</span>
+                  </td>
+
+                  <!-- Hiérarchie -->
+                  <td class="hierarchy-cell">
+                    @if (category.parent_id) {
+                      <div class="parent-link">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"/>
+                        </svg>
+                        {{ category.parent?.name || 'Parent' }}
+                      </div>
+                    } @else {
+                      <span class="root-indicator">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        </svg>
+                        Racine
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Sous-catégories -->
+                  <td class="text-center">
+                    @if ((category.children_count || 0) > 0) {
+                      <span class="children-count">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M6 2v6h6M18 16v6h-6M6 8l6-6M18 16l-6 6"/>
+                        </svg>
+                        {{ category.children_count }}
+                      </span>
+                    } @else {
+                      <span class="no-children">-</span>
+                    }
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="actions-cell">
+                    <div class="action-buttons">
+                      <button class="action-btn edit" (click)="openEditForm(category)" title="Modifier">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button class="action-btn delete" (click)="onDeleteCategory(category)" title="Supprimer"
+                              [disabled]="(state$ | async)?.isDeleting">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3,6 5,6 21,6"/>
+                          <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v11z"/>
+            </svg>
+          </div>
+          <div class="empty-content">
+            <h3>Aucune catégorie trouvée</h3>
+            <p>Créez votre première catégorie pour commencer à organiser vos clients par secteur, taille, priorité ou origine.</p>
+            <button class="btn-primary btn-large" (click)="openCreateForm()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14m-7-7h14"/>
+              </svg>
+              Créer une catégorie
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Create/Edit Category Modal -->
+@if (showCreateForm || showEditForm) {
+  <div class="modal-overlay" (click)="showCreateForm ? closeCreateForm() : closeEditForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ showCreateForm ? 'Nouvelle catégorie' : 'Modifier la catégorie' }}</h2>
+        <button class="close-btn" (click)="showCreateForm ? closeCreateForm() : closeEditForm()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="categoryForm" (ngSubmit)="showCreateForm ? onCreateCategory() : onUpdateCategory()" class="category-form">
+        <div class="form-section">
+          <h3>Informations générales</h3>
+
+          <div class="form-group">
+            <label for="name">Nom *</label>
+            <input
+              id="name"
+              type="text"
+              class="form-input"
+              formControlName="name"
+              placeholder="Ex: Technologies, PME, Priorité haute..."
+              [class.error]="!!getValidationError('name')">
+            @if (getValidationError('name')) {
+              <span class="error-text">{{ getValidationError('name') }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea
+              id="description"
+              class="form-textarea"
+              formControlName="description"
+              placeholder="Description optionnelle de la catégorie"
+              rows="3"
+              [class.error]="!!getValidationError('description')">
+            </textarea>
+            @if (getValidationError('description')) {
+              <span class="error-text">{{ getValidationError('description') }}</span>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="type">Type *</label>
+              <select
+                id="type"
+                class="form-select"
+                formControlName="type"
+                (change)="onTypeChange()"
+                [class.error]="!!getValidationError('type')">
+                @for (categoryType of CATEGORY_TYPES; track categoryType.value) {
+                  <option [value]="categoryType.value">{{ categoryType.label }}</option>
+                }
+              </select>
+              @if (getValidationError('type')) {
+                <span class="error-text">{{ getValidationError('type') }}</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="color">Couleur</label>
+              <input
+                id="color"
+                type="color"
+                class="form-input"
+                formControlName="color">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Hiérarchie</h3>
+
+          <div class="form-group">
+            <label>Catégorie parente</label>
+            @if (getAvailableParents().length > 0) {
+              <div class="parent-selector">
+                <button
+                  type="button"
+                  class="parent-option"
+                  [class.selected]="!selectedParentCategory"
+                  (click)="selectParentCategory(null)">
+                  <span>Aucune (catégorie racine)</span>
+                </button>
+                @for (parent of getAvailableParents(); track parent.id) {
+                  <button
+                    type="button"
+                    class="parent-option"
+                    [class.selected]="selectedParentCategory?.id === parent.id"
+                    (click)="selectParentCategory(parent)">
+                    <app-category-badge
+                      [category]="parent"
+                      [size]="'small'"
+                      [maxNameLength]="25">
+                    </app-category-badge>
+                    <span class="parent-path">{{ getHierarchicalPath(parent) }}</span>
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="no-parents">Aucune catégorie parente disponible pour ce type.</p>
+            }
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="showCreateForm ? closeCreateForm() : closeEditForm()">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="categoryForm.invalid || (state$ | async)?.isCreating || (state$ | async)?.isUpdating">
+            @if ((state$ | async)?.isCreating || (state$ | async)?.isUpdating) {
+              <div class="spinner"></div>
+            }
+            {{ showCreateForm ? 'Créer' : 'Modifier' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

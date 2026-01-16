@@ -1,0 +1,141 @@
+.radio-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.radio-group-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-700);
+
+  &.radio-group-label-error {
+    color: var(--color-error);
+  }
+}
+
+.radio-group {
+  display: flex;
+  gap: var(--spacing-3);
+
+  &.radio-group-vertical {
+    flex-direction: column;
+  }
+
+  &.radio-group-horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.radio-option-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-700);
+
+  &.radio-option-disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.radio-input {
+  position: relative;
+  border: 2px solid var(--color-gray-300);
+  border-radius: 50%;
+  background-color: var(--color-white);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  &:hover:not(.radio-disabled) {
+    border-color: var(--color-primary);
+  }
+
+  // Sizes
+  &.radio-sm {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &.radio-md {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  &.radio-lg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  // States
+  &.radio-selected {
+    border-color: var(--color-primary);
+
+    &:hover:not(.radio-disabled) {
+      border-color: var(--color-primary-dark);
+    }
+  }
+
+  &.radio-disabled {
+    background-color: var(--color-gray-100);
+    border-color: var(--color-gray-300);
+    cursor: not-allowed;
+  }
+
+  &.radio-error {
+    border-color: var(--color-error);
+
+    &.radio-selected {
+      border-color: var(--color-error);
+    }
+  }
+}
+
+.radio-dot {
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  transition: all var(--transition-normal);
+
+  .radio-disabled & {
+    background-color: var(--color-gray-400);
+  }
+
+  .radio-error & {
+    background-color: var(--color-error);
+  }
+}
+
+.radio-option-text {
+  user-select: none;
+}
+
+.radio-messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.radio-error-message {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  font-weight: var(--font-weight-medium);
+}
+
+.radio-hint-message {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+}

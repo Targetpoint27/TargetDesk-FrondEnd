@@ -1,0 +1,114 @@
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  width: 100%;
+}
+
+.input-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-700);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+
+  &.input-label-required .input-required {
+    color: var(--color-error);
+  }
+
+  &.input-label-error {
+    color: var(--color-error);
+  }
+}
+
+.input-required {
+  font-size: var(--font-size-sm);
+}
+
+.input-container {
+  position: relative;
+}
+
+.input-field {
+  width: 100%;
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-normal);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  background-color: var(--color-white);
+  color: var(--color-gray-800);
+  transition: all var(--transition-normal);
+  outline: none;
+
+  &::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+  }
+
+  &:hover:not(:disabled):not(:focus) {
+    border-color: var(--color-gray-400);
+  }
+
+  &:disabled {
+    background-color: var(--color-gray-100);
+    color: var(--color-gray-500);
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  &:read-only {
+    background-color: var(--color-gray-50);
+    cursor: default;
+  }
+
+  // Sizes
+  &.input-sm {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+    height: 2rem;
+  }
+
+  &.input-md {
+    padding: var(--spacing-3) var(--spacing-4);
+    font-size: var(--font-size-base);
+    height: 2.5rem;
+  }
+
+  &.input-lg {
+    padding: var(--spacing-4) var(--spacing-5);
+    font-size: var(--font-size-lg);
+    height: 3rem;
+  }
+
+  // Error state
+  &.input-error {
+    border-color: var(--color-error);
+
+    &:focus {
+      border-color: var(--color-error);
+      box-shadow: 0 0 0 3px rgb(239 68 68 / 0.1);
+    }
+  }
+}
+
+.input-messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.input-error-message {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  font-weight: var(--font-weight-medium);
+}
+
+.input-hint-message {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+}

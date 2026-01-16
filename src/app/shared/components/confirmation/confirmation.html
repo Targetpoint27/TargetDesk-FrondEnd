@@ -1,0 +1,73 @@
+<div class="ui-confirmation__overlay" (click)="closable && onClose()" (keydown)="onKeyDown($event)" tabindex="-1">
+  <div class="ui-confirmation__dialog" (click)="$event.stopPropagation()">
+    <div class="ui-confirmation__content">
+      <!-- Header -->
+      @if (title || showIcon) {
+        <div class="ui-confirmation__header">
+          @if (showIcon) {
+            <div class="ui-confirmation__icon">
+              <span class="material-icons">{{ getIconClass() }}</span>
+            </div>
+          }
+          @if (title) {
+            <h3 id="confirmation-title" class="ui-confirmation__title">
+              {{ title }}
+            </h3>
+          }
+          @if (closable) {
+            <button
+              type="button"
+              class="ui-confirmation__close"
+              (click)="onClose()"
+              [disabled]="disabled || loading"
+              aria-label="Close confirmation dialog">
+              <span class="material-icons">close</span>
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Message -->
+      @if (message) {
+        <div class="ui-confirmation__body">
+          <p id="confirmation-message" class="ui-confirmation__message">
+            {{ message }}
+          </p>
+        </div>
+      }
+
+      <!-- Content Projection -->
+      <div class="ui-confirmation__custom-content">
+        <ng-content></ng-content>
+      </div>
+
+      <!-- Actions -->
+      @if (actions.length > 0) {
+        <div class="ui-confirmation__actions">
+          @for (action of actions; track trackByAction($index, action)) {
+            <button
+              type="button"
+              class="ui-confirmation__action"
+              [class.ui-confirmation__action--primary]="action.variant === 'primary'"
+              [class.ui-confirmation__action--secondary]="action.variant === 'secondary'"
+              [class.ui-confirmation__action--danger]="action.variant === 'danger'"
+              [disabled]="disabled || loading || action.disabled"
+              (click)="onActionClick(action)">
+              @if (loading && action.action === 'confirm') {
+                <span class="ui-confirmation__spinner"></span>
+              }
+              {{ action.label }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Loading Overlay -->
+    @if (loading) {
+      <div class="ui-confirmation__loading-overlay">
+        <div class="ui-confirmation__loading-spinner"></div>
+      </div>
+    }
+  </div>
+</div>

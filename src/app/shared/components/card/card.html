@@ -1,0 +1,36 @@
+<div class="ui-card__container">
+  <!-- Loading overlay -->
+  <div class="ui-card__loading-overlay" *ngIf="loading">
+    <div class="ui-card__spinner"></div>
+  </div>
+
+  <!-- Image -->
+  <div class="ui-card__image-container" *ngIf="imageUrl">
+    <img
+      [src]="imageUrl"
+      [alt]="imageAlt || ''"
+      class="ui-card__image"
+      loading="lazy">
+  </div>
+
+  <!-- Header -->
+  <div class="ui-card__header" *ngIf="title || subtitle">
+    <h3 class="ui-card__title" *ngIf="title">{{ title }}</h3>
+    <p class="ui-card__subtitle" *ngIf="subtitle">{{ subtitle }}</p>
+  </div>
+
+  <!-- Content -->
+  <div class="ui-card__content">
+    <ng-content></ng-content>
+  </div>
+
+  <!-- Footer -->
+  <div class="ui-card__footer">
+    <ng-content select="[slot=footer]"></ng-content>
+  </div>
+
+  <!-- Actions -->
+  <div class="ui-card__actions">
+    <ng-content select="[slot=actions]"></ng-content>
+  </div>
+</div>

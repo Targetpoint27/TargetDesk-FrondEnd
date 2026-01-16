@@ -1,0 +1,738 @@
+<!-- Suppliers Page -->
+<div class="suppliers-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestion des Fournisseurs</h1>
+      <p class="page-description">Gérez vos fournisseurs et leurs informations</p>
+    </div>
+    <div class="header-actions">
+      <button
+        class="btn-secondary"
+        type="button"
+        (click)="toggleFilters()"
+        [class.active]="showFilters">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 6h18M7 12h10M11 18h2"/>
+        </svg>
+        Filtres
+      </button>
+      <button
+        class="btn-primary"
+        type="button"
+        (click)="openCreateForm()"
+        [disabled]="(state$ | async)?.isCreating">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Ajouter un fournisseur
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  @if (showFilters) {
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Rechercher</label>
+        <input
+          type="text"
+          class="form-input"
+          placeholder="Nom, email, secteur..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearchChange()">
+      </div>
+
+      <div class="filter-group">
+        <label>Type de fournisseur</label>
+        <select
+          class="form-select"
+          [(ngModel)]="selectedTypeFilter"
+          (change)="onTypeFilterChange()">
+          <option value="all">Tous les types</option>
+          <option value="entreprise">Entreprises</option>
+          <option value="particulier">Particuliers</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Type de relation</label>
+        <select
+          class="form-select"
+          [(ngModel)]="selectedRelationTypeFilter"
+          (change)="onRelationTypeFilterChange()">
+          <option value="all">Toutes les relations</option>
+          <option value="fournisseur">Fournisseur uniquement</option>
+          <option value="client_et_fournisseur">Client & Fournisseur</option>
+        </select>
+      </div>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if ((state$ | async)?.error) {
+    <div class="error-banner">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+      <span>{{ (state$ | async)?.error?.message }}</span>
+      <button type="button" (click)="clearError()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  }
+
+  <!-- Create Form Modal -->
+  @if (showCreateForm) {
+    <div class="modal-overlay" (click)="closeCreateForm()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Nouveau fournisseur</h2>
+          <button type="button" class="close-btn" (click)="closeCreateForm()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="supplierForm" (ngSubmit)="onCreateSupplier()" class="supplier-form">
+          <!-- Informations principales -->
+          <div class="form-section">
+            <div class="form-row">
+              <div class="form-group required">
+                <label for="name">Nom / Raison sociale *</label>
+                <input
+                  id="name"
+                  type="text"
+                  class="form-input"
+                  formControlName="name"
+                  [class.error]="isFieldInvalid('name')"
+                  placeholder="Nom du fournisseur">
+                @if (getFieldError('name')) {
+                  <span class="error-text">{{ getFieldError('name') }}</span>
+                }
+              </div>
+
+              <div class="form-group required">
+                <label for="type">Type *</label>
+                <select
+                  id="type"
+                  class="form-select"
+                  formControlName="type">
+                  <option value="entreprise">Entreprise</option>
+                  <option value="particulier">Particulier</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label for="email">Email principal *</label>
+              <input
+                id="email"
+                type="email"
+                class="form-input"
+                formControlName="email"
+                [class.error]="isFieldInvalid('email')"
+                placeholder="contact@exemple.com">
+              @if (getFieldError('email')) {
+                <span class="error-text">{{ getFieldError('email') }}</span>
+              }
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="phone">Téléphone</label>
+                <input
+                  id="phone"
+                  type="tel"
+                  class="form-input"
+                  formControlName="phone"
+                  [class.error]="isFieldInvalid('phone')"
+                  placeholder="01 23 45 67 89">
+                @if (getFieldError('phone')) {
+                  <span class="error-text">{{ getFieldError('phone') }}</span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="website">Site web</label>
+                <input
+                  id="website"
+                  type="url"
+                  class="form-input"
+                  formControlName="website"
+                  [class.error]="isFieldInvalid('website')"
+                  placeholder="https://exemple.com">
+                @if (getFieldError('website')) {
+                  <span class="error-text">{{ getFieldError('website') }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Informations entreprise -->
+          @if (supplierForm.value.type === 'entreprise') {
+            <div class="form-section">
+              <h3>Informations entreprise</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="siret">SIRET</label>
+                  <input
+                    id="siret"
+                    type="text"
+                    class="form-input"
+                    formControlName="siret"
+                    [class.error]="isFieldInvalid('siret')"
+                    placeholder="14 chiffres">
+                  @if (getFieldError('siret')) {
+                    <span class="error-text">{{ getFieldError('siret') }}</span>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="sector">Secteur d'activité</label>
+                  <input
+                    id="sector"
+                    type="text"
+                    class="form-input"
+                    formControlName="sector"
+                    placeholder="Technologie, Commerce, etc.">
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Informations commerciales -->
+          <div class="form-section">
+            <h3>Informations commerciales</h3>
+            <div class="form-row">
+              <div class="form-group required">
+                <label for="relationType">Type de relation *</label>
+                <select
+                  id="relationType"
+                  class="form-select"
+                  formControlName="relationType">
+                  <option value="fournisseur">Fournisseur uniquement</option>
+                  <option value="client_et_fournisseur">Client & Fournisseur</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="paymentTerms">Conditions de paiement</label>
+                <select
+                  id="paymentTerms"
+                  class="form-select"
+                  formControlName="paymentTerms">
+                  <option value="">Sélectionner...</option>
+                  @for (term of PAYMENT_TERMS; track term) {
+                    <option [value]="term">{{ term }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="deliveryDelay">Délai de livraison (jours)</label>
+                <input
+                  id="deliveryDelay"
+                  type="number"
+                  class="form-input"
+                  formControlName="deliveryDelay"
+                  [class.error]="isFieldInvalid('deliveryDelay')"
+                  placeholder="7"
+                  min="0"
+                  max="365">
+                @if (getFieldError('deliveryDelay')) {
+                  <span class="error-text">{{ getFieldError('deliveryDelay') }}</span>
+                }
+              </div>
+
+              <div class="form-group required">
+                <label for="currency">Devise *</label>
+                <select
+                  id="currency"
+                  class="form-select"
+                  formControlName="currency">
+                  @for (currency of CURRENCY_CODES; track currency) {
+                    <option [value]="currency">{{ currency }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Autres informations -->
+          <div class="form-section">
+            <div class="form-group">
+              <label for="address">Adresse</label>
+              <textarea
+                id="address"
+                class="form-textarea"
+                formControlName="address"
+                placeholder="Adresse complète"
+                rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="notes">Notes</label>
+              <textarea
+                id="notes"
+                class="form-textarea"
+                formControlName="notes"
+                placeholder="Notes internes sur ce fournisseur"
+                rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="closeCreateForm()">
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="supplierForm.invalid || (state$ | async)?.isCreating">
+              @if ((state$ | async)?.isCreating) {
+                <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25"/>
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" fill="none"/>
+                </svg>
+                Création...
+              } @else {
+                Créer le fournisseur
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Edit Form Modal -->
+  @if (showEditForm && editingSupplier) {
+    <div class="modal-overlay" (click)="closeEditForm()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Modifier le fournisseur</h2>
+          <button type="button" class="close-btn" (click)="closeEditForm()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <form [formGroup]="supplierForm" (ngSubmit)="onUpdateSupplier()" class="supplier-form">
+          <!-- Same form fields as create form -->
+          <!-- Informations principales -->
+          <div class="form-section">
+            <div class="form-row">
+              <div class="form-group required">
+                <label for="edit-name">Nom / Raison sociale *</label>
+                <input
+                  id="edit-name"
+                  type="text"
+                  class="form-input"
+                  formControlName="name"
+                  [class.error]="isFieldInvalid('name')"
+                  placeholder="Nom du fournisseur">
+                @if (getFieldError('name')) {
+                  <span class="error-text">{{ getFieldError('name') }}</span>
+                }
+              </div>
+
+              <div class="form-group required">
+                <label for="edit-type">Type *</label>
+                <select
+                  id="edit-type"
+                  class="form-select"
+                  formControlName="type">
+                  <option value="entreprise">Entreprise</option>
+                  <option value="particulier">Particulier</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label for="edit-email">Email principal *</label>
+              <input
+                id="edit-email"
+                type="email"
+                class="form-input"
+                formControlName="email"
+                [class.error]="isFieldInvalid('email')"
+                placeholder="contact@exemple.com">
+              @if (getFieldError('email')) {
+                <span class="error-text">{{ getFieldError('email') }}</span>
+              }
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-phone">Téléphone</label>
+                <input
+                  id="edit-phone"
+                  type="tel"
+                  class="form-input"
+                  formControlName="phone"
+                  [class.error]="isFieldInvalid('phone')"
+                  placeholder="01 23 45 67 89">
+                @if (getFieldError('phone')) {
+                  <span class="error-text">{{ getFieldError('phone') }}</span>
+                }
+              </div>
+
+              <div class="form-group">
+                <label for="edit-website">Site web</label>
+                <input
+                  id="edit-website"
+                  type="url"
+                  class="form-input"
+                  formControlName="website"
+                  [class.error]="isFieldInvalid('website')"
+                  placeholder="https://exemple.com">
+                @if (getFieldError('website')) {
+                  <span class="error-text">{{ getFieldError('website') }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Informations entreprise -->
+          @if (supplierForm.value.type === 'entreprise') {
+            <div class="form-section">
+              <h3>Informations entreprise</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="edit-siret">SIRET</label>
+                  <input
+                    id="edit-siret"
+                    type="text"
+                    class="form-input"
+                    formControlName="siret"
+                    [class.error]="isFieldInvalid('siret')"
+                    placeholder="14 chiffres">
+                  @if (getFieldError('siret')) {
+                    <span class="error-text">{{ getFieldError('siret') }}</span>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="edit-sector">Secteur d'activité</label>
+                  <input
+                    id="edit-sector"
+                    type="text"
+                    class="form-input"
+                    formControlName="sector"
+                    placeholder="Technologie, Commerce, etc.">
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Informations commerciales -->
+          <div class="form-section">
+            <h3>Informations commerciales</h3>
+            <div class="form-row">
+              <div class="form-group required">
+                <label for="edit-relationType">Type de relation *</label>
+                <select
+                  id="edit-relationType"
+                  class="form-select"
+                  formControlName="relationType">
+                  <option value="fournisseur">Fournisseur uniquement</option>
+                  <option value="client_et_fournisseur">Client & Fournisseur</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="edit-paymentTerms">Conditions de paiement</label>
+                <select
+                  id="edit-paymentTerms"
+                  class="form-select"
+                  formControlName="paymentTerms">
+                  <option value="">Sélectionner...</option>
+                  @for (term of PAYMENT_TERMS; track term) {
+                    <option [value]="term">{{ term }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-deliveryDelay">Délai de livraison (jours)</label>
+                <input
+                  id="edit-deliveryDelay"
+                  type="number"
+                  class="form-input"
+                  formControlName="deliveryDelay"
+                  [class.error]="isFieldInvalid('deliveryDelay')"
+                  placeholder="7"
+                  min="0"
+                  max="365">
+                @if (getFieldError('deliveryDelay')) {
+                  <span class="error-text">{{ getFieldError('deliveryDelay') }}</span>
+                }
+              </div>
+
+              <div class="form-group required">
+                <label for="edit-currency">Devise *</label>
+                <select
+                  id="edit-currency"
+                  class="form-select"
+                  formControlName="currency">
+                  @for (currency of CURRENCY_CODES; track currency) {
+                    <option [value]="currency">{{ currency }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Autres informations -->
+          <div class="form-section">
+            <div class="form-group">
+              <label for="edit-address">Adresse</label>
+              <textarea
+                id="edit-address"
+                class="form-textarea"
+                formControlName="address"
+                placeholder="Adresse complète"
+                rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-notes">Notes</label>
+              <textarea
+                id="edit-notes"
+                class="form-textarea"
+                formControlName="notes"
+                placeholder="Notes internes sur ce fournisseur"
+                rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="closeEditForm()">
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="supplierForm.invalid || (state$ | async)?.isUpdating">
+              @if ((state$ | async)?.isUpdating) {
+                <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25"/>
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" fill="none"/>
+                </svg>
+                Mise à jour...
+              } @else {
+                Mettre à jour
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Loading State -->
+    @if ((state$ | async)?.isLoading) {
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Chargement des fournisseurs...</p>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @else if (!(state$ | async)?.hasSuppliers) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <h3>Aucun fournisseur pour le moment</h3>
+        <p>Commencez par ajouter votre premier fournisseur pour gérer vos relations commerciales.</p>
+        <button class="btn-primary" type="button" (click)="openCreateForm()">
+          Ajouter votre premier fournisseur
+        </button>
+      </div>
+    }
+
+    <!-- Suppliers List -->
+    @else {
+      <!-- Suppliers Table -->
+      <div class="suppliers-table-container">
+        <table class="suppliers-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Type</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th>Relation</th>
+              <th>Conditions</th>
+              <th>Délai livraison</th>
+              <th>Devise</th>
+              <th class="actions-column">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (supplier of (state$ | async)?.suppliers; track supplier.id) {
+              <tr>
+                <td>
+                  <div class="supplier-info">
+                    <strong>{{ supplier.name }}</strong>
+                    @if (supplier.sector) {
+                      <small class="supplier-sector">{{ supplier.sector }}</small>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" [class]="'badge-' + supplier.type">
+                    {{ supplier.type === 'entreprise' ? 'Entreprise' : 'Particulier' }}
+                  </span>
+                </td>
+                <td>
+                  <a [href]="'mailto:' + supplier.email" class="email-link">
+                    {{ supplier.email }}
+                  </a>
+                </td>
+                <td>
+                  @if (supplier.phone) {
+                    <a [href]="'tel:' + supplier.phone" class="phone-link">
+                      {{ supplier.phone }}
+                    </a>
+                  } @else {
+                    <span class="text-muted">-</span>
+                  }
+                </td>
+                <td>
+                  <span class="badge" [class]="'badge-' + supplier.relationType">
+                    {{ formatRelationType(supplier.relationType) }}
+                  </span>
+                </td>
+                <td>{{ formatPaymentTerms(supplier.paymentTerms) }}</td>
+                <td>{{ formatDeliveryDelay(supplier.deliveryDelay) }}</td>
+                <td>
+                  <span class="currency-badge">{{ supplier.currency }}</span>
+                </td>
+                <td class="supplier-actions">
+                  <button
+                    type="button"
+                    class="action-btn view"
+                    title="Voir les détails"
+                    (click)="onViewSupplier(supplier)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="action-btn edit"
+                    title="Modifier"
+                    (click)="onEditSupplier(supplier)"
+                    [disabled]="(state$ | async)?.isUpdating">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="action-btn delete"
+                    title="Supprimer"
+                    (click)="onDeleteSupplier(supplier)"
+                    [disabled]="(state$ | async)?.isDeleting">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="pagination">
+          <div class="pagination-info">
+            Affichage de {{ (currentPage - 1) * pageSize + 1 }} à {{ Math.min(currentPage * pageSize, totalItems) }} sur {{ totalItems }} fournisseurs
+          </div>
+
+          <div class="pagination-controls">
+            <button
+              type="button"
+              class="pagination-btn"
+              [disabled]="!canGoPrevious"
+              (click)="onPreviousPage()">
+              ← Précédent
+            </button>
+
+            <span class="pagination-current">
+              Page {{ currentPage }} sur {{ totalPages }}
+            </span>
+
+            <button
+              type="button"
+              class="pagination-btn"
+              [disabled]="!canGoNext"
+              (click)="onNextPage()">
+              Suivant →
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<app-confirmation-modal
+  [isVisible]="showDeleteConfirmation"
+  [title]="'Supprimer le fournisseur'"
+  [message]="getDeleteMessage()"
+  [type]="'danger'"
+  (confirmed)="onConfirmDelete()"
+  (cancelled)="onCancelDelete()">
+</app-confirmation-modal>
+
+<!-- Supplier Details Modal -->
+<app-supplier-details-modal
+  [isVisible]="showDetailsModal"
+  [supplier]="supplierToView"
+  (closed)="onCloseDetailsModal()"
+  (addContact)="onAddContact($event)"
+  (editContact)="onEditContact($event)">
+</app-supplier-details-modal>
+
+<!-- Contact Form Modal -->
+<app-contact-form-modal
+  [isOpen]="showContactFormModal"
+  [contact]="editingContact"
+  [entityId]="contactEntityId"
+  [entityType]="contactEntityType"
+  (close)="onCloseContactFormModal()"
+  (contactCreated)="onContactCreated($event)"
+  (contactUpdated)="onContactUpdated($event)">
+</app-contact-form-modal>

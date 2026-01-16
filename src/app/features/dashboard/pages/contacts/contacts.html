@@ -1,0 +1,327 @@
+<!-- Contacts Page -->
+<div class="contacts-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Contacts</h1>
+      <p class="page-description">Gérez tous vos contacts clients et fournisseurs</p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn-primary" (click)="createNewContact()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14m-7-7h14"/>
+        </svg>
+        Nouveau Contact
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Recherche</label>
+      <input
+        type="text"
+        class="form-input"
+        placeholder="Nom, prénom ou email..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label>Type d'entité</label>
+      <select
+        class="form-select"
+        [(ngModel)]="selectedEntityType"
+        (ngModelChange)="onEntityTypeChange()"
+      >
+        <option value="">Tous</option>
+        <option value="client">Clients</option>
+        <option value="supplier">Fournisseurs</option>
+      </select>
+    </div>
+
+    <div class="filter-actions">
+      <button type="button" class="btn-secondary" (click)="resetFilters()">
+        Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Bannière d'erreur -->
+  @if (error$ | async; as error) {
+    <div class="error-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+      <span>{{ error }}</span>
+    </div>
+  }
+
+  <!-- Contenu principal -->
+  <div class="main-content">
+    <!-- État de chargement -->
+    @if (isLoading$ | async) {
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Chargement des contacts...</p>
+      </div>
+    }
+
+    <!-- État vide -->
+    @else if (isEmpty$ | async) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <h3>Aucun contact trouvé</h3>
+        <p>Il n'y a pas encore de contacts correspondant à vos critères de recherche.</p>
+        <button type="button" class="btn-primary" (click)="createNewContact()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14m-7-7h14"/>
+          </svg>
+          Créer le premier contact
+        </button>
+      </div>
+    }
+
+    <!-- Tableau des contacts -->
+    @else if (hasContacts$ | async) {
+      <div class="contacts-table-container">
+        <table class="contacts-table">
+          <thead>
+            <tr>
+              <th>Contact</th>
+              <th>Entité</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (contact of contacts$ | async; track contact.id) {
+              <tr>
+                <!-- Contact (Nom + initiales) -->
+                <td>
+                  <div class="contact-info">
+                    <div class="contact-avatar">
+                      {{ getContactInitials(contact) }}
+                    </div>
+                    <div class="contact-details">
+                      <div class="contact-name">{{ contact.full_name }}</div>
+                      @if (contact.function) {
+                        <div class="contact-function">{{ contact.function }}</div>
+                      }
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Entité (Client/Fournisseur) -->
+                <td>
+                  <div class="entity-info">
+                    <span class="entity-badge" [ngClass]="getEntityBadgeClass(contact.entity_type)">
+                      {{ getEntityDisplayName(contact.entity_type) }}
+                    </span>
+                    <div class="entity-name">{{ contact.entity_name }}</div>
+                    <div class="entity-id">{{ contact.entity_id }}</div>
+                  </div>
+                </td>
+
+                <!-- Email principal -->
+                <td>
+                  @if (contact.primary_email) {
+                    <a [href]="'mailto:' + contact.primary_email" class="email-link">
+                      {{ contact.primary_email }}
+                    </a>
+                  } @else {
+                    <span class="text-muted">Aucun email</span>
+                  }
+                </td>
+
+                <!-- Téléphone principal -->
+                <td>
+                  @if (contact.primary_phone) {
+                    <a [href]="'tel:' + contact.primary_phone" class="phone-link">
+                      {{ formatPhone(contact.primary_phone) }}
+                    </a>
+                  } @else {
+                    <span class="text-muted">Aucun téléphone</span>
+                  }
+                </td>
+
+                <!-- Statut (Principal/Secondaire) -->
+                <td>
+                  <span class="status-badge" [ngClass]="getPrimaryBadgeClass(contact.is_primary)">
+                    {{ contact.is_primary ? 'Principal' : 'Secondaire' }}
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td>
+                  <div class="contact-actions">
+                    <button
+                      type="button"
+                      class="action-btn view"
+                      (click)="viewContact(contact)"
+                      title="Voir les détails"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="action-btn edit"
+                      (click)="editContact(contact)"
+                      title="Modifier"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+
+                    @if (!contact.is_primary) {
+                      <button
+                        type="button"
+                        class="action-btn primary"
+                        (click)="makePrimary(contact)"
+                        title="Définir comme principal"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                        </svg>
+                      </button>
+                    }
+
+                    <button
+                      type="button"
+                      class="action-btn delete"
+                      (click)="deleteContact(contact)"
+                      title="Supprimer"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3,6 5,6 21,6"/>
+                        <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/>
+                        <line x1="14" y1="11" x2="14" y2="17"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (pagination$ | async; as pagination) {
+        <div class="pagination">
+          <div class="pagination-info">
+            {{ paginationInfo | async }}
+          </div>
+
+          <div class="pagination-controls">
+            <button
+              type="button"
+              class="pagination-btn"
+              [disabled]="!(canGoPrevious$ | async)"
+              (click)="onPreviousPage()"
+            >
+              ← Précédent
+            </button>
+
+            <span class="pagination-current">
+              Page {{ currentPage$ | async }} sur {{ totalPages$ | async }}
+            </span>
+
+            <button
+              type="button"
+              class="pagination-btn"
+              [disabled]="!(canGoNext$ | async)"
+              (click)="onNextPage()"
+            >
+              Suivant →
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Modal de création/édition -->
+<app-contact-form-modal
+  [isOpen]="showCreateModal"
+  [contact]="selectedContactForEdit"
+  [entityId]="null"
+  [entityType]="null"
+  (close)="onCreateModalClose()"
+  (contactCreated)="onContactCreated($event)"
+  (contactUpdated)="onContactUpdated($event)"
+></app-contact-form-modal>
+
+<!-- Modal de détails -->
+<app-contact-details-modal
+  [isOpen]="showDetailsModal"
+  [contactId]="selectedContact?.id || null"
+  (close)="onDetailsModalClose()"
+></app-contact-details-modal>
+
+<!-- Modal Supprimer Contact -->
+@if (showDeleteContactModal) {
+  <div class="modal-overlay" (click)="onCloseDeleteContactModal()">
+    <div class="modal-content contact-delete-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="icon-container icon-danger">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.258c-.77-.833-2.694-.833-3.464 0L3.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+          </svg>
+        </div>
+      </div>
+
+      @if (contactToDelete) {
+        <div class="modal-body">
+          <h3 class="modal-title">Supprimer le contact</h3>
+          <p class="modal-message">
+            @if (contactToDelete.is_primary) {
+              Attention : {{ contactToDelete.full_name }} est le contact principal. Êtes-vous sûr de vouloir le supprimer ?
+            } @else {
+              Êtes-vous sûr de vouloir supprimer {{ contactToDelete.full_name }} ?
+            }
+          </p>
+        </div>
+      }
+
+      <div class="modal-actions">
+        <button type="button"
+                class="btn btn-secondary"
+                (click)="onCloseDeleteContactModal()"
+                [disabled]="isDeletingContact">
+          Annuler
+        </button>
+        <button type="button"
+                class="btn btn-danger"
+                (click)="onConfirmDeleteContact()"
+                [disabled]="isDeletingContact">
+          @if (isDeletingContact) {
+            <span class="spinner"></span>
+          }
+          {{ isDeletingContact ? 'Suppression...' : 'Supprimer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

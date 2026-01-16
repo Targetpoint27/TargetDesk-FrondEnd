@@ -1,0 +1,24 @@
+<div class="radio-wrapper">
+  <div *ngIf="label" [class]="getLabelClasses()">
+    {{ label }}
+  </div>
+
+  <div [class]="getGroupClasses()">
+    <label
+      *ngFor="let option of options"
+      class="radio-option-label"
+      [class.radio-option-disabled]="option.disabled || disabled"
+      (click)="selectOption(option)"
+    >
+      <div [class]="getRadioClasses(option)">
+        <span *ngIf="isSelected(option)" class="radio-dot"></span>
+      </div>
+      <span class="radio-option-text">{{ option.label }}</span>
+    </label>
+  </div>
+
+  <div class="radio-messages" *ngIf="error || hint">
+    <span *ngIf="error" class="radio-error-message">{{ error }}</span>
+    <span *ngIf="hint && !error" class="radio-hint-message">{{ hint }}</span>
+  </div>
+</div>

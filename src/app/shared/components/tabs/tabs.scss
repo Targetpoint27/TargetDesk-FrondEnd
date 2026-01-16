@@ -1,0 +1,121 @@
+.tabs {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--color-gray-200);
+  background-color: var(--color-white);
+
+  &--pills {
+    background-color: var(--color-gray-100);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-1);
+    border: none;
+  }
+
+  &--underline {
+    border-bottom: 2px solid var(--color-gray-200);
+  }
+
+  &--full-width {
+    .tabs__tab {
+      flex: 1;
+    }
+  }
+
+  &--sm {
+    .tabs__tab {
+      padding: var(--spacing-2) var(--spacing-3);
+      font-size: var(--font-size-sm);
+    }
+  }
+
+  &--lg {
+    .tabs__tab {
+      padding: var(--spacing-4) var(--spacing-6);
+      font-size: var(--font-size-lg);
+    }
+  }
+}
+
+.tabs__tab {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-600);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+  white-space: nowrap;
+
+  &:hover:not(&--disabled) {
+    color: var(--color-primary);
+    background-color: var(--color-gray-50);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-primary-light);
+  }
+
+  &--active {
+    color: var(--color-primary);
+
+    .tabs--default & {
+      border-bottom: 2px solid var(--color-primary);
+    }
+
+    .tabs--pills & {
+      background-color: var(--color-white);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tabs--underline & {
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: var(--color-primary);
+        border-radius: 2px;
+      }
+    }
+  }
+
+  &--disabled {
+    color: var(--color-gray-400);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+.tabs__tab-icon {
+  font-size: 1em;
+  line-height: 1;
+}
+
+.tabs__tab-label {
+  line-height: 1;
+}
+
+/* Responsive behavior */
+@media (max-width: 640px) {
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .tabs__tab {
+    flex-shrink: 0;
+  }
+}

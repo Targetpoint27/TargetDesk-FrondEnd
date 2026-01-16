@@ -1,0 +1,66 @@
+.dashboard-home {
+  .page-header {
+    margin-bottom: 2rem;
+
+    h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .page-description {
+      margin: 0;
+      color: #6b7280;
+      font-size: 1rem;
+    }
+  }
+
+  .dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+
+    .card {
+      background: white;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e5e7eb;
+      transition: all 0.2s ease;
+
+      &:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+
+        h3 {
+          margin: 0;
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: #1f2937;
+        }
+
+        svg {
+          color: #667eea;
+          width: 24px;
+          height: 24px;
+        }
+      }
+
+      .card-content {
+        p {
+          margin: 0;
+          color: #6b7280;
+          font-size: 0.875rem;
+        }
+      }
+    }
+  }
+}
