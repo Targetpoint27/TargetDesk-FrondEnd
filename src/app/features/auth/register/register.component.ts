@@ -87,12 +87,19 @@ export class RegisterComponent implements OnInit, OnDestroy {
             this.router.navigate(['/dashboard']);
           },
           error: (error) => {
-            // Error handling is done by facade, but we handle validation errors here
+            // Handle validation errors for field display
             if (error.code === 'VALIDATION_ERROR' && error.details?.errors) {
               this.fieldErrors = this.messageService.extractValidationErrors(error.details.errors);
-            } else if (error.details?.errors) {
-              // Try alternative path for validation errors
-              this.fieldErrors = this.messageService.extractValidationErrors(error.details.errors);
+              this.messageService.showError('Veuillez corriger les erreurs de validation', {
+                title: 'Erreurs de validation',
+                duration: 6000
+              });
+            } else {
+              // Show error toast directly in component
+              this.messageService.showError(error.userMessage || 'Erreur lors de l\'inscription', {
+                title: 'Erreur d\'inscription',
+                duration: 8000
+              });
             }
             // Mark form fields as touched to show validation errors
             this.markAllFieldsAsTouched();
@@ -115,16 +122,6 @@ export class RegisterComponent implements OnInit, OnDestroy {
         }
       });
 
-    // Disable/enable form controls based on loading state
-    this.isLoading$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(isLoading => {
-        if (isLoading) {
-          this.registerForm.disable();
-        } else {
-          this.registerForm.enable();
-        }
-      });
   }
 
   getFieldError(fieldName: string): string {

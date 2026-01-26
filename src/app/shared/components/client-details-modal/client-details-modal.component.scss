@@ -656,3 +656,30 @@
     padding: 3px;
   }
 }
+
+// Timeline section
+.timeline-section {
+  margin-top: 20px;
+
+  // Ajustement pour la modal
+  :ng-deep app-client-timeline {
+    .timeline-container {
+      border: none;
+      border-radius: 8px;
+      max-height: 500px;
+
+      .timeline-header {
+        padding: 16px 20px;
+        background: #fafafa;
+
+        .title-section h3 {
+          font-size: 16px;
+        }
+      }
+
+      .timeline-content {
+        max-height: 400px;
+      }
+    }
+  }
+}

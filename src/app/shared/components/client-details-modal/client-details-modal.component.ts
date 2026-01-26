@@ -11,11 +11,12 @@ import { DeleteContactUseCase } from '../../../domain/use-cases/contact/delete-c
 import { MakePrimaryContactUseCase } from '../../../domain/use-cases/contact/make-primary-contact.use-case';
 import { MessageService } from '../../services/message.service';
 import { ClientCategoriesManagerComponent } from '../client-categories-manager/client-categories-manager.component';
+import { ClientTimelineComponent } from '../client-timeline/client-timeline.component';
 
 @Component({
   selector: 'app-client-details-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ClientCategoriesManagerComponent],
+  imports: [CommonModule, ReactiveFormsModule, ClientCategoriesManagerComponent, ClientTimelineComponent],
   template: `
     <div class="modal-overlay" *ngIf="isVisible" (click)="onOverlayClick($event)">
       <div class="modal-container" (click)="$event.stopPropagation()">
@@ -221,6 +222,11 @@ import { ClientCategoriesManagerComponent } from '../client-categories-manager/c
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- Timeline -->
+              <div class="timeline-section" *ngIf="client">
+                <app-client-timeline [clientId]="client.id"></app-client-timeline>
               </div>
 
             </div>

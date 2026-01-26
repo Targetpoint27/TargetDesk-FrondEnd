@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -26,8 +26,8 @@ export class DashboardLayoutComponent implements OnInit {
   // Observable pour l'utilisateur connecté
   currentUser$!: Observable<UserEntity | null>;
 
-  // User dropdown state
-  isUserDropdownOpen = false;
+  // État du dropdown du menu utilisateur
+  isUserMenuOpen = false;
 
   menuItems: MenuItem[] = [
     {
@@ -69,8 +69,7 @@ export class DashboardLayoutComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private authFacade: AuthFacade,
-    private elementRef: ElementRef
+    private authFacade: AuthFacade
   ) {}
 
   ngOnInit(): void {
@@ -88,33 +87,25 @@ export class DashboardLayoutComponent implements OnInit {
     this.router.navigate([menuItem.route]);
   }
 
-  // User dropdown methods
-  toggleUserDropdown(): void {
-    this.isUserDropdownOpen = !this.isUserDropdownOpen;
-  }
-
-  closeUserDropdown(): void {
-    this.isUserDropdownOpen = false;
+  // User actions
+  toggleUserMenu(): void {
+    this.isUserMenuOpen = !this.isUserMenuOpen;
   }
 
   onProfileClick(): void {
-    this.closeUserDropdown();
+    this.isUserMenuOpen = false;
     this.router.navigate(['/dashboard/profile']);
   }
 
   onLogout(): void {
-    this.closeUserDropdown();
+    this.isUserMenuOpen = false;
     this.authFacade.logout$().subscribe(() => {
       this.router.navigate(['/login']);
     });
   }
 
-  // Close dropdown when clicking outside
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    if (!this.elementRef.nativeElement.contains(event.target)) {
-      this.closeUserDropdown();
-    }
+  closeUserMenu(): void {
+    this.isUserMenuOpen = false;
   }
 
   // Private methods for menu synchronization

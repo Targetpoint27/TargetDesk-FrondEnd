@@ -103,9 +103,15 @@ export class CreateSupplierUseCase {
     // Website validation (optional)
     if (request.website && request.website.trim().length > 0) {
       try {
+        // Try with the URL as-is first
         new URL(request.website);
       } catch {
-        errors['website'] = ['L\'URL du site web n\'est pas valide'];
+        try {
+          // If it fails, try adding http:// prefix
+          new URL('http://' + request.website);
+        } catch {
+          errors['website'] = ['L\'URL du site web n\'est pas valide'];
+        }
       }
     }
 

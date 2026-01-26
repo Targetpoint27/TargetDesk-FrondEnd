@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, combineLatest, map, shareReplay, switchMap, tap, catchError, of } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, map, shareReplay, switchMap, tap, catchError, of, throwError } from 'rxjs';
 
 import { ContactEntity, ContactFilters, ContactPagination, CreateContactData, UpdateContactData } from '../../domain/entities/contact.entity';
 import { ContactsListResponse, ClientContactsResponse, SupplierContactsResponse } from '../../domain/repositories/contact.repository';
@@ -173,13 +173,11 @@ export class ContactFacade {
   }
 
   filterContactsByEntityType(entityType: 'client' | 'supplier' | undefined): void {
-    console.log('Facade filterContactsByEntityType appelé avec:', entityType);
     const filters = {
       ...this._contactsState$.value.filters,
       entity_type: entityType,
       page: 1
     };
-    console.log('Filtres envoyés à loadContacts:', filters);
     this.loadContacts(filters);
   }
 
@@ -191,7 +189,6 @@ export class ContactFacade {
   }
 
   resetFilters(): void {
-    console.log('Facade resetFilters appelé');
     this.loadContacts({ page: 1, per_page: 15 });
   }
 
@@ -355,7 +352,6 @@ export class ContactFacade {
           }
         }),
         catchError(error => {
-          console.error('Erreur création contact:', error);
           throw error;
         })
       );
@@ -386,7 +382,6 @@ export class ContactFacade {
           }
         }),
         catchError(error => {
-          console.error('Erreur modification contact:', error);
           throw error;
         })
       );
@@ -419,7 +414,6 @@ export class ContactFacade {
           }
         }),
         catchError(error => {
-          console.error('Erreur définition contact principal:', error);
           throw error;
         })
       );
@@ -463,7 +457,6 @@ export class ContactFacade {
           }
         }),
         catchError(error => {
-          console.error('Erreur suppression contact:', error);
           throw error;
         })
       );

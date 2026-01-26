@@ -81,7 +81,8 @@ export class ApiService {
   ): Observable<T> {
     const requestId = this.generateRequestId();
     const url = this.environmentService.getApiUrl(endpoint);
-    const headers = this.buildHeaders(options?.headers);
+    const isFormData = data instanceof FormData;
+    const headers = this.buildHeaders(options?.headers, isFormData);
     const requestTimeout = options?.timeout || this.environmentService.api.timeout;
     const retryAttempts = options?.retryAttempts ?? this.environmentService.api.retryAttempts;
 
@@ -192,8 +193,8 @@ export class ApiService {
     );
   }
 
-  private buildHeaders(customHeaders?: HttpHeaders | { [header: string]: string | string[] }): HttpHeaders {
-    let headers = this.defaultHeaders;
+  private buildHeaders(customHeaders?: HttpHeaders | { [header: string]: string | string[] }, isFormData?: boolean): HttpHeaders {
+    let headers = isFormData ? new HttpHeaders() : this.defaultHeaders;
 
     if (customHeaders) {
       if (customHeaders instanceof HttpHeaders) {
@@ -215,10 +216,15 @@ export class ApiService {
     const requestId = this.generateRequestId();
     headers = headers.set('X-Request-ID', requestId);
 
+    // Don't set Content-Type for FormData - let browser handle it
+    if (!isFormData) {
+      headers = headers.set('Accept', 'application/json');
+    }
+
     return headers;
   }
 
-  private getStoredToken(): string | null {
+  public getStoredToken(): string | null {
     const tokenKey = this.environmentService.auth.tokenKey;
     return localStorage.getItem(tokenKey);
   }
@@ -263,6 +269,20 @@ export class ApiService {
   // Get API base URL
   getBaseUrl(): string {
     return this.environmentService.api.baseUrl;
+  }
+
+  // Get auth headers
+  getAuthHeaders(): { [header: string]: string } {
+    const headers: { [header: string]: string } = {
+      'Accept': 'application/json'
+    };
+
+    const token = this.getStoredToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return headers;
   }
 
   // Get full URL for endpoint

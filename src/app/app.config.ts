@@ -1,6 +1,7 @@
 import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withHashLocation } from '@angular/router';
+import { LocationStrategy, HashLocationStrategy } from '@angular/common';
 
 // Routes
 import { routes } from './app.routes';
@@ -12,6 +13,8 @@ import { ClientRepository } from './domain/repositories/client.repository';
 import { SupplierRepository } from './domain/repositories/supplier.repository';
 import { ContactRepository } from './domain/repositories/contact.repository';
 import { ImportExportRepository } from './domain/repositories/import-export.repository';
+import { CrmRepository } from './domain/repositories/crm.repository';
+import { TimelineRepository } from './domain/repositories/timeline.repository';
 
 // Infrastructure Layer - Repository implementations
 import { AuthApiRepository } from './infrastructure/repositories/auth-api.repository';
@@ -19,6 +22,8 @@ import { ClientApiRepository } from './infrastructure/repositories/client-api.re
 import { SupplierApiRepository } from './infrastructure/repositories/supplier-api.repository';
 import { ContactApiRepository } from './infrastructure/repositories/contact-api.repository';
 import { ImportExportApiRepository } from './infrastructure/repositories/import-export-api.repository';
+import { CrmApiRepository } from './infrastructure/repositories/crm-api.repository';
+import { ApiTimelineRepository } from './infrastructure/repositories/api-timeline.repository';
 
 // Core Services
 import { EnvironmentService } from './core/config/environment.service';
@@ -49,11 +54,16 @@ import { CreateClientUseCase, GetClientsUseCase, UpdateClientUseCase, DeleteClie
 import { CreateSupplierUseCase, GetSuppliersUseCase, UpdateSupplierUseCase, DeleteSupplierUseCase } from './domain/use-cases/supplier';
 import { CreateContactUseCase, GetContactsUseCase, UpdateContactUseCase, DeleteContactUseCase, MakePrimaryContactUseCase, GetClientContactsUseCase, GetSupplierContactsUseCase, CreateClientContactUseCase, CreateSupplierContactUseCase } from './domain/use-cases/contact';
 import { DownloadTemplateUseCase, PreviewImportUseCase, ImportClientsUseCase, ExportClientsUseCase } from './domain/use-cases/import-export';
+import { GetClientTimelineUseCase } from './domain/use-cases/crm/get-client-timeline.use-case';
+import { ManageNotesUseCase } from './domain/use-cases/crm/manage-notes.use-case';
+import { ManageCallsUseCase } from './domain/use-cases/crm/manage-calls.use-case';
+import { ManageAppointmentsUseCase } from './domain/use-cases/crm/manage-appointments.use-case';
+import { ManageTimelineUseCase } from './domain/use-cases/crm/manage-timeline.use-case';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Router
-    provideRouter(routes),
+    // Router - using hash location strategy to avoid base href issues
+    provideRouter(routes, withHashLocation()),
 
     // HTTP Client
     provideHttpClient(
@@ -98,6 +108,14 @@ export const appConfig: ApplicationConfig = {
       provide: ImportExportRepository,
       useClass: ImportExportApiRepository
     },
+    {
+      provide: CrmRepository,
+      useClass: CrmApiRepository
+    },
+    {
+      provide: TimelineRepository,
+      useClass: ApiTimelineRepository
+    },
     // TODO: Add UserRepository implementation when needed
     // {
     //   provide: UserRepository,
@@ -129,6 +147,11 @@ export const appConfig: ApplicationConfig = {
     PreviewImportUseCase,
     ImportClientsUseCase,
     ExportClientsUseCase,
+    GetClientTimelineUseCase,
+    ManageNotesUseCase,
+    ManageCallsUseCase,
+    ManageAppointmentsUseCase,
+    ManageTimelineUseCase,
 
     // Facades
     AuthFacade,

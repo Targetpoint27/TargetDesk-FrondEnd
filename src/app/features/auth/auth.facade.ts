@@ -95,8 +95,8 @@ export class AuthFacade {
       }),
       catchError(error => {
         this.setError(error);
-        this.messageService.showAppError(error);
 
+        // Only log the error, let the component handle the display
         this.loggingService.error('Auth Facade: Login failed', {
           component: 'AuthFacade',
           action: 'login',
@@ -155,13 +155,7 @@ export class AuthFacade {
       catchError(error => {
         this.setError(error);
 
-        // Handle validation errors specially
-        if (error.code === 'VALIDATION_ERROR' && error.details?.errors) {
-          this.messageService.showValidationErrors(error.details.errors);
-        } else {
-          this.messageService.showAppError(error);
-        }
-
+        // Only log the error, let the component handle the display
         this.loggingService.error('Auth Facade: Registration failed', {
           component: 'AuthFacade',
           action: 'register',

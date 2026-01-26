@@ -4,7 +4,7 @@
  */
 
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, map, catchError, finalize, of, tap, combineLatest, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, map, catchError, finalize, of, tap, combineLatest, switchMap, throwError } from 'rxjs';
 
 import { ClientEntity } from '../../../domain/entities/client.entity';
 import { PaginationResult } from '../../../domain/repositories/client.repository';
@@ -171,7 +171,7 @@ export class ClientFacade {
     this.updateState({ isCreating: true, error: null });
 
     return this.createClientUseCase.execute(clientData, userId).pipe(
-      tap(result => {
+      switchMap(result => {
         if (result.success && result.data) {
           // Add new client to the beginning of the list
           const updatedClients = [result.data, ...this.state$.value.clients];
@@ -183,7 +183,7 @@ export class ClientFacade {
             error: null
           });
 
-          this.messageService.showSuccess('Client créé avec succès');
+          return of(result.data);
         } else {
           const error = new AppError('CREATE_CLIENT_ERROR', result.error || 'Erreur lors de la création du client', result.error || 'Erreur lors de la création du client', result.validationErrors);
           this.updateState({
@@ -191,21 +191,15 @@ export class ClientFacade {
             error
           });
 
-          if (result.validationErrors) {
-            this.messageService.showError('Veuillez corriger les erreurs de validation');
-          } else {
-            this.messageService.showError(error.message);
-          }
+          return throwError(() => error);
         }
       }),
-      map(result => result.data!),
       catchError(error => {
         const appError = error instanceof AppError ? error : new AppError('CREATE_CLIENT_ERROR', 'Erreur inattendue lors de la création du client', 'Erreur inattendue lors de la création du client');
         this.updateState({
           isCreating: false,
           error: appError
         });
-        this.messageService.showError(appError.message);
         throw appError;
       })
     );
@@ -229,7 +223,7 @@ export class ClientFacade {
             error: null
           });
 
-          this.messageService.showSuccess('Client mis à jour avec succès');
+          // Success message handled at component level
         } else {
           const error = new AppError('UPDATE_CLIENT_ERROR', result.error || 'Erreur lors de la mise à jour du client', result.error || 'Erreur lors de la mise à jour du client', result.validationErrors);
           this.updateState({
@@ -237,11 +231,8 @@ export class ClientFacade {
             error
           });
 
-          if (result.validationErrors) {
-            this.messageService.showError('Veuillez corriger les erreurs de validation');
-          } else {
-            this.messageService.showError(error.message);
-          }
+          // Error handling is done at component level
+          // Don't show messages here to avoid duplicates
         }
       }),
       map(result => result.data!),
@@ -251,7 +242,7 @@ export class ClientFacade {
           isUpdating: false,
           error: appError
         });
-        this.messageService.showError(appError.message);
+        // Error message handled at component level
         throw appError;
       })
     );
@@ -273,14 +264,14 @@ export class ClientFacade {
             error: null
           });
 
-          this.messageService.showSuccess('Client supprimé avec succès');
+          // Success message handled at component level
         } else {
           const error = new AppError('DELETE_CLIENT_ERROR', result.error || 'Erreur lors de la suppression du client', result.error || 'Erreur lors de la suppression du client');
           this.updateState({
             isDeleting: false,
             error
           });
-          this.messageService.showError(error.message);
+          // Error message handled at component level
         }
       }),
       map(() => undefined),
@@ -290,7 +281,7 @@ export class ClientFacade {
           isDeleting: false,
           error: appError
         });
-        this.messageService.showError(appError.message);
+        // Error message handled at component level
         throw appError;
       })
     );

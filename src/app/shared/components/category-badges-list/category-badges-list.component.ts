@@ -13,7 +13,7 @@ import { CategoryBadgeComponent } from '../category-badge/category-badge.compone
   imports: [CommonModule, CategoryBadgeComponent],
   template: `
     <div class="category-badges-list" [class.compact]="compact">
-      @if (displayMode === 'summary' && categoriesSummary?.length) {
+      @if (displayMode === 'summary' && categoriesSummary.length) {
         <!-- Summary mode: Show count by type -->
         @for (summary of categoriesSummary; track summary.type) {
           @for (categoryInfo of summary.categories; track categoryInfo.id) {
@@ -27,7 +27,7 @@ import { CategoryBadgeComponent } from '../category-badge/category-badge.compone
             </app-category-badge>
           }
         }
-      } @else if (displayMode === 'full' && categories?.length) {
+      } @else if (displayMode === 'full' && categories.length) {
         <!-- Full mode: Show individual categories -->
         @for (category of visibleCategories; track category.id) {
           <app-category-badge

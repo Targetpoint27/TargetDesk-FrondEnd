@@ -81,7 +81,7 @@
       <button
         type="submit"
         class="btn-primary"
-        [disabled]="registerForm.invalid || registerForm.disabled"
+        [disabled]="registerForm.invalid || (isLoading$ | async)"
       >
         @if (isLoading$ | async) {
           <svg class="btn-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none">

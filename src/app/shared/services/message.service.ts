@@ -57,7 +57,7 @@ export class MessageService {
     duration?: number;
     action?: Message['action'];
   }): string {
-    return this.addMessage({
+    const messageId = this.addMessage({
       type: 'error',
       title: options?.title || 'Erreur',
       content,
@@ -65,6 +65,7 @@ export class MessageService {
       action: options?.action,
       dismissible: true
     });
+    return messageId;
   }
 
   // Warning messages
@@ -109,6 +110,7 @@ export class MessageService {
     if (options?.showTechnicalDetails && error.message !== error.userMessage) {
       content += `\n\nDétails techniques: ${error.message}`;
     }
+
 
     return this.showError(content, {
       title: 'Erreur',
@@ -239,7 +241,9 @@ export class MessageService {
     };
 
     const currentMessages = this.messages$.value;
-    this.messages$.next([...currentMessages, message]);
+    const newMessages = [...currentMessages, message];
+
+    this.messages$.next(newMessages);
 
     // Auto-dismiss if duration is specified
     if (message.duration && message.duration > 0) {

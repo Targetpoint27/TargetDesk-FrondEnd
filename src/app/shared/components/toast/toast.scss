@@ -6,7 +6,7 @@
   opacity: 0;
   visibility: hidden;
   transform: translateX(100%);
-  transition: all var(--transition-normal);
+  transition: all 200ms ease;
 
   &--visible {
     opacity: 1;
@@ -16,8 +16,8 @@
 
   /* Positioning variants */
   &--top-right {
-    top: var(--spacing-4);
-    right: var(--spacing-4);
+    top: 1rem;
+    right: 1rem;
   }
 
   &--top-left {

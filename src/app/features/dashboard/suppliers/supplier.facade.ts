@@ -4,7 +4,7 @@
  */
 
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, map, catchError, finalize, of, tap, combineLatest, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, map, catchError, finalize, of, tap, combineLatest, switchMap, throwError } from 'rxjs';
 
 import { SupplierEntity } from '../../../domain/entities/supplier.entity';
 import { PaginationResult } from '../../../domain/repositories/supplier.repository';
@@ -173,7 +173,7 @@ export class SupplierFacade {
     this.updateState({ isCreating: true, error: null });
 
     return this.createSupplierUseCase.execute(supplierData, userId).pipe(
-      tap(result => {
+      switchMap(result => {
         if (result.success && result.data) {
           // Add new supplier to the beginning of the list
           const updatedSuppliers = [result.data, ...this.state$.value.suppliers];
@@ -185,7 +185,7 @@ export class SupplierFacade {
             error: null
           });
 
-          this.messageService.showSuccess('Fournisseur créé avec succès');
+          return of(result.data);
         } else {
           const error = new AppError('CREATE_SUPPLIER_ERROR', result.error || 'Erreur lors de la création du fournisseur', result.error || 'Erreur lors de la création du fournisseur', result.validationErrors);
           this.updateState({
@@ -193,21 +193,15 @@ export class SupplierFacade {
             error
           });
 
-          if (result.validationErrors) {
-            this.messageService.showError('Veuillez corriger les erreurs de validation');
-          } else {
-            this.messageService.showError(error.message);
-          }
+          return throwError(() => error);
         }
       }),
-      map(result => result.data!),
       catchError(error => {
         const appError = error instanceof AppError ? error : new AppError('CREATE_SUPPLIER_ERROR', 'Erreur inattendue lors de la création du fournisseur', 'Erreur inattendue lors de la création du fournisseur');
         this.updateState({
           isCreating: false,
           error: appError
         });
-        this.messageService.showError(appError.message);
         throw appError;
       })
     );
@@ -231,7 +225,7 @@ export class SupplierFacade {
             error: null
           });
 
-          this.messageService.showSuccess('Fournisseur mis à jour avec succès');
+          // Success message handled at component level
         } else {
           const error = new AppError('UPDATE_SUPPLIER_ERROR', result.error || 'Erreur lors de la mise à jour du fournisseur', result.error || 'Erreur lors de la mise à jour du fournisseur', result.validationErrors);
           this.updateState({
@@ -240,9 +234,9 @@ export class SupplierFacade {
           });
 
           if (result.validationErrors) {
-            this.messageService.showError('Veuillez corriger les erreurs de validation');
+            // Error message handled at component level
           } else {
-            this.messageService.showError(error.message);
+            // Error message handled at component level
           }
         }
       }),
@@ -253,7 +247,7 @@ export class SupplierFacade {
           isUpdating: false,
           error: appError
         });
-        this.messageService.showError(appError.message);
+        // Error message handled at component level
         throw appError;
       })
     );
@@ -275,7 +269,7 @@ export class SupplierFacade {
             error: null
           });
 
-          this.messageService.showSuccess('Fournisseur supprimé avec succès');
+          // Success message handled at component level
         } else {
           const error = new AppError('DELETE_SUPPLIER_ERROR', result.error || 'Erreur lors de la suppression du fournisseur', result.error || 'Erreur lors de la suppression du fournisseur');
           this.updateState({
@@ -292,7 +286,7 @@ export class SupplierFacade {
           isDeleting: false,
           error: appError
         });
-        this.messageService.showError(appError.message);
+        // Error message handled at component level
         throw appError;
       })
     );

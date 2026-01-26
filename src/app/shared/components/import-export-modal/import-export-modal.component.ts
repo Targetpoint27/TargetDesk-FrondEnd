@@ -153,7 +153,13 @@ export type ImportExportMode = 'export' | 'import' | 'template';
                 </div>
               </div>
 
-              <div class="upload-zone" [class.has-file]="selectedFile()" (click)="fileInput.click()">
+              <div class="upload-zone"
+                   [class.has-file]="selectedFile()"
+                   [class.drag-over]="isDragOver()"
+                   (click)="fileInput.click()"
+                   (dragover)="onDragOver($event)"
+                   (dragleave)="onDragLeave($event)"
+                   (drop)="onDrop($event)">
                 <input
                   type="file"
                   #fileInput
@@ -279,35 +285,26 @@ export type ImportExportMode = 'export' | 'import' | 'template';
 
               <!-- Duplicate Action -->
               <div *ngIf="(importPreview()?.data?.stats?.duplicates_found || 0) > 0" class="duplicate-section">
-                <div class="section-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <div class="duplicate-header">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2"/>
                     <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2"/>
                     <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2"/>
                   </svg>
-                  <span>Gestion des doublons</span>
+                  <span>{{ (importPreview()?.data?.stats?.duplicates_found || 0) }} doublon(s) détecté(s)</span>
                 </div>
                 <div class="duplicate-options">
-                  <label class="option" [class.selected]="duplicateAction === 'ignore'">
+                  <label class="duplicate-option" [class.active]="duplicateAction === 'ignore'">
                     <input type="radio" [(ngModel)]="duplicateAction" value="ignore" name="duplicateAction">
-                    <div class="option-content">
-                      <span class="option-title">Ignorer</span>
-                      <span class="option-desc">Laisser les données existantes inchangées</span>
-                    </div>
+                    <span class="option-label">Ignorer</span>
                   </label>
-                  <label class="option" [class.selected]="duplicateAction === 'update'">
+                  <label class="duplicate-option" [class.active]="duplicateAction === 'update'">
                     <input type="radio" [(ngModel)]="duplicateAction" value="update" name="duplicateAction">
-                    <div class="option-content">
-                      <span class="option-title">Mettre à jour</span>
-                      <span class="option-desc">Compléter les champs vides uniquement</span>
-                    </div>
+                    <span class="option-label">Mettre à jour</span>
                   </label>
-                  <label class="option" [class.selected]="duplicateAction === 'replace'">
+                  <label class="duplicate-option" [class.active]="duplicateAction === 'replace'">
                     <input type="radio" [(ngModel)]="duplicateAction" value="replace" name="duplicateAction">
-                    <div class="option-content">
-                      <span class="option-title">Remplacer</span>
-                      <span class="option-desc">Écraser toutes les données existantes</span>
-                    </div>
+                    <span class="option-label">Remplacer</span>
                   </label>
                 </div>
               </div>
@@ -589,6 +586,7 @@ export class ImportExportModalComponent {
   exportLimit = 1000;
   clientTypeFilter: '' | 'particulier' | 'entreprise' = '';
   statusFilter: '' | 'true' | 'false' = '';
+  dragOverState = signal(false);
 
   availableColumns = AVAILABLE_EXPORT_COLUMNS;
 
@@ -664,6 +662,44 @@ export class ImportExportModalComponent {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile.set(file);
+    }
+  }
+
+  isDragOver(): boolean {
+    return this.dragOverState();
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragOverState.set(true);
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragOverState.set(false);
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragOverState.set(false);
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+
+      // Vérifier le type de fichier
+      const validTypes = ['.csv', '.xlsx', '.xls'];
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+
+      if (validTypes.includes(fileExtension)) {
+        this.selectedFile.set(file);
+        this.messageService.showSuccess(`Fichier ${file.name} sélectionné`);
+      } else {
+        this.messageService.showError('Type de fichier non supporté. Utilisez CSV ou Excel (.xlsx, .xls)');
+      }
     }
   }
 
@@ -798,5 +834,6 @@ export class ImportExportModalComponent {
     this.exportLimit = 1000;
     this.clientTypeFilter = '';
     this.statusFilter = '';
+    this.dragOverState.set(false);
   }
 }

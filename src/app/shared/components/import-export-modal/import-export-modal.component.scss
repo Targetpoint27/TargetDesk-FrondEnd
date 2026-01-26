@@ -290,6 +290,14 @@
     background: rgba(37, 99, 235, 0.05);
   }
 
+  &.drag-over {
+    border-color: var(--color-primary, #2563eb);
+    border-style: solid;
+    background: rgba(37, 99, 235, 0.1);
+    transform: scale(1.02);
+    box-shadow: 0 8px 32px rgba(37, 99, 235, 0.15);
+  }
+
   .file-input {
     display: none;
   }
@@ -495,55 +503,57 @@
   }
 }
 
-// Gestion des doublons moderne
+// Gestion des doublons compacte
 .duplicate-section {
-  margin: 0 24px 24px;
+  margin: 0 24px 16px;
+  padding: 16px;
   border: 1px solid #f3f4f6;
-  border-radius: 12px;
-  background: #fafafa;
+  border-radius: 8px;
+  background: #fefbf2;
+  border-left: 4px solid #f59e0b;
 
-  .section-title {
-    padding: 16px 20px;
+  .duplicate-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    margin-bottom: 12px;
     font-weight: 600;
-    color: #f59e0b;
-    border-bottom: 1px solid #e5e7eb;
-    background: #fefbf2;
-    border-radius: 12px 12px 0 0;
+    font-size: 14px;
+    color: #d97706;
 
     svg {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
+      color: #f59e0b;
     }
   }
 
   .duplicate-options {
-    padding: 20px;
     display: flex;
-    flex-direction: column;
     gap: 12px;
+    flex-wrap: wrap;
   }
 
-  .option {
+  .duplicate-option {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
     background: white;
+    min-width: fit-content;
 
     &:hover {
       border-color: #d1d5db;
+      background: #f9fafb;
     }
 
-    &.selected {
+    &.active {
       border-color: var(--color-primary, #2563eb);
-      background: #f8fafc;
+      background: #f0f9ff;
     }
 
     input[type="radio"] {
@@ -551,20 +561,11 @@
       accent-color: var(--color-primary, #2563eb);
     }
 
-    .option-content {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .option-title {
-      font-weight: 600;
-      color: #1e293b;
-    }
-
-    .option-desc {
+    .option-label {
       font-size: 13px;
-      color: #64748b;
+      font-weight: 500;
+      color: #374151;
+      white-space: nowrap;
     }
   }
 }

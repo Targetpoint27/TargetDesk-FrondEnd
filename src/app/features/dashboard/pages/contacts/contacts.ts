@@ -10,9 +10,7 @@ import { ContactRepository } from '../../../../domain/repositories/contact.repos
 import { ContactApiRepository } from '../../../../infrastructure/repositories/contact-api.repository';
 import { ContactFormModalComponent } from '../../../../shared/components/contact-form-modal/contact-form-modal.component';
 import { ContactDetailsModalComponent } from '../../../../shared/components/contact-details-modal/contact-details-modal.component';
-import { DeleteContactUseCase } from '../../../../domain/use-cases/contact/delete-contact.use-case';
-import { MakePrimaryContactUseCase } from '../../../../domain/use-cases/contact/make-primary-contact.use-case';
-import { MessageService } from '../../../../shared/services/message.service';
+import { SimpleNotificationService } from '../../../../shared/services/simple-notification.service';
 
 @Component({
   selector: 'app-contacts',
@@ -65,9 +63,7 @@ export class ContactsComponent implements OnInit, OnDestroy {
 
   constructor(
     private contactFacade: ContactFacade,
-    private deleteContactUseCase: DeleteContactUseCase,
-    private makePrimaryContactUseCase: MakePrimaryContactUseCase,
-    private messageService: MessageService,
+    private notificationService: SimpleNotificationService,
     private cdr: ChangeDetectorRef
   ) {
     // Initialisation des observables
@@ -123,16 +119,13 @@ export class ContactsComponent implements OnInit, OnDestroy {
 
   onEntityTypeChange(): void {
     const entityType = this.selectedEntityType === '' ? undefined : this.selectedEntityType as 'client' | 'supplier';
-    console.log('onEntityTypeChange - selectedEntityType:', this.selectedEntityType, 'entityType:', entityType);
     this.cdr.detectChanges();
     this.contactFacade.filterContactsByEntityType(entityType);
   }
 
   resetFilters(): void {
-    console.log('resetFilters appelé - avant reset:', { searchTerm: this.searchTerm, selectedEntityType: this.selectedEntityType });
     this.searchTerm = '';
     this.selectedEntityType = '';
-    console.log('resetFilters appelé - après reset:', { searchTerm: this.searchTerm, selectedEntityType: this.selectedEntityType });
     this.cdr.detectChanges();
 
     // Appeler loadContacts directement avec des filtres vides pour éviter le problème de timing
@@ -188,25 +181,19 @@ export class ContactsComponent implements OnInit, OnDestroy {
     this.actionInProgress = true;
     this.cdr.detectChanges();
 
-    this.makePrimaryContactUseCase.execute(contact.id)
+    this.contactFacade.makePrimaryContact(contact.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (result) => {
-          console.log('Contact défini comme principal:', contact.full_name);
-          this.messageService.showSuccess(`${contact.full_name} défini comme contact principal`, {
-            title: 'Contact principal modifié',
-            duration: 4000
-          });
+          this.notificationService.showSuccess(`${contact.full_name} défini comme contact principal`, 'Contact principal modifié');
           this.isMakingPrimary = false;
           this.actionInProgress = false;
-          this.contactFacade.loadContacts(); // Recharger la liste
         },
         error: (error) => {
-          console.error('Erreur lors de la définition du contact principal:', error);
+          this.notificationService.showError('Erreur lors de la définition du contact principal. Veuillez réessayer.', 'Erreur');
           this.isMakingPrimary = false;
           this.actionInProgress = false;
           this.cdr.detectChanges();
-          alert('Erreur lors de la définition du contact principal. Veuillez réessayer.');
         }
       });
   }
@@ -229,21 +216,17 @@ export class ContactsComponent implements OnInit, OnDestroy {
     this.actionInProgress = true;
     this.cdr.detectChanges();
 
-    this.deleteContactUseCase.execute(this.contactToDelete.id)
+    this.contactFacade.deleteContact(this.contactToDelete.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.messageService.showSuccess('Contact supprimé avec succès', {
-            title: 'Suppression réussie',
-            duration: 4000
-          });
+          this.notificationService.showSuccess('Contact supprimé avec succès', 'Suppression réussie');
           this.isDeletingContact = false;
           this.actionInProgress = false;
-          this.contactFacade.loadContacts(); // Recharger la liste
           this.onCloseDeleteContactModal();
         },
         error: (error) => {
-          console.error('Erreur lors de la suppression du contact:', error);
+          this.notificationService.showError('Erreur lors de la suppression du contact. Veuillez réessayer.', 'Erreur de suppression');
           this.isDeletingContact = false;
           this.actionInProgress = false;
           this.cdr.detectChanges();
@@ -293,16 +276,12 @@ export class ContactsComponent implements OnInit, OnDestroy {
 
   onContactCreated(contact: ContactEntity): void {
     this.onCreateModalClose();
-    console.log('Contact créé:', contact);
-    // Recharger la liste des contacts
-    this.contactFacade.loadContacts();
+    this.notificationService.showSuccess('Le contact a été créé avec succès', 'Contact créé');
   }
 
   onContactUpdated(contact: ContactEntity): void {
     this.onCreateModalClose();
-    console.log('Contact mis à jour:', contact);
-    // Recharger la liste des contacts pour afficher les modifications
-    this.contactFacade.loadContacts();
+    this.notificationService.showSuccess('Le contact a été mis à jour avec succès', 'Contact modifié');
   }
 
 
@@ -322,7 +301,6 @@ export class ContactsComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       takeUntil(this.destroy$)
     ).subscribe(searchTerm => {
-      console.log('Recherche déclenchée pour:', searchTerm);
       this.contactFacade.searchContacts(searchTerm);
     });
 

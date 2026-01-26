@@ -18,7 +18,7 @@ import { ContactEntity } from '../../../../domain/entities/contact.entity';
 import { CreateSupplierRequest, UpdateSupplierRequest, CURRENCY_CODES, PAYMENT_TERMS } from '../../../../domain/models/supplier.models';
 import { UserEntity } from '../../../../domain/entities/user.entity';
 import { AppError } from '../../../../core/error/error.service';
-import { MessageService } from '../../../../shared/services/message.service';
+import { SimpleNotificationService } from '../../../../shared/services/simple-notification.service';
 
 interface SuppliersState {
   suppliers: SupplierEntity[];
@@ -100,7 +100,7 @@ export class Suppliers implements OnInit, OnDestroy {
     private supplierFacade: SupplierFacade,
     private authFacade: AuthFacade,
     private fb: FormBuilder,
-    private messageService: MessageService
+    private notificationService: SimpleNotificationService
   ) {
     this.supplierForm = this.createSupplierForm();
     this.currentUser$ = this.authFacade.user$;
@@ -192,11 +192,26 @@ export class Suppliers implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
+          this.notificationService.showSuccess(
+            'Le fournisseur a été créé avec succès',
+            'Fournisseur créé'
+          );
           this.closeCreateForm();
-          this.loadSuppliers();
         },
         error: (error) => {
-          console.error('Failed to create supplier:', error);
+          if (error?.validationErrors) {
+            // Show specific validation errors
+            const validationMessages = Object.values(error.validationErrors).flat();
+            this.notificationService.showError(
+              validationMessages.join(', '),
+              'Erreurs de validation'
+            );
+          } else {
+            this.notificationService.showError(
+              error?.message || 'Une erreur est survenue lors de la création du fournisseur',
+              'Erreur de création'
+            );
+          }
         }
       });
     } else {
@@ -222,12 +237,17 @@ export class Suppliers implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe({
       next: () => {
-        console.log('Fournisseur supprimé avec succès');
-        this.loadSuppliers();
+        this.notificationService.showSuccess(
+          `Le fournisseur "${this.supplierToDelete!.name}" a été supprimé avec succès`,
+          'Fournisseur supprimé'
+        );
         this.onCancelDelete();
       },
       error: (error) => {
-        console.error('Erreur lors de la suppression:', error);
+        this.notificationService.showError(
+          error?.message || 'Une erreur est survenue lors de la suppression du fournisseur',
+          'Erreur de suppression'
+        );
         this.onCancelDelete();
       }
     });
@@ -276,10 +296,10 @@ export class Suppliers implements OnInit, OnDestroy {
   }
 
   onContactCreated(contact: ContactEntity): void {
-    this.messageService.showSuccess('Contact créé avec succès', {
-      title: 'Contact ajouté',
-      duration: 4000
-    });
+    this.notificationService.showSuccess(
+      'Contact créé avec succès',
+      'Contact ajouté'
+    );
     this.onCloseContactFormModal();
 
     // Refresh supplier details modal contacts if open
@@ -289,10 +309,10 @@ export class Suppliers implements OnInit, OnDestroy {
   }
 
   onContactUpdated(contact: ContactEntity): void {
-    this.messageService.showSuccess('Contact modifié avec succès', {
-      title: 'Contact mis à jour',
-      duration: 4000
-    });
+    this.notificationService.showSuccess(
+      'Contact modifié avec succès',
+      'Contact mis à jour'
+    );
     this.onCloseContactFormModal();
 
     // Refresh supplier details modal contacts if open
@@ -351,11 +371,26 @@ export class Suppliers implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
+          this.notificationService.showSuccess(
+            'Le fournisseur a été modifié avec succès',
+            'Fournisseur mis à jour'
+          );
           this.closeEditForm();
-          this.loadSuppliers();
         },
         error: (error) => {
-          console.error('Failed to update supplier:', error);
+          if (error?.validationErrors) {
+            // Show specific validation errors
+            const validationMessages = Object.values(error.validationErrors).flat();
+            this.notificationService.showError(
+              validationMessages.join(', '),
+              'Erreurs de validation'
+            );
+          } else {
+            this.notificationService.showError(
+              error?.message || 'Une erreur est survenue lors de la modification du fournisseur',
+              'Erreur de modification'
+            );
+          }
         }
       });
     } else {

@@ -6,6 +6,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Observable, Subject, takeUntil, combineLatest, map, BehaviorSubject } from 'rxjs';
 import { ConfirmationModalComponent } from '../../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { ClientDetailsModalComponent } from '../../../../shared/components/client-details-modal/client-details-modal.component';
@@ -22,7 +23,7 @@ import { CategoryEntity, CategoryType, CATEGORY_TYPES } from '../../../../domain
 import { CreateClientRequest, UpdateClientRequest } from '../../../../domain/repositories/client.repository';
 import { UserEntity } from '../../../../domain/entities/user.entity';
 import { AppError } from '../../../../core/error/error.service';
-import { MessageService } from '../../../../shared/services/message.service';
+import { SimpleNotificationService } from '../../../../shared/services/simple-notification.service';
 
 interface ClientsState {
   clients: ClientEntity[];
@@ -109,7 +110,8 @@ export class Clients implements OnInit, OnDestroy {
     private categoryFacade: CategoryFacade,
     private authFacade: AuthFacade,
     private fb: FormBuilder,
-    private messageService: MessageService
+    private notificationService: SimpleNotificationService,
+    private router: Router
   ) {
     this.clientForm = this.createClientForm();
     this.currentUser$ = this.authFacade.user$;
@@ -211,11 +213,26 @@ export class Clients implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
+          this.notificationService.showSuccess(
+            'Le client a été créé avec succès',
+            'Client créé'
+          );
           this.closeCreateForm();
-          this.loadClients();
         },
         error: (error) => {
-          console.error('Failed to create client:', error);
+          if (error?.validationErrors) {
+            // Show specific validation errors
+            const validationMessages = Object.values(error.validationErrors).flat();
+            this.notificationService.showError(
+              validationMessages.join(', '),
+              'Erreurs de validation'
+            );
+          } else {
+            this.notificationService.showError(
+              error?.message || 'Une erreur est survenue lors de la création du client',
+              'Erreur de création'
+            );
+          }
         }
       });
     } else {
@@ -241,12 +258,17 @@ export class Clients implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe({
       next: () => {
-        console.log('Client supprimé avec succès');
-        this.loadClients();
+        this.notificationService.showSuccess(
+          `Le client "${this.clientToDelete!.name}" a été supprimé avec succès`,
+          'Client supprimé'
+        );
         this.onCancelDelete();
       },
       error: (error) => {
-        console.error('Erreur lors de la suppression:', error);
+        this.notificationService.showError(
+          error?.message || 'Une erreur est survenue lors de la suppression du client',
+          'Erreur de suppression'
+        );
         this.onCancelDelete();
       }
     });
@@ -263,8 +285,7 @@ export class Clients implements OnInit, OnDestroy {
   }
 
   onViewClient(client: ClientEntity): void {
-    this.clientToView = client;
-    this.showDetailsModal = true;
+    this.router.navigate(['/dashboard/clients', client.id]);
   }
 
   onCloseDetailsModal(): void {
@@ -295,10 +316,10 @@ export class Clients implements OnInit, OnDestroy {
   }
 
   onContactCreated(contact: ContactEntity): void {
-    this.messageService.showSuccess('Contact créé avec succès', {
-      title: 'Contact ajouté',
-      duration: 4000
-    });
+    this.notificationService.showSuccess(
+      'Contact créé avec succès',
+      'Contact ajouté'
+    );
     this.onCloseContactFormModal();
 
     // Refresh client details modal contacts if open
@@ -308,10 +329,10 @@ export class Clients implements OnInit, OnDestroy {
   }
 
   onContactUpdated(contact: ContactEntity): void {
-    this.messageService.showSuccess('Contact modifié avec succès', {
-      title: 'Contact mis à jour',
-      duration: 4000
-    });
+    this.notificationService.showSuccess(
+      'Contact modifié avec succès',
+      'Contact mis à jour'
+    );
     this.onCloseContactFormModal();
 
     // Refresh client details modal contacts if open
@@ -362,11 +383,26 @@ export class Clients implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
+          this.notificationService.showSuccess(
+            'Le client a été modifié avec succès',
+            'Client mis à jour'
+          );
           this.closeEditForm();
-          this.loadClients();
         },
         error: (error) => {
-          console.error('Failed to update client:', error);
+          if (error?.validationErrors) {
+            // Show specific validation errors
+            const validationMessages = Object.values(error.validationErrors).flat();
+            this.notificationService.showError(
+              validationMessages.join(', '),
+              'Erreurs de validation'
+            );
+          } else {
+            this.notificationService.showError(
+              error?.message || 'Une erreur est survenue lors de la modification du client',
+              'Erreur de modification'
+            );
+          }
         }
       });
     } else {
@@ -395,8 +431,8 @@ export class Clients implements OnInit, OnDestroy {
     this.showFilters = !this.showFilters;
   }
 
-  onTypeFilterChange(type: 'all' | 'particulier' | 'entreprise'): void {
-    this.selectedTypeFilter = type;
+  onTypeFilterChange(type: any): void {
+    this.selectedTypeFilter = type as 'all' | 'particulier' | 'entreprise';
     this.loadClients();
   }
 
@@ -405,13 +441,13 @@ export class Clients implements OnInit, OnDestroy {
     this.loadClients();
   }
 
-  onCategoryFilterChange(categoryId: number | 'all'): void {
-    this.selectedCategoryFilter = categoryId;
+  onCategoryFilterChange(categoryId: any): void {
+    this.selectedCategoryFilter = categoryId === 'all' ? 'all' : Number(categoryId);
     this.loadClients();
   }
 
-  onCategoryTypeFilterChange(categoryType: CategoryType | 'all'): void {
-    this.selectedCategoryTypeFilter = categoryType;
+  onCategoryTypeFilterChange(categoryType: any): void {
+    this.selectedCategoryTypeFilter = categoryType as CategoryType | 'all';
     this.loadClients();
   }
 
@@ -601,7 +637,10 @@ export class Clients implements OnInit, OnDestroy {
 
   onImportCompleted(): void {
     this.showImportExportModal = false;
-    this.messageService.showSuccess('Import terminé avec succès');
+    this.notificationService.showSuccess(
+      'Import terminé avec succès',
+      'Import terminé'
+    );
     this.loadClients();
   }
 }

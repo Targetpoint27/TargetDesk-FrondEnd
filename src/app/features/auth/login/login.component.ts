@@ -5,7 +5,7 @@ import { RouterModule, Router } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AuthFacade } from '../auth.facade';
-import { MessageService } from '../../../shared/services/message.service';
+import { SimpleNotificationService } from '../../../shared/services/simple-notification.service';
 import { LoginRequest } from '../../../domain/models/auth.models';
 
 @Component({
@@ -18,7 +18,7 @@ import { LoginRequest } from '../../../domain/models/auth.models';
 export class LoginComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private authFacade = inject(AuthFacade);
-  private messageService = inject(MessageService);
+  private notificationService = inject(SimpleNotificationService);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
 
@@ -73,9 +73,16 @@ export class LoginComponent implements OnInit, OnDestroy {
             this.router.navigate([redirectUrl]);
           },
           error: (error) => {
-            // Error handling is done by facade, but we handle validation errors here
+            // Handle validation errors for field display
             if (error.code === 'VALIDATION_ERROR' && error.details?.errors) {
-              this.fieldErrors = this.messageService.showValidationErrors(error.details.errors);
+              // TODO: Handle validation errors if needed
+              this.fieldErrors = {};
+            } else {
+              // Use simple notification service
+              this.notificationService.showError(
+                error.userMessage || 'Identifiants incorrects',
+                'Erreur de connexion'
+              );
             }
             // Mark form fields as touched to show validation errors
             this.markAllFieldsAsTouched();

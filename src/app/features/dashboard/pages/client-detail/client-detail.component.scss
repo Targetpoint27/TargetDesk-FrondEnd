@@ -1,0 +1,988 @@
+.client-detail-page {
+  // Variables CSS - Override global styles with !important to force black text on white
+  --color-primary: #2563eb !important;
+  --color-primary-light: #eff6ff !important;
+  --color-success: #16a34a !important;
+  --color-warning: #f59e0b !important;
+  --color-danger: #dc2626 !important;
+  --color-text-primary: #000000 !important;
+  --color-text-secondary: #333333 !important;
+  --color-text-tertiary: #666666 !important;
+  --color-border: #e5e7eb !important;
+  --color-background: #f5f5f5 !important;
+  --color-card: #ffffff !important;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  // Force black text on white background
+  color: #000000 !important;
+  background-color: #f5f5f5 !important;
+  min-height: 100vh;
+
+  // Override all text colors to black
+  h1, h2, h3, h4, h5, h6 {
+    color: #000000 !important;
+  }
+
+  p, span, div, label {
+    color: #000000 !important;
+  }
+
+  // Override secondary text to dark gray
+  .contact-job, .stat-label, .breadcrumb-separator, .time-relative {
+    color: #333333 !important;
+  }
+
+  // Header - Compact et moderne
+  .page-header {
+    background: var(--color-card);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.5rem 1rem;
+    box-shadow: none;
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+
+      .breadcrumb-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: var(--color-primary);
+        text-decoration: none;
+        padding: 0.25rem 0.375rem;
+        border-radius: var(--radius-sm);
+        transition: all 0.15s ease;
+        font-weight: 500;
+
+        &:hover {
+          background: var(--color-primary-light);
+        }
+
+        svg {
+          width: 12px;
+          height: 12px;
+        }
+      }
+
+      .breadcrumb-separator {
+        color: var(--color-text-secondary);
+        margin: 0 0.125rem;
+        font-size: 0.625rem;
+      }
+
+      .breadcrumb-current {
+        color: var(--color-text-primary);
+        font-weight: 600;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .page-actions {
+      margin-top: 0.25rem;
+    }
+  }
+
+  // Loading states
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--color-border);
+      border-top: 3px solid var(--color-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+
+    .error-icon {
+      color: var(--color-danger);
+      margin-bottom: 1rem;
+    }
+
+    h3 {
+      color: var(--color-text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      color: var(--color-text-secondary);
+      margin-bottom: 2rem;
+    }
+  }
+
+  // Main content
+  .page-content {
+    padding: 0.25rem;
+    max-width: 100%;
+    margin: 0;
+
+    // Tab navigation
+    .tab-navigation {
+      display: flex;
+      background: var(--color-card);
+      border-radius: var(--radius-sm);
+      padding: 0.25rem;
+      margin-bottom: 0.25rem;
+      box-shadow: none;
+      border: 1px solid var(--color-border);
+
+      .tab-button {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        padding: 0.5rem 0.5rem;
+        border: none;
+        background: transparent;
+        color: var(--color-text-secondary);
+        font-weight: 500;
+        font-size: 0.75rem;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover:not(.active) {
+          background: var(--color-background);
+          color: var(--color-text-primary);
+        }
+
+        &.active {
+          background: var(--color-primary);
+          color: white;
+          box-shadow: var(--shadow-sm);
+        }
+
+        svg {
+          width: 1.125rem;
+          height: 1.125rem;
+        }
+      }
+    }
+
+    // Tab content
+    .tab-content {
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+
+      // Overview tab
+      &.overview .overview-content {
+        padding: 0.5rem;
+
+        .quick-actions-card {
+          background: var(--color-background);
+          padding: 0.5rem;
+          border-radius: var(--radius-sm);
+          margin-bottom: 0.5rem;
+          border: 1px solid var(--color-border);
+
+          h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 0.25rem;
+          }
+
+          .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+            gap: 0.5rem;
+
+            .quick-action {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 0.25rem;
+              padding: 0.5rem 0.375rem;
+              background: var(--color-card);
+              border: 1px solid var(--color-border);
+              border-radius: var(--radius-sm);
+              color: var(--color-text-primary);
+              font-size: 0.75rem;
+              font-weight: 500;
+              cursor: pointer;
+              transition: all 0.2s ease;
+
+              &:hover {
+                background: var(--color-primary-light);
+                border-color: var(--color-primary);
+                color: var(--color-primary);
+              }
+
+              svg {
+                width: 1.25rem;
+                height: 1.25rem;
+              }
+            }
+          }
+        }
+
+        // Main layout for overview - Full width
+        .main-layout {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          width: 100%;
+        }
+
+        // Stats section - 3 columns horizontal
+        .stats-section {
+          width: 100%;
+          background: var(--color-background);
+          padding: 0.5rem;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--color-border);
+          margin-bottom: 0.5rem;
+
+          h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 0.25rem;
+          }
+
+          .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+
+            .stat-item {
+              text-align: center;
+              background: var(--color-card);
+              padding: 0.5rem;
+              border-radius: var(--radius-sm);
+              border: 1px solid var(--color-border);
+
+              .stat-number {
+                font-size: 1.25rem;
+                font-weight: 700;
+                color: var(--color-primary);
+                display: block;
+                margin-bottom: 0.125rem;
+              }
+
+              .stat-label {
+                font-size: 0.6875rem;
+                color: var(--color-text-secondary);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                line-height: 1.2;
+              }
+            }
+          }
+        }
+
+        // Client info sections - 2 columns grid
+        .client-info-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.5rem;
+          width: 100%;
+        }
+
+        // Client info card
+        .info-card {
+          background: var(--color-card);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          padding: 0.5rem;
+          box-shadow: none;
+
+          .info-section {
+            margin-bottom: 0.5rem;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            h3 {
+              font-size: 0.875rem;
+              font-weight: 600;
+              color: var(--color-text-primary);
+              margin-bottom: 0.25rem;
+              padding-bottom: 0.125rem;
+              border-bottom: 1px solid var(--color-border);
+            }
+
+            // Info grid for key-value pairs
+            .info-grid {
+              display: flex;
+              flex-direction: column;
+              gap: 0.25rem;
+
+              .info-row {
+                display: grid;
+                grid-template-columns: 4rem 1fr;
+                gap: 0.5rem;
+                align-items: center;
+
+                .label {
+                  font-size: 0.875rem;
+                  font-weight: 500;
+                  color: var(--color-text-secondary);
+                  text-transform: uppercase;
+                  letter-spacing: 0.025em;
+                  font-size: 0.75rem;
+                }
+
+                .value {
+                  font-size: 0.875rem;
+                  color: var(--color-text-primary);
+                  line-height: 1.4;
+
+                  &.mono {
+                    font-family: monospace;
+                    background: var(--color-background);
+                    padding: 0.25rem 0.5rem;
+                    border-radius: var(--radius-sm);
+                    font-size: 0.8125rem;
+                  }
+
+                  &.link {
+                    color: var(--color-primary);
+                    text-decoration: none;
+
+                    &:hover {
+                      text-decoration: underline;
+                    }
+                  }
+
+                  &.badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.375rem;
+                    padding: 0.25rem 0.75rem;
+                    border-radius: var(--radius-sm);
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+
+                    &.active {
+                      background: color-mix(in srgb, var(--color-success), transparent 85%);
+                      color: var(--color-success);
+                    }
+
+                    &.inactive {
+                      background: color-mix(in srgb, var(--color-danger), transparent 85%);
+                      color: var(--color-danger);
+                    }
+
+                    &.type-entreprise {
+                      background: color-mix(in srgb, var(--color-primary), transparent 85%);
+                      color: var(--color-primary);
+                    }
+
+                    &.type-particulier {
+                      background: color-mix(in srgb, var(--color-warning), transparent 85%);
+                      color: var(--color-warning);
+                    }
+                  }
+                }
+              }
+            }
+
+            // Address text
+            .address-text {
+              color: var(--color-text-primary);
+              line-height: 1.5;
+              background: var(--color-background);
+              padding: 1rem;
+              border-radius: var(--radius-md);
+            }
+
+            // Notes text
+            .notes-text {
+              color: var(--color-text-primary);
+              line-height: 1.6;
+              background: var(--color-background);
+              padding: 1rem;
+              border-radius: var(--radius-md);
+              white-space: pre-wrap;
+            }
+
+            // System info - Horizontal layout
+            &.system-info {
+              .system-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 0.5rem;
+
+                .system-item {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.125rem;
+                  background: var(--color-background);
+                  padding: 0.375rem;
+                  border-radius: var(--radius-sm);
+                  border: 1px solid var(--color-border);
+
+                  .label {
+                    font-size: 0.6875rem;
+                    font-weight: 500;
+                    color: var(--color-text-secondary);
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                  }
+
+                  .value {
+                    font-size: 0.8125rem;
+                    color: var(--color-text-primary);
+                    font-weight: 500;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Content area (empty for overview)
+        .content-area {
+          // Empty for overview tab
+        }
+      }
+
+      // Other tabs
+      &.contacts,
+      &.categories,
+      &.timeline,
+      &.documents {
+        .contacts-content,
+        .categories-content,
+        .timeline-content,
+        .documents-content {
+          padding: 0.5rem;
+
+          .section-card {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+
+            .section-header {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 0.5rem;
+              padding-bottom: 0.25rem;
+              border-bottom: 1px solid var(--color-border);
+
+              h3 {
+                font-size: 1rem;
+                font-weight: 600;
+                color: var(--color-text-primary);
+                margin: 0;
+              }
+
+              .btn {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.8125rem;
+                background: var(--color-primary);
+                color: white;
+                border: none;
+                border-radius: var(--radius-sm);
+                cursor: pointer;
+                transition: all 0.2s ease;
+
+                &:hover {
+                  background: color-mix(in srgb, var(--color-primary), black 10%);
+                }
+
+                &.btn-small {
+                  padding: 0.25rem 0.5rem;
+                  font-size: 0.75rem;
+                }
+              }
+            }
+
+            // Contacts grid - Design moderne et optimisé
+            .contacts-container {
+              .contacts-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 0.375rem;
+
+                .contact-card {
+                  background: var(--color-card);
+                  border: 1px solid var(--color-border);
+                  border-radius: var(--radius-md);
+                  padding: 0.75rem;
+                  transition: all 0.2s ease;
+                  position: relative;
+                  overflow: hidden;
+
+                  &:hover {
+                    border-color: var(--color-primary);
+                    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+                    transform: translateY(-1px);
+                  }
+
+                  &.is-primary {
+                    border-color: var(--color-primary);
+                    background: linear-gradient(135deg, var(--color-card) 0%, color-mix(in srgb, var(--color-primary), transparent 98%) 100%);
+
+                    &::before {
+                      content: '';
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      width: 4px;
+                      height: 100%;
+                      background: var(--color-primary);
+                    }
+                  }
+
+                  .contact-header {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                    margin-bottom: 0.5rem;
+
+                    .contact-avatar {
+                      width: 2.5rem;
+                      height: 2.5rem;
+                      border-radius: 50%;
+                      background: linear-gradient(135deg, var(--color-primary) 0%, #1e40af 100%);
+                      color: white !important;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-weight: 700;
+                      font-size: 0.875rem;
+                      flex-shrink: 0;
+                      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+                    }
+
+                    .contact-info {
+                      flex: 1;
+                      min-width: 0;
+
+                      .contact-name {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        margin-bottom: 0.25rem;
+                        flex-wrap: wrap;
+
+                        span {
+                          font-weight: 600;
+                          color: var(--color-text-primary);
+                          font-size: 0.9rem;
+                          line-height: 1.2;
+                        }
+
+                        .primary-badge {
+                          background: var(--color-primary);
+                          color: white !important;
+                          padding: 0.125rem 0.5rem;
+                          border-radius: 12px;
+                          font-size: 0.625rem;
+                          font-weight: 600;
+                          text-transform: uppercase;
+                          letter-spacing: 0.5px;
+                        }
+                      }
+
+                      .contact-job {
+                        color: var(--color-text-secondary);
+                        font-size: 0.75rem;
+                        line-height: 1.3;
+                        font-weight: 500;
+                      }
+                    }
+
+                    .contact-actions {
+                      display: flex;
+                      gap: 0.25rem;
+                      flex-shrink: 0;
+
+                      .btn-icon {
+                        width: 1.5rem !important;
+                        height: 1.5rem !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        border: none !important;
+                        background: transparent !important;
+                        cursor: pointer !important;
+                        transition: all 0.15s ease !important;
+                        color: #000000 !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+
+                        &:hover {
+                          transform: scale(1.15) !important;
+                        }
+
+                        // Force les styles pour tous les SVG
+                        svg,
+                        svg *,
+                        > *,
+                        [stroke],
+                        [fill] {
+                          width: 1.25rem !important;
+                          height: 1.25rem !important;
+                          color: #374151 !important;
+                          stroke: #374151 !important;
+                          stroke-width: 2.5 !important;
+                          fill: none !important;
+                          stroke-linecap: round !important;
+                          stroke-linejoin: round !important;
+                        }
+
+                        // Bouton modifier - gris
+                        &:not(.star):not(.danger) svg,
+                        &:not(.star):not(.danger) svg * {
+                          stroke: #374151 !important;
+                          color: #374151 !important;
+                        }
+
+                        // Bouton étoile - orange
+                        &.star svg,
+                        &.star svg * {
+                          stroke: #f59e0b !important;
+                          color: #f59e0b !important;
+                        }
+
+                        // Bouton supprimer - rouge
+                        &.danger svg,
+                        &.danger svg * {
+                          stroke: #dc2626 !important;
+                          color: #dc2626 !important;
+                        }
+
+                        &:hover svg,
+                        &:hover svg * {
+                          stroke-width: 3 !important;
+                        }
+                      }
+                    }
+                  }
+
+                  .contact-details {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                    gap: 0.5rem;
+
+                    .contact-detail {
+                      display: flex;
+                      align-items: center;
+                      gap: 0.375rem;
+                      padding: 0.375rem;
+                      background: var(--color-background);
+                      border-radius: 6px;
+                      transition: all 0.15s ease;
+
+                      &:hover {
+                        background: var(--color-primary-light);
+                      }
+
+                      svg {
+                        width: 1rem;
+                        height: 1rem;
+                        color: #000000 !important;
+                        flex-shrink: 0;
+                      }
+
+                      .contact-link {
+                        color: var(--color-text-primary);
+                        text-decoration: none;
+                        font-size: 0.75rem;
+                        font-weight: 500;
+                        line-height: 1.2;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+
+                        &:hover {
+                          color: var(--color-primary);
+                        }
+                      }
+                    }
+                  }
+                }
+
+                // Responsive pour petits écrans
+                @media (max-width: 640px) {
+                  grid-template-columns: 1fr;
+                }
+              }
+
+              // Empty state
+              .empty-state {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 3rem;
+                text-align: center;
+                color: var(--color-text-secondary);
+
+                svg {
+                  margin-bottom: 1rem;
+                  opacity: 0.5;
+                }
+
+                h4 {
+                  color: var(--color-text-primary);
+                  margin-bottom: 0.5rem;
+                }
+              }
+
+              // Loading state
+              .loading-state {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 1rem;
+                padding: 2rem;
+                color: var(--color-text-secondary);
+
+                .spinner-mini {
+                  width: 1.5rem;
+                  height: 1.5rem;
+                  border: 2px solid var(--color-border);
+                  border-top: 2px solid var(--color-primary);
+                  border-radius: 50%;
+                  animation: spin 1s linear infinite;
+                }
+              }
+            }
+
+            // Documents placeholder
+            .documents-placeholder {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              padding: 4rem 2rem;
+              text-align: center;
+              color: var(--color-text-secondary);
+
+              svg {
+                margin-bottom: 1rem;
+                opacity: 0.5;
+              }
+
+              h4 {
+                font-size: 1.125rem;
+                font-weight: 600;
+                color: var(--color-text-primary);
+                margin-bottom: 0.5rem;
+              }
+
+              p {
+                font-size: 0.875rem;
+                margin: 0;
+                max-width: 24rem;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Modal styles (kept for contact modals)
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 1rem;
+
+    .modal-container {
+      background: var(--color-card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      max-width: 28rem;
+      width: 100%;
+      overflow: hidden;
+
+      .modal-header {
+        padding: 2rem;
+        text-align: center;
+
+        .icon-container {
+          margin-bottom: 1rem;
+
+          &.icon-danger {
+            color: var(--color-danger);
+          }
+
+          svg {
+            width: 3rem;
+            height: 3rem;
+          }
+        }
+      }
+
+      .modal-body {
+        padding: 0 2rem 2rem;
+
+        .modal-title {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: var(--color-text-primary);
+          margin-bottom: 1rem;
+        }
+
+        .modal-message {
+          color: var(--color-text-secondary);
+          line-height: 1.5;
+          margin: 0;
+        }
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 0.75rem;
+        padding: 1.5rem 2rem;
+        background: var(--color-background);
+        border-top: 1px solid var(--color-border);
+
+        .btn {
+          flex: 1;
+          justify-content: center;
+          padding: 0.75rem 1rem;
+          border-radius: var(--radius-sm);
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border: none;
+
+          &.btn-secondary {
+            background: var(--color-background);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+
+            &:hover {
+              background: var(--color-card);
+            }
+          }
+
+          &.btn-danger {
+            background: var(--color-danger);
+            color: white;
+
+            &:hover {
+              background: color-mix(in srgb, var(--color-danger), black 10%);
+            }
+          }
+
+          &.btn-primary {
+            background: var(--color-primary);
+            color: white;
+
+            &:hover {
+              background: color-mix(in srgb, var(--color-primary), black 10%);
+            }
+          }
+
+          .spinner {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 0.5rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .client-detail-page {
+    .page-header {
+      padding: 0.5rem;
+
+      .breadcrumb {
+        .breadcrumb-current {
+          max-width: 12rem;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+
+    .page-content {
+      padding: 1rem;
+
+      .tab-navigation {
+        .tab-button {
+          padding: 0.75rem 0.5rem;
+          font-size: 0.8125rem;
+
+          span {
+            display: none;
+          }
+        }
+      }
+
+      .tab-content.overview .overview-content {
+        padding: 1.5rem;
+
+        .main-layout {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+
+        .quick-actions-card .quick-actions-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .client-info-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    }
+  }
+}
+
+// Animation keyframes
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

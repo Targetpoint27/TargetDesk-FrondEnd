@@ -12,6 +12,10 @@ export class EnvironmentService {
     return this.config.production;
   }
 
+  get environment(): AppConfig {
+    return this.config;
+  }
+
   get api(): ApiConfig {
     return this.config.api;
   }

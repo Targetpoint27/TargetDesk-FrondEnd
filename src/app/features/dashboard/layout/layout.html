@@ -11,8 +11,8 @@
       </div>
 
       <div class="header-actions">
-        <div class="user-menu">
-          <button class="user-profile-btn" (click)="toggleUserDropdown()" type="button">
+        <div class="user-menu" (click)="closeUserMenu()">
+          <div class="user-avatar-container" (click)="toggleUserMenu(); $event.stopPropagation()">
             <div class="user-avatar">
               @if (currentUser$ | async; as user) {
                 {{ user.getDisplayName().substring(0, 2).toUpperCase() }}
@@ -20,59 +20,40 @@
                 US
               }
             </div>
-            <svg class="dropdown-icon" [class.rotated]="isUserDropdownOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6,9 12,15 18,9"></polyline>
-            </svg>
-          </button>
 
-          <div class="user-dropdown" [class.show]="isUserDropdownOpen">
-            <div class="dropdown-header">
-              <div class="user-avatar-large">
-                @if (currentUser$ | async; as user) {
-                  {{ user.getDisplayName().charAt(0).toUpperCase() }}
-                } @else {
-                  U
-                }
-              </div>
-              <div class="user-details">
-                <div class="user-name">
-                  @if (currentUser$ | async; as user) {
-                    {{ user.getDisplayName() }}
-                  } @else {
-                    Utilisateur
-                  }
-                </div>
-                <div class="user-email">
-                  @if (currentUser$ | async; as user) {
-                    {{ user.email }}
-                  } @else {
-                    utilisateur@example.com
-                  }
-                </div>
-              </div>
+            <div class="user-info">
+              @if (currentUser$ | async; as user) {
+                <span class="user-name">{{ user.getDisplayName() }}</span>
+              } @else {
+                <span class="user-name">Utilisateur</span>
+              }
             </div>
 
-            <div class="dropdown-divider"></div>
+            <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
 
-            <div class="dropdown-menu">
+          @if (isUserMenuOpen) {
+            <div class="user-dropdown" (click)="$event.stopPropagation()">
               <button class="dropdown-item" (click)="onProfileClick()" type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                   <circle cx="12" cy="7" r="4"></circle>
                 </svg>
-                <span>Mon Profil</span>
+                Profil
               </button>
 
-              <button class="dropdown-item logout" (click)="onLogout()" type="button">
+              <button class="dropdown-item" (click)="onLogout()" type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                   <polyline points="16,17 21,12 16,7"/>
                   <line x1="21" y1="12" x2="9" y2="12"/>
                 </svg>
-                <span>Déconnexion</span>
+                Déconnexion
               </button>
             </div>
-          </div>
+          }
         </div>
       </div>
     </div>
@@ -137,7 +118,7 @@
   <!-- Footer -->
   <footer class="dashboard-footer">
     <div class="footer-content">
-      <p>&copy; 2024 TargetDesk. Tous droits réservés.</p>
+      <p>&copy; 2026 TargetDesk. Tous droits réservés.</p>
     </div>
   </footer>
 </div>

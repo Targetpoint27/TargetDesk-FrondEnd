@@ -10,13 +10,12 @@ import { Observable } from 'rxjs';
   imports: [CommonModule, Toast],
   template: `
     <div class="toast-container">
-      @for (message of messages$ | async; track message.id) {
-        <ui-toast
-          [data]="mapToToastData(message)"
-          (dismiss)="onDismiss(message.id)"
-          [position]="'top-right'">
-        </ui-toast>
-      }
+      <ui-toast
+        *ngFor="let message of messages$ | async; trackBy: trackByMessage"
+        [data]="mapToToastData(message)"
+        (dismiss)="onDismiss(message.id)"
+        [position]="'top-right'">
+      </ui-toast>
     </div>
   `,
   styles: [`
@@ -83,8 +82,10 @@ export class ToastContainer {
 
   messages$: Observable<Message[]> = this.messageService.messages;
 
+
+
   mapToToastData(message: Message): ToastData {
-    return {
+    const toastData = {
       id: message.id,
       message: message.content,
       title: message.title,
@@ -97,9 +98,15 @@ export class ToastContainer {
         style: 'primary' as const
       }] : undefined
     };
+
+    return toastData;
   }
 
   onDismiss(messageId: string) {
     this.messageService.dismissMessage(messageId);
+  }
+
+  trackByMessage(index: number, message: Message): string {
+    return message.id;
   }
 }

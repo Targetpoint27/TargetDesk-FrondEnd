@@ -25,29 +25,19 @@ import { ClientCategoryResponse } from '../../../infrastructure/repositories/cli
   imports: [CommonModule, FormsModule, CategoryBadgeComponent],
   template: `
     <div class="categories-manager-container">
-      <!-- Header avec style moderne -->
-      <div class="header-section">
-        <div class="header-content">
-          <div class="title-area">
-            <div class="icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v11z"/>
-              </svg>
-            </div>
-            <h3>Catégories du client</h3>
-          </div>
-
-          @if (!isLoading) {
-            <button
-              type="button"
-              class="action-button"
-              [class.active]="showAssignMode"
-              (click)="toggleAssignMode()"
-              [disabled]="isLoading">
-              @if (showAssignMode) {
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
+      @if (!isLoading) {
+        <!-- Bouton d'action flottant -->
+        <div class="floating-action">
+          <button
+            type="button"
+            class="btn btn-small"
+            [class.active]="showAssignMode"
+            (click)="toggleAssignMode()"
+            [disabled]="isLoading">
+            @if (showAssignMode) {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
                 <span>Fermer</span>
               } @else {
@@ -58,9 +48,8 @@ import { ClientCategoryResponse } from '../../../infrastructure/repositories/cli
                 <span>Ajouter</span>
               }
             </button>
-          }
         </div>
-      </div>
+      }
 
       <!-- Contenu principal -->
       <div class="content-area" [class.assign-mode-active]="showAssignMode">
