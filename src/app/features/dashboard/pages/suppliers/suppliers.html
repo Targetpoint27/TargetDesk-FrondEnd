@@ -17,57 +17,134 @@
         </svg>
         Filtres
       </button>
-      <button
-        class="btn-primary"
-        type="button"
-        (click)="openCreateForm()"
-        [disabled]="(state$ | async)?.isCreating">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-        Ajouter un fournisseur
-      </button>
+      @if (canCreateSupplier$ | async) {
+        <button
+          class="btn-primary"
+          type="button"
+          (click)="openCreateForm()"
+          [disabled]="(state$ | async)?.isCreating">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Ajouter un fournisseur
+        </button>
+      }
     </div>
   </div>
 
-  <!-- Filters Section -->
+  <!-- Recherche rapide -->
+  <app-quick-search
+    type="suppliers"
+    placeholder="Rechercher un fournisseur (nom, email, secteur...)"
+    (resultSelected)="onQuickSearchResultSelected($event)"
+    (searchChanged)="onQuickSearchChanged($event)">
+  </app-quick-search>
+
+  <!-- Advanced Filters Section -->
   @if (showFilters) {
     <div class="filters-section">
-      <div class="filter-group">
-        <label>Rechercher</label>
-        <input
-          type="text"
-          class="form-input"
-          placeholder="Nom, email, secteur..."
-          [(ngModel)]="searchQuery"
-          (input)="onSearchChange()">
+      <div class="filters-header">
+        <h3>Filtres avancés</h3>
       </div>
 
-      <div class="filter-group">
-        <label>Type de fournisseur</label>
-        <select
-          class="form-select"
-          [(ngModel)]="selectedTypeFilter"
-          (change)="onTypeFilterChange()">
-          <option value="all">Tous les types</option>
-          <option value="entreprise">Entreprises</option>
-          <option value="particulier">Particuliers</option>
-        </select>
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label>Type de fournisseur</label>
+          <select
+            class="form-select"
+            [(ngModel)]="selectedTypeFilter"
+            (change)="onTypeFilterChange()">
+            <option value="all">Tous les types</option>
+            <option value="entreprise">Entreprises</option>
+            <option value="particulier">Particuliers</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Type de relation</label>
+          <select
+            class="form-select"
+            [(ngModel)]="selectedRelationTypeFilter"
+            (change)="onRelationTypeFilterChange()">
+            <option value="all">Toutes les relations</option>
+            <option value="fournisseur">Fournisseur uniquement</option>
+            <option value="client_et_fournisseur">Client & Fournisseur</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Secteur d'activité</label>
+          <input
+            type="text"
+            class="form-input"
+            placeholder="Technologie, Commerce..."
+            [(ngModel)]="sectorFilter"
+            (input)="onSectorFilterChange(sectorFilter)">
+        </div>
+
+        <div class="filter-group">
+          <label>Trier par</label>
+          <select
+            class="form-select"
+            [(ngModel)]="sortBy"
+            (change)="onSortChange(sortBy)">
+            <option value="name">Nom</option>
+            <option value="email">Email</option>
+            <option value="type">Type</option>
+            <option value="sector">Secteur</option>
+            <option value="created_at">Date de création</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Ordre</label>
+          <select
+            class="form-select"
+            [(ngModel)]="sortOrder"
+            (change)="onSortOrderChange(sortOrder)">
+            <option value="asc">Croissant</option>
+            <option value="desc">Décroissant</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Créé depuis</label>
+          <input
+            type="date"
+            class="form-input"
+            [(ngModel)]="createdFromFilter"
+            (input)="onDateFilterChange()">
+        </div>
+
+        <div class="filter-group">
+          <label>Créé jusqu'à</label>
+          <input
+            type="date"
+            class="form-input"
+            [(ngModel)]="createdToFilter"
+            (input)="onDateFilterChange()">
+        </div>
       </div>
 
-      <div class="filter-group">
-        <label>Type de relation</label>
-        <select
-          class="form-select"
-          [(ngModel)]="selectedRelationTypeFilter"
-          (change)="onRelationTypeFilterChange()">
-          <option value="all">Toutes les relations</option>
-          <option value="fournisseur">Fournisseur uniquement</option>
-          <option value="client_et_fournisseur">Client & Fournisseur</option>
-        </select>
+      <!-- Actions des filtres -->
+      <div class="filter-actions" style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+        @if (hasActiveFilters()) {
+          <span class="active-filters-count" style="background: #4f46e5; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500;">
+            {{ getActiveFiltersCount() }} filtre(s) actif(s)
+          </span>
+        }
+        @if (hasActiveFilters()) {
+          <button type="button" class="btn-secondary" (click)="clearAllFilters()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Effacer tous les filtres
+          </button>
+        }
       </div>
     </div>
   }
@@ -570,9 +647,11 @@
         </div>
         <h3>Aucun fournisseur pour le moment</h3>
         <p>Commencez par ajouter votre premier fournisseur pour gérer vos relations commerciales.</p>
-        <button class="btn-primary" type="button" (click)="openCreateForm()">
-          Ajouter votre premier fournisseur
-        </button>
+        @if (canCreateSupplier$ | async) {
+          <button class="btn-primary" type="button" (click)="openCreateForm()">
+            Ajouter votre premier fournisseur
+          </button>
+        }
       </div>
     }
 
@@ -635,37 +714,43 @@
                   <span class="currency-badge">{{ supplier.currency }}</span>
                 </td>
                 <td class="supplier-actions">
-                  <button
-                    type="button"
-                    class="action-btn view"
-                    title="Voir les détails"
-                    (click)="onViewSupplier(supplier)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    class="action-btn edit"
-                    title="Modifier"
-                    (click)="onEditSupplier(supplier)"
-                    [disabled]="(state$ | async)?.isUpdating">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                      <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    class="action-btn delete"
-                    title="Supprimer"
-                    (click)="onDeleteSupplier(supplier)"
-                    [disabled]="(state$ | async)?.isDeleting">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
-                    </svg>
-                  </button>
+                  @if (canViewSupplier$ | async) {
+                    <button
+                      type="button"
+                      class="action-btn view"
+                      title="Voir les détails"
+                      (click)="onViewSupplier(supplier)">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    </button>
+                  }
+                  @if (canUpdateSupplier$ | async) {
+                    <button
+                      type="button"
+                      class="action-btn edit"
+                      title="Modifier"
+                      (click)="onEditSupplier(supplier)"
+                      [disabled]="(state$ | async)?.isUpdating">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+                      </svg>
+                    </button>
+                  }
+                  @if (canDeleteSupplier$ | async) {
+                    <button
+                      type="button"
+                      class="action-btn delete"
+                      title="Supprimer"
+                      (click)="onDeleteSupplier(supplier)"
+                      [disabled]="(state$ | async)?.isDeleting">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                      </svg>
+                    </button>
+                  }
                 </td>
               </tr>
             }

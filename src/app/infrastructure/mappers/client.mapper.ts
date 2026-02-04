@@ -84,7 +84,8 @@ export class ClientMapper {
       siret: domainRequest.siret,
       sector: domainRequest.sector,
       website: domainRequest.website,
-      notes: domainRequest.notes
+      notes: domainRequest.notes,
+      category_ids: domainRequest.category_ids
     };
   }
 
@@ -103,6 +104,7 @@ export class ClientMapper {
     if (domainRequest.sector !== undefined) apiRequest.sector = domainRequest.sector;
     if (domainRequest.website !== undefined) apiRequest.website = domainRequest.website;
     if (domainRequest.notes !== undefined) apiRequest.notes = domainRequest.notes;
+    if (domainRequest.category_ids !== undefined) apiRequest.category_ids = domainRequest.category_ids;
 
     return apiRequest;
   }

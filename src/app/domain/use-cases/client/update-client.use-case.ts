@@ -4,7 +4,7 @@
  */
 
 import { Injectable } from '@angular/core';
-import { Observable, map, catchError, of, switchMap, forkJoin } from 'rxjs';
+import { Observable, map, catchError, of, switchMap } from 'rxjs';
 import { ClientRepository } from '../../repositories/client.repository';
 import { ClientEntity } from '../../entities/client.entity';
 import {
@@ -43,26 +43,16 @@ export class UpdateClientUseCase {
               });
             }
 
-            return this.checkUniqueness(request, clientId).pipe(
-              switchMap(uniquenessValidation => {
-                if (!uniquenessValidation.isValid) {
-                  return of({
-                    success: false,
-                    validationErrors: uniquenessValidation.errors
-                  });
-                }
-
-                return this.updateClient(clientId, request).pipe(
-                  map(updatedClient => ({
-                    success: true,
-                    data: updatedClient,
-                    events: [this.createDomainEvent(updatedClient, existingClient, userId)]
-                  })),
-                  catchError(error => of({
-                    success: false,
-                    error: this.getErrorMessage(error)
-                  }))
-                );
+            // Supprimer checkUniqueness - laisser l'API faire la validation
+            return this.updateClient(clientId, request).pipe(
+              map(updatedClient => ({
+                success: true,
+                data: updatedClient,
+                events: [this.createDomainEvent(updatedClient, existingClient, userId)]
+              })),
+              catchError(error => {
+                // Propager l'erreur HTTP directement sans la transformer
+                throw error;
               })
             );
           })
@@ -138,46 +128,6 @@ export class UpdateClientUseCase {
     });
   }
 
-  private checkUniqueness(request: UpdateClientRequest, clientId: number): Observable<ValidationResult> {
-    const checks: Observable<any>[] = [];
-
-    if (request.email !== undefined) {
-      checks.push(this.clientRepository.isEmailUnique(request.email, clientId));
-    }
-
-    if (request.siret !== undefined && request.siret && request.siret.trim().length > 0) {
-      checks.push(this.clientRepository.isSiretUnique(request.siret, clientId));
-    }
-
-    if (checks.length === 0) {
-      return of({ isValid: true, errors: {} });
-    }
-
-    return forkJoin(checks).pipe(
-      map(results => {
-        const errors: Record<string, string[]> = {};
-
-        // Check email uniqueness
-        if (request.email !== undefined && results[0] !== undefined && !results[0]) {
-          errors['email'] = ['Cet email est déjà utilisé par un autre client'];
-        }
-
-        // Check SIRET uniqueness if provided
-        if (request.siret !== undefined && request.siret && results[1] !== undefined && !results[1]) {
-          errors['siret'] = ['Ce SIRET est déjà utilisé par un autre client'];
-        }
-
-        return {
-          isValid: Object.keys(errors).length === 0,
-          errors
-        };
-      }),
-      catchError(() => of({
-        isValid: false,
-        errors: { 'general': ['Erreur lors de la vérification d\'unicité'] }
-      }))
-    );
-  }
 
   private updateClient(clientId: number, request: UpdateClientRequest): Observable<ClientEntity> {
     return this.clientRepository.update(clientId, request);
@@ -250,15 +200,4 @@ export class UpdateClientUseCase {
     };
   }
 
-  private getErrorMessage(error: any): string {
-    if (error?.message) {
-      return error.message;
-    }
-
-    if (typeof error === 'string') {
-      return error;
-    }
-
-    return 'Une erreur inattendue s\'est produite lors de la mise à jour du client';
-  }
 }

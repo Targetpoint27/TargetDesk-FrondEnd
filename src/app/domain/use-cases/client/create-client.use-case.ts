@@ -4,7 +4,7 @@
  */
 
 import { Injectable } from '@angular/core';
-import { Observable, map, catchError, of, switchMap, forkJoin } from 'rxjs';
+import { Observable, map, catchError, of, switchMap } from 'rxjs';
 import { ClientRepository } from '../../repositories/client.repository';
 import { ClientEntity } from '../../entities/client.entity';
 import {
@@ -13,12 +13,16 @@ import {
   ValidationResult,
   ClientCreatedEvent
 } from '../../models/client.models';
+import { AssignCategoriesUseCase } from '../client-category/assign-categories.use-case';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CreateClientUseCase {
-  constructor(private clientRepository: ClientRepository) {}
+  constructor(
+    private clientRepository: ClientRepository,
+    private assignCategoriesUseCase: AssignCategoriesUseCase
+  ) {}
 
   execute(request: CreateClientRequest, userId: string): Observable<UseCaseResult<ClientEntity>> {
     return this.validateRequest(request).pipe(
@@ -30,26 +34,43 @@ export class CreateClientUseCase {
           });
         }
 
-        return this.checkUniqueness(request).pipe(
-          switchMap(uniquenessValidation => {
-            if (!uniquenessValidation.isValid) {
+        // Supprimer checkUniqueness - laisser l'API faire la validation
+        return this.createClient(request).pipe(
+          switchMap(client => {
+            // If categories are provided, assign them to the client
+            if (request.category_ids && request.category_ids.length > 0) {
+              return this.assignCategoriesUseCase.execute(client.id, request.category_ids).pipe(
+                map(categoryResponse => ({
+                  success: true,
+                  data: client.withUpdatedData({
+                    categories: categoryResponse.categories,
+                    categories_count: categoryResponse.categories.length,
+                    categories_summary: this.generateCategorySummary(categoryResponse.categories)
+                  }),
+                  events: [this.createDomainEvent(client, userId)]
+                })),
+                catchError(categoryError => {
+                  console.warn('Failed to assign categories to new client:', categoryError);
+                  // Still return success for client creation, but without categories
+                  return of({
+                    success: true,
+                    data: client,
+                    events: [this.createDomainEvent(client, userId)],
+                    warnings: ['Client créé mais erreur lors de l\'assignation des catégories']
+                  });
+                })
+              );
+            } else {
               return of({
-                success: false,
-                validationErrors: uniquenessValidation.errors
-              });
-            }
-
-            return this.createClient(request).pipe(
-              map(client => ({
                 success: true,
                 data: client,
                 events: [this.createDomainEvent(client, userId)]
-              })),
-              catchError(error => of({
-                success: false,
-                error: this.getErrorMessage(error)
-              }))
-            );
+              });
+            }
+          }),
+          catchError(error => {
+            // Propager l'erreur HTTP directement sans la transformer
+            throw error;
           })
         );
       })
@@ -121,40 +142,6 @@ export class CreateClientUseCase {
     });
   }
 
-  private checkUniqueness(request: CreateClientRequest): Observable<ValidationResult> {
-    const checks: Observable<any>[] = [
-      this.clientRepository.isEmailUnique(request.email)
-    ];
-
-    if (request.siret && request.siret.trim().length > 0) {
-      checks.push(this.clientRepository.isSiretUnique(request.siret));
-    }
-
-    return forkJoin(checks).pipe(
-      map(results => {
-        const errors: Record<string, string[]> = {};
-
-        // Check email uniqueness
-        if (!results[0]) {
-          errors['email'] = ['Cet email est déjà utilisé par un autre client'];
-        }
-
-        // Check SIRET uniqueness if provided
-        if (request.siret && results[1] !== undefined && !results[1]) {
-          errors['siret'] = ['Ce SIRET est déjà utilisé par un autre client'];
-        }
-
-        return {
-          isValid: Object.keys(errors).length === 0,
-          errors
-        };
-      }),
-      catchError(() => of({
-        isValid: false,
-        errors: { 'general': ['Erreur lors de la vérification d\'unicité'] }
-      }))
-    );
-  }
 
   private createClient(request: CreateClientRequest): Observable<ClientEntity> {
     return this.clientRepository.create(request);
@@ -175,15 +162,32 @@ export class CreateClientUseCase {
     };
   }
 
-  private getErrorMessage(error: any): string {
-    if (error?.message) {
-      return error.message;
-    }
+  private generateCategorySummary(categories: any[]): any[] {
+    const summary = new Map();
 
-    if (typeof error === 'string') {
-      return error;
-    }
+    categories.forEach(category => {
+      const type = category.type;
+      if (summary.has(type)) {
+        summary.get(type).count++;
+        summary.get(type).categories.push({
+          id: category.id,
+          name: category.name,
+          color: category.color
+        });
+      } else {
+        summary.set(type, {
+          type,
+          count: 1,
+          categories: [{
+            id: category.id,
+            name: category.name,
+            color: category.color
+          }]
+        });
+      }
+    });
 
-    return 'Une erreur inattendue s\'est produite lors de la création du client';
+    return Array.from(summary.values());
   }
+
 }

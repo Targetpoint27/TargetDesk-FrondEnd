@@ -39,8 +39,8 @@ export class SupplierApiRepository extends SupplierRepository {
     return this.apiService.post<SupplierApiResponse>(`${this.endpoint}`, apiRequest).pipe(
       map(response => {
         return SupplierMapper.fromApiResponse(response.data);
-      }),
-      catchError(error => this.handleError(error, 'Erreur lors de la création du fournisseur'))
+      })
+      // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
     );
   }
 
@@ -51,6 +51,7 @@ export class SupplierApiRepository extends SupplierRepository {
       map(response => {
         return SupplierMapper.toPaginationResult(response);
       }),
+      // Gardé catchError pour les opérations de lecture (non critiques pour les messages d'erreur)
       catchError(error => this.handleError(error, 'Erreur lors de la récupération des fournisseurs'))
     );
   }
@@ -86,8 +87,8 @@ export class SupplierApiRepository extends SupplierRepository {
     return this.apiService.put<SupplierApiResponse>(`${this.endpoint}/${id}`, apiRequest).pipe(
       map(response => {
         return SupplierMapper.fromApiResponse(response.data);
-      }),
-      catchError(error => this.handleError(error, 'Erreur lors de la mise à jour du fournisseur'))
+      })
+      // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
     );
   }
 

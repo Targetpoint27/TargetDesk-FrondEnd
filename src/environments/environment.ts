@@ -1,5 +1,7 @@
 export const environment = {
   production: false,
+  apiUrl: 'http://localhost:8000/api/v1',
+  apiBaseUrl: 'http://localhost:8000/api/v1',
   api: {
     baseUrl: 'http://localhost:8000/api/v1',
     timeout: 30000,

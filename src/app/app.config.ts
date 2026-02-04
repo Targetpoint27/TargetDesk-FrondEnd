@@ -34,6 +34,13 @@ import { LoggingService } from './core/logging/logging.service';
 // Shared Services
 import { MessageService } from './shared/services/message.service';
 
+// Core Auth Services
+import { PermissionService } from './core/auth/permission.service';
+
+// Guards
+import { AuthGuard } from './core/guards/auth.guard';
+import { RoleGuard } from './core/guards/role.guard';
+
 // Auth Feature (simplified architecture)
 import { AuthFacade } from './features/auth/auth.facade';
 import { ClientFacade } from './features/dashboard/clients/client.facade';
@@ -48,7 +55,6 @@ import { ContactMapper } from './infrastructure/mappers/contact.mapper';
 
 // Use Cases
 import { LoginUseCase } from './domain/use-cases/auth/login.use-case';
-import { RegisterUseCase } from './domain/use-cases/auth/register.use-case';
 import { LogoutUseCase } from './domain/use-cases/auth/logout.use-case';
 import { CreateClientUseCase, GetClientsUseCase, UpdateClientUseCase, DeleteClientUseCase } from './domain/use-cases/client';
 import { CreateSupplierUseCase, GetSuppliersUseCase, UpdateSupplierUseCase, DeleteSupplierUseCase } from './domain/use-cases/supplier';
@@ -80,6 +86,13 @@ export const appConfig: ApplicationConfig = {
 
     // Shared Services
     MessageService,
+
+    // Core Auth Services
+    PermissionService,
+
+    // Guards
+    AuthGuard,
+    RoleGuard,
 
     // Mappers
     AuthMapper,
@@ -124,7 +137,6 @@ export const appConfig: ApplicationConfig = {
 
     // Use Cases
     LoginUseCase,
-    RegisterUseCase,
     LogoutUseCase,
     CreateClientUseCase,
     GetClientsUseCase,

@@ -232,8 +232,9 @@
 
 .filter-group {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
 
   label {
     display: flex;
@@ -242,6 +243,7 @@
     font-size: 13px;
     font-weight: 600;
     color: #374151;
+    white-space: nowrap;
 
     svg {
       color: #64748b;

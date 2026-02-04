@@ -64,6 +64,7 @@ export interface CreateClientApiRequest {
   sector?: string;
   website?: string;
   notes?: string;
+  category_ids?: number[];
 }
 
 export interface UpdateClientApiRequest {
@@ -76,6 +77,7 @@ export interface UpdateClientApiRequest {
   sector?: string;
   website?: string;
   notes?: string;
+  category_ids?: number[];
 }
 
 export interface ClientApiResponse {

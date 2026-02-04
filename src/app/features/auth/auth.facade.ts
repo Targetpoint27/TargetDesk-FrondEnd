@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { tap, catchError, map, finalize } from 'rxjs/operators';
+import { tap, catchError, map, finalize, switchMap } from 'rxjs/operators';
 import { LoginUseCase, LoginUseCaseResult } from '../../domain/use-cases/auth/login.use-case';
-import { RegisterUseCase, RegisterUseCaseResult } from '../../domain/use-cases/auth/register.use-case';
 import { LogoutUseCase } from '../../domain/use-cases/auth/logout.use-case';
 import { AuthEntity } from '../../domain/entities/auth.entity';
 import { UserEntity } from '../../domain/entities/user.entity';
-import { LoginRequest, RegisterRequest } from '../../domain/models/auth.models';
+import { LoginRequest } from '../../domain/models/auth.models';
 import { MessageService } from '../../shared/services/message.service';
 import { LoggingService } from '../../core/logging/logging.service';
 import { AppError } from '../../core/error/error.service';
+import { PermissionService } from '../../core/auth/permission.service';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -56,10 +56,10 @@ export class AuthFacade {
 
   constructor(
     private loginUseCase: LoginUseCase,
-    private registerUseCase: RegisterUseCase,
     private logoutUseCase: LogoutUseCase,
     private messageService: MessageService,
-    private loggingService: LoggingService
+    private loggingService: LoggingService,
+    private permissionService: PermissionService
   ) {
     this.initializeAuthState();
   }
@@ -76,11 +76,26 @@ export class AuthFacade {
     });
 
     return this.loginUseCase.execute(credentials).pipe(
-      tap(result => {
+      switchMap(result => {
         this.setAuthenticatedUser(result.auth);
         this.updateLastActivity();
         this.saveAuthToStorage(result.auth);
 
+        // Load user permissions after successful login
+        return this.permissionService.loadUserPermissions(result.auth.user.id).pipe(
+          map(() => result),
+          catchError(permissionError => {
+            this.loggingService.warn('Auth Facade: Failed to load permissions on login', {
+              component: 'AuthFacade',
+              action: 'login',
+              data: { error: permissionError.message }
+            });
+            // Don't fail login if permissions fail to load
+            return of(result);
+          })
+        );
+      }),
+      tap(result => {
         this.messageService.showLoginSuccess(result.auth.user.getDisplayName());
 
         this.loggingService.info('Auth Facade: Login successful', {
@@ -112,64 +127,6 @@ export class AuthFacade {
     );
   }
 
-  register$(userData: RegisterRequest): Observable<RegisterUseCaseResult> {
-    this.setLoading(true);
-    this.clearError();
-
-    this.loggingService.info('Auth Facade: Registration initiated', {
-      component: 'AuthFacade',
-      action: 'register',
-      data: {
-        email: userData.email,
-        name: userData.name
-      }
-    });
-
-    return this.registerUseCase.execute(userData).pipe(
-      tap(result => {
-        this.setAuthenticatedUser(result.auth);
-        this.updateLastActivity();
-
-        this.messageService.showRegistrationSuccess(result.auth.user.getDisplayName());
-
-        if (result.requiresEmailVerification) {
-          this.messageService.showInfo(
-            'Un email de confirmation a été envoyé à votre adresse. Veuillez vérifier votre boîte mail.',
-            {
-              title: 'Vérification email requise',
-              duration: 10000
-            }
-          );
-        }
-
-        this.loggingService.info('Auth Facade: Registration successful', {
-          component: 'AuthFacade',
-          action: 'register',
-          userId: result.auth.user.id,
-          data: {
-            userId: result.auth.user.id,
-            requiresEmailVerification: result.requiresEmailVerification
-          }
-        });
-      }),
-      catchError(error => {
-        this.setError(error);
-
-        // Only log the error, let the component handle the display
-        this.loggingService.error('Auth Facade: Registration failed', {
-          component: 'AuthFacade',
-          action: 'register',
-          data: {
-            error: error.message,
-            email: userData.email
-          }
-        });
-
-        return throwError(() => error);
-      }),
-      finalize(() => this.setLoading(false))
-    );
-  }
 
   logout$(): Observable<void> {
     this.setLoading(true);
@@ -185,6 +142,7 @@ export class AuthFacade {
       tap(() => {
         this.clearAuthenticatedUser();
         this.clearAuthFromStorage();
+        this.permissionService.clearPermissions();
         this.messageService.showLogoutSuccess();
 
         this.loggingService.info('Auth Facade: Logout successful', {
@@ -197,6 +155,7 @@ export class AuthFacade {
         // Even if logout fails on server, clear local state
         this.clearAuthenticatedUser();
         this.clearAuthFromStorage();
+        this.permissionService.clearPermissions();
         this.messageService.showWarning(
           'Déconnexion effectuée localement. Le serveur n\'a pas pu être contacté.',
           { duration: 5000 }
@@ -226,6 +185,7 @@ export class AuthFacade {
     });
 
     this.clearAuthenticatedUser();
+    this.permissionService.clearPermissions();
 
     if (reason === 'token_expired') {
       this.messageService.showSessionExpired();
@@ -268,6 +228,26 @@ export class AuthFacade {
     if (storedAuth && this.isTokenValid(storedAuth.token)) {
       this.setAuthenticatedUser(storedAuth);
       this.updateLastActivity();
+
+      // Load user permissions on session restoration
+      this.permissionService.loadUserPermissions(storedAuth.user.id).subscribe({
+        next: () => {
+          this.loggingService.info('Auth Facade: Session and permissions restored from storage', {
+            component: 'AuthFacade',
+            action: 'initializeAuthState',
+            userId: storedAuth.user.id
+          });
+        },
+        error: (error) => {
+          this.loggingService.warn('Auth Facade: Failed to load permissions on session restore', {
+            component: 'AuthFacade',
+            action: 'initializeAuthState',
+            userId: storedAuth.user.id,
+            data: { error: error.message }
+          });
+        }
+      });
+
       this.loggingService.info('Auth Facade: Session restored from storage', {
         component: 'AuthFacade',
         action: 'initializeAuthState',

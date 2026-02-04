@@ -31,6 +31,7 @@ export interface CreateClientRequest {
   sector?: string;
   website?: string;
   notes?: string;
+  category_ids?: number[];
 }
 
 export interface UpdateClientRequest {
@@ -43,6 +44,7 @@ export interface UpdateClientRequest {
   sector?: string;
   website?: string;
   notes?: string;
+  category_ids?: number[];
 }
 
 /**

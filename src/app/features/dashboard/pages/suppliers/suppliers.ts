@@ -3,13 +3,15 @@
  * Manages supplier listing, creation, and operations
  */
 
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Observable, Subject, takeUntil, combineLatest, map, BehaviorSubject } from 'rxjs';
 import { ConfirmationModalComponent } from '../../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { SupplierDetailsModalComponent } from '../../../../shared/components/supplier-details-modal/supplier-details-modal.component';
 import { ContactFormModalComponent } from '../../../../shared/components/contact-form-modal/contact-form-modal.component';
+import { PermissionService } from '../../../../core/auth/permission.service';
+import { PERMISSIONS } from '../../../../domain/models/permission.models';
 
 import { SupplierFacade } from '../../suppliers/supplier.facade';
 import { AuthFacade } from '../../../auth/auth.facade';
@@ -19,6 +21,8 @@ import { CreateSupplierRequest, UpdateSupplierRequest, CURRENCY_CODES, PAYMENT_T
 import { UserEntity } from '../../../../domain/entities/user.entity';
 import { AppError } from '../../../../core/error/error.service';
 import { SimpleNotificationService } from '../../../../shared/services/simple-notification.service';
+import { SearchResult } from '../../../../shared/interfaces/search.interface';
+import { QuickSearchComponent } from '../../../../shared/components/quick-search/quick-search.component';
 
 interface SuppliersState {
   suppliers: SupplierEntity[];
@@ -38,7 +42,7 @@ interface SuppliersState {
 
 @Component({
   selector: 'app-suppliers',
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, ConfirmationModalComponent, SupplierDetailsModalComponent, ContactFormModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, ConfirmationModalComponent, SupplierDetailsModalComponent, ContactFormModalComponent, QuickSearchComponent],
   templateUrl: './suppliers.html',
   styleUrl: './suppliers.scss',
 })
@@ -71,6 +75,17 @@ export class Suppliers implements OnInit, OnDestroy {
   searchQuery = '';
   editingSupplier: SupplierEntity | null = null;
 
+  // Nouveaux filtres pour la recherche avancée
+  sectorFilter = '';
+  sortBy = 'name';
+  sortOrder: 'asc' | 'desc' = 'asc';
+  createdFromFilter = '';
+  createdToFilter = '';
+
+  // État de la recherche rapide
+  quickSearchResults: SearchResult[] = [];
+  showQuickSearchResults = false;
+
   // Confirmation modal state
   showDeleteConfirmation = false;
   supplierToDelete: SupplierEntity | null = null;
@@ -95,6 +110,14 @@ export class Suppliers implements OnInit, OnDestroy {
   // Utility properties for templates
   Math = Math;
   pageSize = 10; // Default page size
+
+  // Permission observables
+  canCreateSupplier$!: Observable<boolean>;
+  canUpdateSupplier$!: Observable<boolean>;
+  canDeleteSupplier$!: Observable<boolean>;
+  canViewSupplier$!: Observable<boolean>;
+
+  private permissionService = inject(PermissionService);
 
   constructor(
     private supplierFacade: SupplierFacade,
@@ -136,8 +159,14 @@ export class Suppliers implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Initialize permission observables
+    this.canCreateSupplier$ = this.permissionService.hasPermission(PERMISSIONS.SUPPLIERS_CREATE);
+    this.canUpdateSupplier$ = this.permissionService.hasPermission(PERMISSIONS.SUPPLIERS_EDIT);
+    this.canDeleteSupplier$ = this.permissionService.hasPermission(PERMISSIONS.SUPPLIERS_DELETE);
+    this.canViewSupplier$ = this.permissionService.hasPermission(PERMISSIONS.SUPPLIERS_VIEW);
+
     // Load suppliers on component initialization
-    this.loadSuppliers();
+    this.supplierFacade.loadSuppliers().subscribe();
   }
 
   ngOnDestroy(): void {
@@ -420,15 +449,158 @@ export class Suppliers implements OnInit, OnDestroy {
   }
 
   onTypeFilterChange(): void {
-    this.loadSuppliers();
+    console.log('Supplier type filter changed to:', this.selectedTypeFilter); // Debug log
+    // Use facade's setTypeFilter method instead of loadSuppliers directly
+    if (this.selectedTypeFilter === 'all') {
+      this.supplierFacade.setTypeFilter(undefined);
+    } else {
+      this.supplierFacade.setTypeFilter(this.selectedTypeFilter);
+    }
   }
 
   onRelationTypeFilterChange(): void {
-    this.loadSuppliers();
+    console.log('Supplier relation type filter changed to:', this.selectedRelationTypeFilter); // Debug log
+    // Use facade's setRelationTypeFilter method instead of loadSuppliers directly
+    if (this.selectedRelationTypeFilter === 'all') {
+      this.supplierFacade.setRelationTypeFilter(undefined);
+    } else {
+      this.supplierFacade.setRelationTypeFilter(this.selectedRelationTypeFilter);
+    }
   }
 
-  onSearchChange(): void {
-    this.loadSuppliers();
+  onSearchChange(query: string): void {
+    this.searchQuery = query;
+    this.supplierFacade.setSearch(query);
+  }
+
+  clearAllFilters(): void {
+    this.selectedTypeFilter = 'all';
+    this.selectedRelationTypeFilter = 'all';
+    this.searchQuery = '';
+    this.sectorFilter = '';
+    this.sortBy = 'name';
+    this.sortOrder = 'asc';
+    this.createdFromFilter = '';
+    this.createdToFilter = '';
+
+    this.supplierFacade.setFilters({});
+  }
+
+  // NOUVELLES MÉTHODES POUR LA RECHERCHE AVANCÉE
+
+  /**
+   * Gestionnaire pour la sélection d'un résultat de recherche rapide
+   */
+  onQuickSearchResultSelected(result: SearchResult): void {
+    // Naviguer vers le fournisseur sélectionné ou ouvrir les détails
+    const supplier = this.findSupplierById(result.id);
+    if (supplier) {
+      this.onViewSupplier(supplier);
+    }
+  }
+
+  /**
+   * Gestionnaire pour les changements de recherche rapide
+   */
+  onQuickSearchChanged(query: string): void {
+    // Optionellement, synchroniser avec le filtre de recherche général
+    if (query.length >= 2) {
+      this.searchQuery = query;
+      this.supplierFacade.setSearch(query);
+    } else if (query.length === 0) {
+      this.searchQuery = '';
+      this.supplierFacade.setSearch('');
+    }
+  }
+
+  /**
+   * Nouvelle méthode de filtrage par secteur
+   */
+  onSectorFilterChange(sector: string): void {
+    this.sectorFilter = sector;
+    this.applyAdvancedFilters();
+  }
+
+  /**
+   * Gestionnaire pour le changement de tri
+   */
+  onSortChange(sortBy: string): void {
+    this.sortBy = sortBy;
+    this.applyAdvancedFilters();
+  }
+
+  /**
+   * Gestionnaire pour le changement d'ordre de tri
+   */
+  onSortOrderChange(sortOrder: 'asc' | 'desc'): void {
+    this.sortOrder = sortOrder;
+    this.applyAdvancedFilters();
+  }
+
+  /**
+   * Gestionnaire pour les filtres de date
+   */
+  onDateFilterChange(): void {
+    this.applyAdvancedFilters();
+  }
+
+  /**
+   * Appliquer tous les filtres avancés
+   */
+  private applyAdvancedFilters(): void {
+    const filters = {
+      search: this.searchQuery,
+      type: this.selectedTypeFilter !== 'all' ? this.selectedTypeFilter : undefined,
+      relation_type: this.selectedRelationTypeFilter !== 'all' ? this.selectedRelationTypeFilter : undefined,
+      sector: this.sectorFilter || undefined,
+      sort_by: this.sortBy,
+      sort_order: this.sortOrder,
+      created_from: this.createdFromFilter || undefined,
+      created_to: this.createdToFilter || undefined,
+      page: 1
+    };
+
+    this.supplierFacade.setFilters(filters);
+  }
+
+  /**
+   * Vérifier si des filtres sont actifs
+   */
+  hasActiveFilters(): boolean {
+    return !!(
+      this.searchQuery ||
+      this.selectedTypeFilter !== 'all' ||
+      this.selectedRelationTypeFilter !== 'all' ||
+      this.sectorFilter ||
+      this.createdFromFilter ||
+      this.createdToFilter ||
+      this.sortBy !== 'name' ||
+      this.sortOrder !== 'asc'
+    );
+  }
+
+  /**
+   * Compter le nombre de filtres actifs
+   */
+  getActiveFiltersCount(): number {
+    let count = 0;
+    if (this.searchQuery) count++;
+    if (this.selectedTypeFilter !== 'all') count++;
+    if (this.selectedRelationTypeFilter !== 'all') count++;
+    if (this.sectorFilter) count++;
+    if (this.createdFromFilter) count++;
+    if (this.createdToFilter) count++;
+    if (this.sortBy !== 'name') count++;
+    if (this.sortOrder !== 'asc') count++;
+    return count;
+  }
+
+  /**
+   * Trouver un fournisseur par ID dans la liste actuelle
+   */
+  private findSupplierById(id: number): SupplierEntity | undefined {
+    const state = this.internalState$.getValue();
+    return state.suppliers.find(supplier => supplier.id === id);
   }
 
   clearError(): void {

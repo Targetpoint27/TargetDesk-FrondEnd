@@ -1,0 +1,1318 @@
+import { Component, Input, OnInit, OnDestroy, signal, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+import { ClientDocumentFacade, DocumentsState } from '../../../features/dashboard/clients/document.facade';
+import { Document, DocumentCategory, DocumentStatistics, DocumentVersion, UpdateDocumentRequest, DocumentSortField } from '../../../domain/entities/document.entity';
+import { MessageService } from '../../services/message.service';
+
+@Component({
+  selector: 'app-client-documents',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule
+  ],
+  template: `
+    <div class="client-documents">
+      <!-- Header with Actions -->
+      <div class="documents-header">
+        <div class="header-left">
+          <div class="header-title-section">
+            <h3>Documents</h3>
+            @if (selectedDocuments.length > 0) {
+              <div class="selection-info">
+                <span class="selected-count">{{ selectedDocuments.length }} sélectionné(s)</span>
+                <div class="bulk-actions">
+                  <button class="btn btn-sm btn-danger" (click)="onBulkDelete()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2"/>
+                      <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
+                    </svg>
+                    Supprimer
+                  </button>
+                  <button class="btn btn-sm btn-secondary" (click)="onBulkDownload()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2"/>
+                      <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2"/>
+                      <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Télécharger
+                  </button>
+                  <button class="btn btn-sm btn-secondary" (click)="clearSelection()">
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="documents-stats" *ngIf="documentsState().statistics">
+                <span class="stat-item">
+                  <strong>{{ documentsState().statistics.total_documents }}</strong>
+                  document(s)
+                </span>
+                <span class="stat-item">
+                  <strong>{{ documentsState().statistics.formatted_total_size }}</strong>
+                  au total
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="header-actions">
+          <div class="filters-section">
+            <div class="search-box">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Rechercher un document..."
+                [(ngModel)]="searchTerm"
+                (input)="onSearch()"
+                class="search-input">
+            </div>
+            <select [(ngModel)]="selectedCategory" (change)="onCategoryFilter()" class="category-filter">
+              <option value="">Toutes les catégories</option>
+              <option value="contrat">Contrat</option>
+              <option value="devis">Devis</option>
+              <option value="facture">Facture</option>
+              <option value="autre">Autre</option>
+            </select>
+            <select [(ngModel)]="sortBy" (change)="onSortChange()" class="sort-filter">
+              <option value="date">Plus récent</option>
+              <option value="name">Nom A-Z</option>
+              <option value="size">Taille</option>
+              <option value="type">Type</option>
+              <option value="category">Catégorie</option>
+            </select>
+            <button class="btn-filter" [class.active]="showFilters" (click)="toggleFilters()" title="Filtres avancés">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="main-actions">
+            <button class="btn btn-primary" (click)="onAddDocument()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2"/>
+                <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Ajouter
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Filters Panel -->
+      @if (showFilters) {
+        <div class="filters-panel">
+          <div class="filters-grid">
+            <div class="filter-group">
+              <label>Date de création</label>
+              <div class="date-range">
+                <input type="date" [(ngModel)]="filters.dateFrom" (change)="applyAdvancedFilters()" class="filter-input">
+                <span>à</span>
+                <input type="date" [(ngModel)]="filters.dateTo" (change)="applyAdvancedFilters()" class="filter-input">
+              </div>
+            </div>
+            <div class="filter-group">
+              <label>Taille du fichier</label>
+              <select [(ngModel)]="filters.sizeRange" (change)="applyAdvancedFilters()" class="filter-input">
+                <option value="">Toutes tailles</option>
+                <option value="small">< 1 MB</option>
+                <option value="medium">1-10 MB</option>
+                <option value="large">> 10 MB</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Version</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" [(ngModel)]="filters.latestOnly" (change)="applyAdvancedFilters()">
+                  Dernière version uniquement
+                </label>
+              </div>
+            </div>
+            <div class="filter-actions">
+              <button class="btn btn-sm btn-secondary" (click)="clearFilters()">Effacer</button>
+              <button class="btn btn-sm btn-primary" (click)="applyAdvancedFilters()">Appliquer</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Loading State -->
+      @if (documentsState().isLoading) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Chargement des documents...</p>
+        </div>
+      }
+
+      <!-- Error State -->
+      @if (documentsState().error) {
+        <div class="error-state">
+          <div class="error-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
+              <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <p>{{ documentsState().error }}</p>
+          <button class="btn btn-primary" (click)="retryLoading()">Réessayer</button>
+        </div>
+      }
+
+      <!-- Empty State -->
+      @if (!documentsState().isLoading && !documentsState().error && documentsState().documents.length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5"/>
+              <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <h4>Aucun document</h4>
+          <p>Ce client n'a pas encore de documents associés.</p>
+          <button class="btn btn-primary" (click)="onAddDocument()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2"/>
+              <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Ajouter le premier document
+          </button>
+        </div>
+      }
+
+      <!-- View Toggle -->
+      @if (!documentsState().isLoading && !documentsState().error && documentsState().documents.length > 0) {
+        <div class="view-controls">
+          <div class="view-toggle">
+            <button class="view-btn" [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')" title="Vue grille">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"/>
+                <rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"/>
+                <rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"/>
+                <rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+            <button class="view-btn" [class.active]="viewMode === 'list'" (click)="setViewMode('list')" title="Vue liste">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
+                <line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2"/>
+                <line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2"/>
+                <line x1="3" y1="6" x2="3.01" y2="6" stroke="currentColor" stroke-width="2"/>
+                <line x1="3" y1="12" x2="3.01" y2="12" stroke="currentColor" stroke-width="2"/>
+                <line x1="3" y1="18" x2="3.01" y2="18" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
+          <div class="select-all">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [checked]="isAllSelected()"
+                [indeterminate]="isPartiallySelected()"
+                (change)="toggleSelectAll()">
+              Tout sélectionner
+            </label>
+          </div>
+        </div>
+      }
+
+      <!-- Documents Grid View -->
+      @if (!documentsState().isLoading && !documentsState().error && documentsState().documents.length > 0 && viewMode === 'grid') {
+        <div class="documents-grid">
+          @for (document of documentsState().documents; track document.id) {
+            <div class="document-card" [class.recent]="document.isRecent" [class.selected]="isSelected(document.id)">
+              <!-- Selection Checkbox -->
+              <div class="document-selection">
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(document.id)"
+                  (change)="toggleSelection(document.id)"
+                  class="selection-checkbox">
+              </div>
+
+              <!-- Document Header -->
+              <div class="document-header">
+                <div class="document-icon">
+                  <i class="bi" [class]="document.iconClass"></i>
+                </div>
+                <div class="document-info">
+                  <h4 class="document-title" [title]="document.title">{{ document.title }}</h4>
+                  <p class="document-filename">{{ document.originalName }}</p>
+                </div>
+                <div class="document-actions">
+                  <button class="btn-icon" (click)="onPreview(document)" [disabled]="!document.canPreview" title="Prévisualiser">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                  </button>
+                  <button class="btn-icon" (click)="onDownload(document)" title="Télécharger">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2"/>
+                      <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2"/>
+                      <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                  </button>
+                  <div class="dropdown">
+                    <button class="btn-icon dropdown-toggle" (click)="toggleDropdown(document.id)">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="1" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="5" r="1" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="19" r="1" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                    </button>
+                    @if (openDropdown === document.id) {
+                      <div class="dropdown-menu">
+                        <button class="dropdown-item" (click)="onEdit(document)">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                            <path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                          Modifier
+                        </button>
+                        <button class="dropdown-item" (click)="onVersions(document)">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                          Versions
+                        </button>
+                        <button class="dropdown-item" (click)="onDuplicate(document)">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                          Dupliquer
+                        </button>
+                        <hr class="dropdown-divider">
+                        <button class="dropdown-item danger" (click)="onDelete(document)">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                            <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2"/>
+                            <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
+                          </svg>
+                          Supprimer
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Document Details -->
+              <div class="document-details">
+                <div class="detail-row">
+                  <span class="detail-label">Catégorie:</span>
+                  <span class="category-badge" [class]="'category-' + document.categoryInfo.color">
+                    {{ document.categoryInfo.label }}
+                  </span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Taille:</span>
+                  <span class="detail-value">{{ document.formattedSize }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Version:</span>
+                  <span class="detail-value">v{{ document.version }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Modifié:</span>
+                  <span class="detail-value">{{ formatDate(document.updatedAt) }}</span>
+                </div>
+                @if (document.description) {
+                  <div class="document-description">
+                    <p>{{ document.description }}</p>
+                  </div>
+                }
+              </div>
+
+              @if (document.isRecent) {
+                <div class="recent-badge">Nouveau</div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Documents List View -->
+      @if (!documentsState().isLoading && !documentsState().error && documentsState().documents.length > 0 && viewMode === 'list') {
+        <div class="documents-list">
+          <div class="list-header">
+            <div class="list-column list-select">
+              <input
+                type="checkbox"
+                [checked]="isAllSelected()"
+                [indeterminate]="isPartiallySelected()"
+                (change)="toggleSelectAll()">
+            </div>
+            <div class="list-column list-name">Nom</div>
+            <div class="list-column list-category">Catégorie</div>
+            <div class="list-column list-size">Taille</div>
+            <div class="list-column list-date">Modifié</div>
+            <div class="list-column list-version">Version</div>
+            <div class="list-column list-actions">Actions</div>
+          </div>
+
+          @for (document of documentsState().documents; track document.id) {
+            <div class="list-row" [class.selected]="isSelected(document.id)" [class.recent]="document.isRecent">
+              <div class="list-column list-select">
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(document.id)"
+                  (change)="toggleSelection(document.id)">
+              </div>
+              <div class="list-column list-name">
+                <div class="document-name-cell">
+                  <div class="document-icon">
+                    <i class="bi" [class]="document.iconClass"></i>
+                  </div>
+                  <div class="document-text">
+                    <span class="document-title">{{ document.title }}</span>
+                    <span class="document-filename">{{ document.originalName }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="list-column list-category">
+                <span class="category-badge" [class]="'category-' + document.categoryInfo.color">
+                  {{ document.categoryInfo.label }}
+                </span>
+              </div>
+              <div class="list-column list-size">{{ document.formattedSize }}</div>
+              <div class="list-column list-date">{{ formatDate(document.updatedAt) }}</div>
+              <div class="list-column list-version">v{{ document.version }}</div>
+              <div class="list-column list-actions">
+                <div class="action-buttons">
+                  <button class="btn-icon-sm" (click)="onPreview(document)" [disabled]="!document.canPreview" title="Prévisualiser">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                  </button>
+                  <button class="btn-icon-sm" (click)="onDownload(document)" title="Télécharger">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2"/>
+                      <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2"/>
+                      <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                  </button>
+                  <div class="dropdown">
+                    <button class="btn-icon-sm dropdown-toggle" (click)="toggleDropdown(document.id)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="1" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="5" r="1" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="19" r="1" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                    </button>
+                    @if (openDropdown === document.id) {
+                      <div class="dropdown-menu">
+                        <button class="dropdown-item" (click)="onEdit(document)">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                            <path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                          Modifier
+                        </button>
+                        <button class="dropdown-item" (click)="onVersions(document)">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                          Versions
+                        </button>
+                        <button class="dropdown-item" (click)="onDuplicate(document)">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                          Dupliquer
+                        </button>
+                        <hr class="dropdown-divider">
+                        <button class="dropdown-item danger" (click)="onDelete(document)">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2"/>
+                            <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
+                          </svg>
+                          Supprimer
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Upload Modal -->
+      @if (showUploadModal) {
+        <div class="modal-overlay" (click)="onCloseUploadModal()">
+          <div class="modal-container upload-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Ajouter un document</h3>
+              <button class="btn-close" (click)="onCloseUploadModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
+                  <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </button>
+            </div>
+
+            <form [formGroup]="uploadForm" (ngSubmit)="onSubmitUpload()">
+              <div class="modal-body">
+                <!-- File Upload Area -->
+                <div class="form-group">
+                  <label>Fichier</label>
+                  <div class="file-upload-area"
+                       [class.dragover]="isDragOver"
+                       (dragover)="onDragOver($event)"
+                       (dragleave)="onDragLeave($event)"
+                       (drop)="onDrop($event)"
+                       (click)="fileInput.click()">
+                    @if (!selectedFile) {
+                      <div class="upload-placeholder">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2"/>
+                          <polyline points="17,8 12,3 7,8" stroke="currentColor" stroke-width="2"/>
+                          <line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <p>Glissez-déposez un fichier ou cliquez pour sélectionner</p>
+                        <small>PDF, Word, Excel, PowerPoint, Images (max 10MB)</small>
+                      </div>
+                    } @else {
+                      <div class="selected-file">
+                        <div class="file-info">
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2"/>
+                            <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                          <div>
+                            <div class="file-name">{{ selectedFile.name }}</div>
+                            <div class="file-size">{{ formatFileSize(selectedFile.size || 0) }}</div>
+                          </div>
+                        </div>
+                        <button type="button" class="btn-remove" (click)="removeFile(); $event.stopPropagation()">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
+                            <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                  <input #fileInput type="file" hidden (change)="onFileSelected($event)" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.bmp,.svg,.webp,.txt,.csv,.rtf">
+                </div>
+
+                <!-- Form Fields -->
+                <div class="form-group">
+                  <label for="title">Titre *</label>
+                  <input
+                    type="text"
+                    id="title"
+                    formControlName="title"
+                    class="form-control"
+                    placeholder="Nom du document">
+                  @if (uploadForm.get('title')?.invalid && uploadForm.get('title')?.touched) {
+                    <div class="form-error">Le titre est obligatoire</div>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="category">Catégorie *</label>
+                  <select id="category" formControlName="category" class="form-control">
+                    <option value="">Sélectionner une catégorie</option>
+                    <option value="contrat">Contrat</option>
+                    <option value="devis">Devis</option>
+                    <option value="facture">Facture</option>
+                    <option value="autre">Autre</option>
+                  </select>
+                  @if (uploadForm.get('category')?.invalid && uploadForm.get('category')?.touched) {
+                    <div class="form-error">La catégorie est obligatoire</div>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="description">Description</label>
+                  <textarea
+                    id="description"
+                    formControlName="description"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Description optionnelle du document..."></textarea>
+                </div>
+
+                <!-- Upload Progress -->
+                @if (documentsState().isUploading) {
+                  <div class="upload-progress">
+                    <div class="progress-bar">
+                      <div class="progress-fill" [style.width.%]="documentsState().uploadProgress"></div>
+                    </div>
+                    <div class="progress-text">{{ documentsState().uploadProgress }}% envoyé</div>
+                  </div>
+                }
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" (click)="onCloseUploadModal()" [disabled]="documentsState().isUploading">
+                  Annuler
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="uploadForm.invalid || !selectedFile || documentsState().isUploading">
+                  @if (documentsState().isUploading) {
+                    <span class="spinner"></span>
+                    Envoi en cours...
+                  } @else {
+                    Ajouter le document
+                  }
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- Edit Document Modal -->
+      @if (showEditModal) {
+        <div class="modal-overlay" (click)="onCloseEditModal()">
+          <div class="modal-container edit-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Modifier le document</h3>
+              <button class="btn-close" (click)="onCloseEditModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
+                  <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </button>
+            </div>
+
+            <form [formGroup]="editForm" (ngSubmit)="onSubmitEdit()" *ngIf="editingDocument">
+              <div class="modal-body">
+                <div class="form-group">
+                  <label for="editTitle">Titre *</label>
+                  <input
+                    type="text"
+                    id="editTitle"
+                    formControlName="title"
+                    class="form-control"
+                    placeholder="Nom du document">
+                  @if (editForm.get('title')?.invalid && editForm.get('title')?.touched) {
+                    <div class="form-error">Le titre est obligatoire</div>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="editCategory">Catégorie *</label>
+                  <select id="editCategory" formControlName="category" class="form-control">
+                    <option value="">Sélectionner une catégorie</option>
+                    <option value="contrat">Contrat</option>
+                    <option value="devis">Devis</option>
+                    <option value="facture">Facture</option>
+                    <option value="autre">Autre</option>
+                  </select>
+                  @if (editForm.get('category')?.invalid && editForm.get('category')?.touched) {
+                    <div class="form-error">La catégorie est obligatoire</div>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="editDescription">Description</label>
+                  <textarea
+                    id="editDescription"
+                    formControlName="description"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Description optionnelle du document..."></textarea>
+                </div>
+
+                <div class="document-info">
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <span class="label">Fichier original:</span>
+                      <span class="value">{{ editingDocument.originalName }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Taille:</span>
+                      <span class="value">{{ editingDocument.formattedSize }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Version:</span>
+                      <span class="value">v{{ editingDocument.version }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Créé le:</span>
+                      <span class="value">{{ formatDate(editingDocument.createdAt) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" (click)="onCloseEditModal()">
+                  Annuler
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="editForm.invalid">
+                  Enregistrer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- Document Versions Modal -->
+      @if (showVersionsModal) {
+        <div class="modal-overlay" (click)="onCloseVersionsModal()">
+          <div class="modal-container versions-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Versions du document</h3>
+              <button class="btn-close" (click)="onCloseVersionsModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
+                  <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="modal-body" *ngIf="selectedDocumentVersions">
+              <div class="versions-list">
+                @if (loadingVersions) {
+                  <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Chargement des versions...</p>
+                  </div>
+                } @else {
+                  @for (version of selectedDocumentVersions; track version.version) {
+                    <div class="version-item" [class.current]="version.version === editingDocument?.version">
+                      <div class="version-header">
+                        <div class="version-info">
+                          <span class="version-number">Version {{ version.version }}</span>
+                          @if (version.version === editingDocument?.version) {
+                            <span class="current-badge">Actuelle</span>
+                          }
+                        </div>
+                        <div class="version-date">{{ formatDate(new Date(version.created_at)) }}</div>
+                      </div>
+                      <div class="version-details">
+                        <div class="version-meta">
+                          <span class="version-size">{{ version.formatted_size }}</span>
+                          <span class="version-uploader">par {{ version.uploader.name }}</span>
+                        </div>
+                      </div>
+                      <div class="version-actions">
+                        <button class="btn btn-sm btn-secondary" (click)="downloadVersion(version)">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2"/>
+                            <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2"/>
+                            <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                          Télécharger
+                        </button>
+                        @if (version.version !== editingDocument?.version) {
+                          <button class="btn btn-sm btn-primary" (click)="restoreVersion(version)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <polyline points="1,4 1,10 7,10" stroke="currentColor" stroke-width="2"/>
+                              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            Restaurer
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button class="btn btn-secondary" (click)="onCloseVersionsModal()">
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Document Preview Modal -->
+      @if (showPreviewModal) {
+        <div class="modal-overlay preview-overlay" (click)="onClosePreviewModal()">
+          <div class="modal-container preview-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Aperçu - {{ previewDocument?.title }}</h3>
+              <div class="preview-actions">
+                <button class="btn btn-sm btn-secondary" (click)="onDownload(previewDocument!)" *ngIf="previewDocument">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2"/>
+                    <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2"/>
+                    <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  Télécharger
+                </button>
+                <button class="btn-close" (click)="onClosePreviewModal()">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
+                    <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="modal-body preview-body">
+              @if (loadingPreview) {
+                <div class="loading-state">
+                  <div class="spinner"></div>
+                  <p>Chargement de l'aperçu...</p>
+                </div>
+              } @else {
+                @if (previewUrl) {
+                  <iframe [src]="previewUrl" class="preview-frame" frameborder="0"></iframe>
+                } @else {
+                  <div class="preview-error">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                      <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <p>Aperçu non disponible pour ce type de document</p>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  `,
+  styleUrl: './client-documents.component.scss'
+})
+export class ClientDocumentsComponent implements OnInit, OnDestroy {
+  @Input() clientId!: number;
+
+  private destroy$ = new Subject<void>();
+
+  // State
+  documentsState = signal<DocumentsState>({
+    documents: [],
+    statistics: {
+      total_documents: 0,
+      total_size: 0,
+      formatted_total_size: '0 B',
+      by_category: { contrat: 0, devis: 0, facture: 0, autre: 0 }
+    },
+    selectedDocument: null,
+    isLoading: false,
+    isUploading: false,
+    uploadProgress: 0,
+    error: null,
+    filters: { latest_only: true },
+    searchTerm: ''
+  });
+
+  // UI State
+  searchTerm = '';
+  selectedCategory = '';
+  sortBy: DocumentSortField = 'date';
+  viewMode: 'grid' | 'list' = 'grid';
+  showUploadModal = false;
+  showEditModal = false;
+  showVersionsModal = false;
+  showPreviewModal = false;
+  showFilters = false;
+  openDropdown: number | null = null;
+  isDragOver = false;
+  selectedFile: File | null = null;
+
+  // Selection
+  selectedDocuments: number[] = [];
+
+  // Modal Data
+  editingDocument: Document | null = null;
+  previewDocument: Document | null = null;
+  selectedDocumentVersions: DocumentVersion[] | null = null;
+  loadingVersions = false;
+  loadingPreview = false;
+  previewUrl: string | null = null;
+
+  // Filters
+  filters = {
+    dateFrom: '',
+    dateTo: '',
+    sizeRange: '',
+    latestOnly: true
+  };
+
+  // Forms
+  uploadForm: FormGroup;
+  editForm: FormGroup;
+
+  constructor(
+    private documentFacade: ClientDocumentFacade,
+    private messageService: MessageService,
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef
+  ) {
+    this.uploadForm = this.fb.group({
+      title: ['', [Validators.required, Validators.minLength(2)]],
+      category: ['', Validators.required],
+      description: ['']
+    });
+
+    this.editForm = this.fb.group({
+      title: ['', [Validators.required, Validators.minLength(2)]],
+      category: ['', Validators.required],
+      description: ['']
+    });
+  }
+
+  ngOnInit(): void {
+    if (!this.clientId) {
+      console.error('ClientDocumentsComponent: clientId is required');
+      return;
+    }
+
+    // Subscribe to facade state
+    this.documentFacade.state$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(state => {
+        this.documentsState.set(state);
+        this.cdr.detectChanges();
+      });
+
+    this.loadDocuments();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  loadDocuments(): void {
+    this.documentFacade.loadDocuments(this.clientId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
+  }
+
+  retryLoading(): void {
+    this.loadDocuments();
+  }
+
+  // Search and Filter
+  onSearch(): void {
+    if (this.searchTerm.trim()) {
+      this.documentFacade.searchDocuments(this.clientId, this.searchTerm)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe();
+    } else {
+      this.loadDocuments();
+    }
+  }
+
+  onCategoryFilter(): void {
+    const filters = this.selectedCategory
+      ? { category: this.selectedCategory as DocumentCategory, latest_only: true }
+      : { latest_only: true };
+
+    this.documentFacade.applyFilters(this.clientId, filters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
+  }
+
+  // Document Actions
+  onAddDocument(): void {
+    this.showUploadModal = true;
+    this.selectedFile = null;
+    this.uploadForm.reset();
+  }
+
+  onPreview(document: Document): void {
+    if (!document.canPreview) {
+      this.messageService.showInfo('Aperçu non disponible pour ce type de document');
+      return;
+    }
+
+    this.previewDocument = document;
+    this.loadingPreview = true;
+    this.showPreviewModal = true;
+    this.previewUrl = null;
+
+    this.documentFacade.previewDocument(this.clientId, document.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (previewUrl) => {
+          this.previewUrl = previewUrl;
+          this.loadingPreview = false;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          this.messageService.showError('Erreur lors de l\'ouverture de l\'aperçu');
+          this.loadingPreview = false;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  onDownload(document: Document): void {
+    this.documentFacade.downloadDocument(this.clientId, document.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.messageService.showSuccess('Téléchargement démarré');
+        },
+        error: (error) => {
+          this.messageService.showError('Erreur lors du téléchargement');
+        }
+      });
+  }
+
+  onEdit(document: Document): void {
+    this.editingDocument = document;
+    this.editForm.patchValue({
+      title: document.title,
+      category: document.category,
+      description: document.description || ''
+    });
+    this.showEditModal = true;
+    this.closeDropdown();
+  }
+
+  onVersions(document: Document): void {
+    this.editingDocument = document;
+    this.loadingVersions = true;
+    this.showVersionsModal = true;
+    this.closeDropdown();
+
+    this.documentFacade.getDocumentVersions(this.clientId, document.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (versions) => {
+          this.selectedDocumentVersions = versions;
+          this.loadingVersions = false;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          this.messageService.showError('Erreur lors du chargement des versions');
+          this.loadingVersions = false;
+          this.onCloseVersionsModal();
+        }
+      });
+  }
+
+  onDuplicate(document: Document): void {
+    // TODO: Implement document duplication
+    this.messageService.showInfo('Fonctionnalité de duplication à venir');
+    this.closeDropdown();
+  }
+
+  onDelete(document: Document): void {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer "${document.title}" ?`)) {
+      this.documentFacade.deleteDocument(this.clientId, document.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.messageService.showSuccess('Document supprimé avec succès');
+          },
+          error: (error) => {
+            this.messageService.showError('Erreur lors de la suppression');
+          }
+        });
+    }
+    this.closeDropdown();
+  }
+
+  // Upload Modal
+  onCloseUploadModal(): void {
+    if (this.documentsState().isUploading) {
+      if (!confirm('Un téléchargement est en cours. Voulez-vous vraiment fermer ?')) {
+        return;
+      }
+    }
+    this.showUploadModal = false;
+    this.selectedFile = null;
+    this.uploadForm.reset();
+  }
+
+  onSubmitUpload(): void {
+    if (this.uploadForm.invalid || !this.selectedFile) return;
+
+    const formValue = this.uploadForm.value;
+    const request = {
+      file: this.selectedFile,
+      title: formValue.title,
+      category: formValue.category,
+      description: formValue.description || undefined
+    };
+
+    this.documentFacade.uploadDocument(this.clientId, request)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (document) => {
+          this.messageService.showSuccess('Document ajouté avec succès');
+          this.onCloseUploadModal();
+        },
+        error: (error) => {
+          this.messageService.showError('Erreur lors de l\'ajout du document');
+        }
+      });
+  }
+
+  // File Upload
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
+      this.updateTitleFromFile();
+    }
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = false;
+
+    if (event.dataTransfer && event.dataTransfer.files.length > 0) {
+      this.selectedFile = event.dataTransfer.files[0];
+      this.updateTitleFromFile();
+    }
+  }
+
+  removeFile(): void {
+    this.selectedFile = null;
+  }
+
+  private updateTitleFromFile(): void {
+    if (this.selectedFile && !this.uploadForm.get('title')?.value) {
+      const nameWithoutExtension = this.selectedFile.name.replace(/\.[^/.]+$/, '');
+      this.uploadForm.patchValue({ title: nameWithoutExtension });
+    }
+  }
+
+  // Dropdown
+  toggleDropdown(documentId: number): void {
+    this.openDropdown = this.openDropdown === documentId ? null : documentId;
+  }
+
+  closeDropdown(): void {
+    this.openDropdown = null;
+  }
+
+  // Utility methods
+  formatDate(date: Date): string {
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // View Mode
+  setViewMode(mode: 'grid' | 'list'): void {
+    this.viewMode = mode;
+  }
+
+  // Filters
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
+  onSortChange(): void {
+    const filters = {
+      ...this.documentsState().filters,
+      sort: this.sortBy
+    };
+    this.documentFacade.applyFilters(this.clientId, filters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
+  }
+
+  applyAdvancedFilters(): void {
+    const filters: any = { latest_only: this.filters.latestOnly };
+
+    if (this.selectedCategory) {
+      filters.category = this.selectedCategory;
+    }
+
+    if (this.filters.dateFrom) {
+      filters.date_from = this.filters.dateFrom;
+    }
+
+    if (this.filters.dateTo) {
+      filters.date_to = this.filters.dateTo;
+    }
+
+    if (this.filters.sizeRange) {
+      filters.size_range = this.filters.sizeRange;
+    }
+
+    this.documentFacade.applyFilters(this.clientId, filters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
+  }
+
+  clearFilters(): void {
+    this.filters = {
+      dateFrom: '',
+      dateTo: '',
+      sizeRange: '',
+      latestOnly: true
+    };
+    this.selectedCategory = '';
+    this.searchTerm = '';
+
+    this.documentFacade.clearFilters(this.clientId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
+  }
+
+  // Selection
+  isSelected(documentId: number): boolean {
+    return this.selectedDocuments.includes(documentId);
+  }
+
+  toggleSelection(documentId: number): void {
+    const index = this.selectedDocuments.indexOf(documentId);
+    if (index === -1) {
+      this.selectedDocuments.push(documentId);
+    } else {
+      this.selectedDocuments.splice(index, 1);
+    }
+  }
+
+  isAllSelected(): boolean {
+    const documents = this.documentsState().documents;
+    return documents.length > 0 && this.selectedDocuments.length === documents.length;
+  }
+
+  isPartiallySelected(): boolean {
+    return this.selectedDocuments.length > 0 && !this.isAllSelected();
+  }
+
+  toggleSelectAll(): void {
+    const documents = this.documentsState().documents;
+    if (this.isAllSelected()) {
+      this.selectedDocuments = [];
+    } else {
+      this.selectedDocuments = documents.map(doc => doc.id);
+    }
+  }
+
+  clearSelection(): void {
+    this.selectedDocuments = [];
+  }
+
+  // Bulk Operations
+  onBulkDelete(): void {
+    if (this.selectedDocuments.length === 0) return;
+
+    const message = `Êtes-vous sûr de vouloir supprimer ${this.selectedDocuments.length} document(s) ?`;
+    if (confirm(message)) {
+      this.documentFacade.bulkDeleteDocuments(this.clientId, this.selectedDocuments)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.messageService.showSuccess(`${this.selectedDocuments.length} document(s) supprimé(s)`);
+            this.clearSelection();
+          },
+          error: (error) => {
+            this.messageService.showError('Erreur lors de la suppression');
+          }
+        });
+    }
+  }
+
+  onBulkDownload(): void {
+    if (this.selectedDocuments.length === 0) return;
+
+    // Download each document individually
+    this.selectedDocuments.forEach(documentId => {
+      const document = this.documentsState().documents.find(d => d.id === documentId);
+      if (document) {
+        this.onDownload(document);
+      }
+    });
+
+    this.messageService.showSuccess('Téléchargements démarrés');
+  }
+
+  // Edit Modal
+  onCloseEditModal(): void {
+    this.showEditModal = false;
+    this.editingDocument = null;
+    this.editForm.reset();
+  }
+
+  onSubmitEdit(): void {
+    if (this.editForm.invalid || !this.editingDocument) return;
+
+    const formValue = this.editForm.value;
+    const request: UpdateDocumentRequest = {
+      title: formValue.title,
+      category: formValue.category,
+      description: formValue.description || undefined
+    };
+
+    this.documentFacade.updateDocument(this.clientId, this.editingDocument.id, request)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (document) => {
+          this.messageService.showSuccess('Document modifié avec succès');
+          this.onCloseEditModal();
+        },
+        error: (error) => {
+          this.messageService.showError('Erreur lors de la modification');
+        }
+      });
+  }
+
+  // Versions Modal
+  onCloseVersionsModal(): void {
+    this.showVersionsModal = false;
+    this.selectedDocumentVersions = null;
+    this.editingDocument = null;
+    this.loadingVersions = false;
+  }
+
+  downloadVersion(version: DocumentVersion): void {
+    // TODO: Implement version-specific download
+    this.messageService.showInfo('Téléchargement de version spécifique à venir');
+  }
+
+  restoreVersion(version: DocumentVersion): void {
+    // TODO: Implement version restoration
+    if (confirm(`Restaurer la version ${version.version} ? Cette action créera une nouvelle version.`)) {
+      this.messageService.showInfo('Restauration de version à venir');
+    }
+  }
+
+  // Preview Modal
+  onClosePreviewModal(): void {
+    this.showPreviewModal = false;
+    this.previewDocument = null;
+    this.previewUrl = null;
+    this.loadingPreview = false;
+  }
+}

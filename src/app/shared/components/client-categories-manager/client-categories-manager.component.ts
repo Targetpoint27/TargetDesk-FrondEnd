@@ -303,6 +303,14 @@ import { ClientCategoryResponse } from '../../../infrastructure/repositories/cli
       overflow: hidden;
     }
 
+    /* Bouton flottant positionné à droite */
+    .floating-action {
+      display: flex;
+      justify-content: flex-end;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+    }
+
     /* Header compact */
     .header-section {
       background: #374151;

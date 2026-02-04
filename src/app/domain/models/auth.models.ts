@@ -4,12 +4,6 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-  password_confirmation: string;
-}
 
 export interface RefreshTokenRequest {
   refreshToken: string;
@@ -34,7 +28,7 @@ export interface UserRegistration {
 
 // Domain events
 export interface AuthEvent {
-  type: 'LOGIN' | 'LOGOUT' | 'REGISTER' | 'TOKEN_REFRESH' | 'SESSION_EXPIRED';
+  type: 'LOGIN' | 'LOGOUT' | 'TOKEN_REFRESH' | 'SESSION_EXPIRED';
   timestamp: Date;
   userId?: string;
   context?: any;
@@ -60,15 +54,6 @@ export class LogoutEvent implements AuthEvent {
   ) {}
 }
 
-export class RegisterEvent implements AuthEvent {
-  readonly type = 'REGISTER' as const;
-  readonly timestamp = new Date();
-
-  constructor(
-    public readonly userId: string,
-    public readonly context?: any
-  ) {}
-}
 
 export class TokenRefreshEvent implements AuthEvent {
   readonly type = 'TOKEN_REFRESH' as const;

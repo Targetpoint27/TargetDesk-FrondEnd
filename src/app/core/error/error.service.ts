@@ -142,10 +142,18 @@ export class ErrorService {
         break;
 
       case 403:
+        // Debug logging to see what we're receiving
+        console.log('403 Error Debug:', {
+          httpError,
+          errorObj: httpError.error,
+          message: httpError.error?.message,
+          fullResponse: JSON.stringify(httpError.error, null, 2)
+        });
+
         appError = new AppError(
           'FORBIDDEN',
           httpError.error?.message || 'Forbidden',
-          'Vous n\'avez pas les permissions nécessaires.',
+          httpError.error?.message || 'Vous n\'avez pas les permissions nécessaires.',
           httpError.error
         );
         break;
@@ -160,10 +168,31 @@ export class ErrorService {
         break;
 
       case 422:
+        // Utiliser les messages d'erreur exacts retournés par l'API
+        let userMessage = 'Données invalides';
+        let detailedMessage = 'Validation failed';
+
+        if (httpError.error?.errors) {
+          // Prendre le premier message d'erreur disponible tel qu'il est retourné par l'API
+          const errors = httpError.error.errors;
+          for (const field in errors) {
+            if (errors[field] && Array.isArray(errors[field]) && errors[field].length > 0) {
+              // Utiliser exactement le message retourné par l'API
+              userMessage = errors[field][0];
+              detailedMessage = errors[field][0];
+              break;
+            }
+          }
+        } else if (httpError.error?.message && httpError.error.message !== 'Validation errors') {
+          // Utiliser le message exact retourné par l'API
+          userMessage = httpError.error.message;
+          detailedMessage = httpError.error.message;
+        }
+
         appError = new AppError(
           'VALIDATION_ERROR',
-          'Validation failed',
-          'Données invalides',
+          detailedMessage,
+          userMessage,
           httpError.error
         );
         break;

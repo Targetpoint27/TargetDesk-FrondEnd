@@ -1,0 +1,131 @@
+// Styles pour le composant modal de notifications
+
+.modal-backdrop {
+  backdrop-filter: blur(2px);
+}
+
+// Animation pour le spinner
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+// Styles pour les tabs
+.tab-button {
+  position: relative;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    color: #3B82F6;
+    border-color: #93C5FD;
+  }
+
+  &.active {
+    color: #2563EB;
+    border-color: #2563EB;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: #2563EB;
+    }
+  }
+}
+
+// Styles pour les cartes de statistiques
+.stats-card {
+  transition: transform 0.2s ease-in-out;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+// Styles pour les toggles
+.toggle-switch {
+  input[type="checkbox"] {
+    &:checked + .slider {
+      background-color: #3B82F6;
+    }
+
+    &:focus + .slider {
+      box-shadow: 0 0 0 2px #93C5FD;
+    }
+  }
+
+  .slider {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background-color: #CBD5E1;
+    border-radius: 24px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background-color: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    &.checked::before {
+      transform: translateX(20px);
+    }
+  }
+}
+
+// Styles pour les badges de statut
+.status-badge {
+  &.status-planned {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+  }
+
+  &.status-completed {
+    background-color: #D1FAE5;
+    color: #065F46;
+  }
+
+  &.status-cancelled {
+    background-color: #FEE2E2;
+    color: #991B1B;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .modal-container {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+
+  .tabs-navigation {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    .tab-button {
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+  }
+
+  .grid-stats {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}

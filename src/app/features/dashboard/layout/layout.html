@@ -1,124 +1,236 @@
-<div class="dashboard-layout">
-  <!-- Header -->
-  <header class="dashboard-header">
-    <div class="header-content">
-      <div class="logo">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <path d="M9 9h6v6H9z"/>
-        </svg>
-        <h2>TargetDesk</h2>
-      </div>
-
-      <div class="header-actions">
-        <div class="user-menu" (click)="closeUserMenu()">
-          <div class="user-avatar-container" (click)="toggleUserMenu(); $event.stopPropagation()">
-            <div class="user-avatar">
-              @if (currentUser$ | async; as user) {
-                {{ user.getDisplayName().substring(0, 2).toUpperCase() }}
-              } @else {
-                US
-              }
-            </div>
-
-            <div class="user-info">
-              @if (currentUser$ | async; as user) {
-                <span class="user-name">{{ user.getDisplayName() }}</span>
-              } @else {
-                <span class="user-name">Utilisateur</span>
-              }
-            </div>
-
-            <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M6 9l6 6 6-6"/>
+<div class="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col">
+  <!-- Header fixe -->
+  <header class="bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
+    <div class="px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo Section -->
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 9h6v6H9z"/>
             </svg>
           </div>
+          <div class="flex items-center">
+            <h1 class="text-xl font-bold text-slate-800 mt-0.5">TargetDesk</h1>
+          </div>
+        </div>
 
+        <!-- User Menu -->
+        <div class="flex items-center space-x-3">
+          <!-- Notification Menu -->
+          <div class="relative notification-menu">
+            <button
+              (click)="toggleNotificationMenu(); $event.stopPropagation()"
+              class="relative flex items-center h-10 px-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+              <!-- Red dot indicator - always visible -->
+              <div class="absolute -top-0.5 -right-0.5 bg-red-500 rounded-full h-2.5 w-2.5 animate-pulse"></div>
+              @if (notificationCount$ | async; as count) {
+                @if (count > 0) {
+                  <div class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
+                    {{ count > 99 ? '99+' : count }}
+                  </div>
+                }
+              }
+            </button>
+
+            <!-- Dropdown Preview -->
+            @if (isNotificationMenuOpen) {
+              <div class="absolute right-0 mt-1 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+                   (click)="$event.stopPropagation()">
+                <div class="p-4 border-b border-gray-200">
+                  <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                </div>
+                <div class="p-4">
+                  <div class="text-sm text-gray-600 mb-3">
+                    Vous avez {{ (notificationCount$ | async) || 0 }} rappel(s) en attente
+                  </div>
+                  <button
+                    (click)="openNotificationModal()"
+                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Voir toutes les notifications
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- User Menu -->
+          <div class="relative user-menu">
+            <button
+              (click)="toggleUserMenu(); $event.stopPropagation()"
+              class="flex items-center h-10 px-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+            >
+            <div class="flex items-center">
+              <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <span class="text-xs font-medium text-white">
+                  @if (currentUser$ | async; as user) {
+                    {{ user.getDisplayName().substring(0, 2).toUpperCase() }}
+                  } @else {
+                    US
+                  }
+                </span>
+              </div>
+              <div class="hidden sm:block ml-2 space-y-0 px-4 py-2">
+                <div class="text-sm font-medium text-slate-800">
+                  @if (currentUser$ | async; as user) {
+                    {{ user.getDisplayName() }}
+                  } @else {
+                    Utilisateur
+                  }
+                </div>
+                <div class="text-xs text-slate-600 -mt-1">
+                  @if (userRole$ | async; as role) {
+                    {{ role }}
+                  } @else {
+                    Utilisateur
+                  }
+                </div>
+              </div>
+            </div>
+            <svg class="w-3 h-3 text-gray-400 ml-2" [class.rotate-180]="isUserMenuOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+
+          <!-- Dropdown Menu -->
           @if (isUserMenuOpen) {
-            <div class="user-dropdown" (click)="$event.stopPropagation()">
-              <button class="dropdown-item" (click)="onProfileClick()" type="button">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                Profil
+            <div class="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                 (click)="$event.stopPropagation()">
+              <button (click)="onProfileClick()" type="button"
+                      class="flex items-center justify-start w-full px-4 py-3 text-sm text-gray-700 bg-white hover:bg-blue-50 transition-colors">
+                <div class="flex items-center justify-center w-5 h-5 rounded bg-gray-100 mr-3">
+                  <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <span class="font-medium">Profil</span>
               </button>
-
-              <button class="dropdown-item" (click)="onLogout()" type="button">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16,17 21,12 16,7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                Déconnexion
+              @if (canAccessSettings$ | async) {
+                <button (click)="onSettingsClick()" type="button"
+                        class="flex items-center justify-start w-full px-4 py-3 text-sm text-gray-700 bg-white hover:bg-blue-50 transition-colors">
+                  <div class="flex items-center justify-center w-5 h-5 rounded bg-gray-100 mr-3">
+                    <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                  </div>
+                  <span class="font-medium">Paramètres</span>
+                </button>
+              }
+              <hr class="my-2 border-gray-200">
+              <button (click)="onLogout()" type="button"
+                      class="flex items-center justify-start w-full px-4 py-3 text-sm text-red-600 bg-white hover:bg-blue-50 transition-colors">
+                <div class="flex items-center justify-center w-5 h-5 rounded bg-red-100 mr-3">
+                  <svg class="w-3 h-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16,17 21,12 16,7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                </div>
+                <span class="font-medium">Déconnexion</span>
               </button>
             </div>
           }
+          </div>
         </div>
       </div>
     </div>
   </header>
 
-  <div class="dashboard-body">
-    <!-- Sidebar -->
-    <aside class="dashboard-sidebar">
-      <nav class="sidebar-nav">
-        <ul class="nav-menu">
-          @for (menuItem of menuItems; track menuItem.id) {
-            <li class="nav-item">
-              <button
-                class="nav-link"
-                [class.active]="menuItem.active"
-                (click)="onMenuClick(menuItem)"
-                type="button"
-              >
-                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  @if (menuItem.icon === 'dashboard') {
-                    <rect x="3" y="3" width="7" height="9"/>
-                    <rect x="14" y="3" width="7" height="5"/>
-                    <rect x="14" y="12" width="7" height="9"/>
-                    <rect x="3" y="16" width="7" height="5"/>
-                  }
-                  @if (menuItem.icon === 'people') {
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                  }
-                  @if (menuItem.icon === 'business') {
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                    <line x1="8" y1="21" x2="16" y2="21"/>
-                    <line x1="12" y1="17" x2="12" y2="21"/>
-                  }
-                  @if (menuItem.icon === 'contacts') {
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  }
-                  @if (menuItem.icon === 'category') {
-                    <rect x="3" y="3" width="7" height="7" rx="1"/>
-                    <rect x="14" y="3" width="7" height="7" rx="1"/>
-                    <rect x="3" y="14" width="7" height="7" rx="1"/>
-                    <rect x="14" y="14" width="7" height="7" rx="1"/>
-                  }
-                </svg>
-                <span class="nav-label">{{ menuItem.label }}</span>
-              </button>
-            </li>
-          }
-        </ul>
-      </nav>
+  <!-- Main Layout avec flex-1 pour occuper l'espace restant -->
+  <div class="flex-1 flex overflow-hidden">
+    <!-- Menu latéral fixe -->
+    <aside class="w-64 flex-shrink-0 bg-white/80 backdrop-blur-sm border-r border-white/60 shadow-lg">
+      <div class="h-full overflow-y-auto">
+        <!-- Navigation Menu -->
+        <div class="p-3">
+          <div class="mb-6">
+            <div class="mb-3"></div>
+            <nav class="space-y-1">
+              @for (menuItem of visibleMenuItems$ | async; track menuItem.id) {
+                <a
+                  [routerLink]="menuItem.route"
+                  routerLinkActive="bg-blue-200 text-blue-900 rounded-lg font-medium"
+                  [routerLinkActiveOptions]="{ exact: false }"
+                  class="group flex items-center justify-between p-2 text-gray-700 w-full text-left transition-all duration-200 hover:bg-gray-50 no-underline"
+                >
+                  <div class="flex items-center">
+                    <div class="flex items-center justify-center w-6 h-6 rounded mr-2 transition-colors"
+                         [class.bg-blue-100]="menuItem.active"
+                         [class.text-blue-600]="menuItem.active"
+                         [class.text-gray-600]="!menuItem.active"
+                         [class.bg-gray-100]="!menuItem.active"
+                         [class.group-hover:bg-blue-100]="!menuItem.active">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        @if (menuItem.icon === 'dashboard') {
+                          <rect x="3" y="3" width="7" height="9"/>
+                          <rect x="14" y="3" width="7" height="5"/>
+                          <rect x="14" y="12" width="7" height="9"/>
+                          <rect x="3" y="16" width="7" height="5"/>
+                        }
+                        @if (menuItem.icon === 'people') {
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                          <circle cx="9" cy="7" r="4"/>
+                          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        }
+                        @if (menuItem.icon === 'business') {
+                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                          <line x1="8" y1="21" x2="16" y2="21"/>
+                          <line x1="12" y1="17" x2="12" y2="21"/>
+                        }
+                        @if (menuItem.icon === 'contacts') {
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                          <circle cx="12" cy="7" r="4"/>
+                        }
+                        @if (menuItem.icon === 'category') {
+                          <rect x="3" y="3" width="7" height="7" rx="1"/>
+                          <rect x="14" y="3" width="7" height="7" rx="1"/>
+                          <rect x="3" y="14" width="7" height="7" rx="1"/>
+                          <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        }
+                      </svg>
+                    </div>
+                    <span class="text-sm font-medium">{{ menuItem.label }}</span>
+                  </div>
+
+                  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 5l7 7-7 7"/>
+                  </svg>
+                </a>
+              }
+            </nav>
+          </div>
+        </div>
+      </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="dashboard-content">
-      <router-outlet></router-outlet>
+    <!-- Contenu principal scrollable -->
+    <main class="flex-1 overflow-y-auto">
+      <div class="p-6">
+        <router-outlet></router-outlet>
+      </div>
     </main>
   </div>
 
-  <!-- Footer -->
-  <footer class="dashboard-footer">
-    <div class="footer-content">
-      <p>&copy; 2026 TargetDesk. Tous droits réservés.</p>
+  <!-- Footer fixe -->
+  <footer class="bg-white/80 backdrop-blur-sm border-t border-gray-200/60 py-3 flex-shrink-0">
+    <div class="px-6">
+      <p class="text-sm text-gray-500 text-center">
+        &copy; 2026 TargetDesk. Tous droits réservés.
+      </p>
     </div>
   </footer>
+
+  <!-- Modal de notifications -->
+  @if (isNotificationModalOpen) {
+    <app-notification-modal (closeModal)="closeNotificationModal()"></app-notification-modal>
+  }
 </div>

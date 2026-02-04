@@ -50,7 +50,7 @@ export class ImportExportApiRepository extends ImportExportRepository {
       `${this.endpoint}/import/preview`,
       formData
     ).pipe(
-      catchError(error => this.handleError(error, 'Erreur lors de la prévisualisation'))
+      // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
     );
   }
 
@@ -67,7 +67,7 @@ export class ImportExportApiRepository extends ImportExportRepository {
       `${this.endpoint}/import`,
       formData
     ).pipe(
-      catchError(error => this.handleError(error, 'Erreur lors de l\'import'))
+      // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
     );
   }
 

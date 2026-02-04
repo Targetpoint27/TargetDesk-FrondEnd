@@ -10,16 +10,19 @@ import { ClientEntity } from '../../../domain/entities/client.entity';
 import { PaginationResult } from '../../../domain/repositories/client.repository';
 import { AppError } from '../../../core/error/error.service';
 import { MessageService } from '../../../shared/services/message.service';
+import { SearchService } from '../../../shared/services/search.service';
 
 // Use cases
 import {
   CreateClientUseCase,
   GetClientsUseCase,
+  GetClientByIdUseCase,
   UpdateClientUseCase,
   DeleteClientUseCase
 } from '../../../domain/use-cases/client';
 import { GetClientsParams } from '../../../domain/use-cases/client/get-clients.use-case';
 import { CreateClientRequest, UpdateClientRequest } from '../../../domain/models/client.models';
+import { FilterOptions, ClientSearchResult } from '../../../shared/interfaces/search.interface';
 
 // State interfaces
 export interface ClientsState {
@@ -68,9 +71,11 @@ export class ClientFacade {
   constructor(
     private createClientUseCase: CreateClientUseCase,
     private getClientsUseCase: GetClientsUseCase,
+    private getClientByIdUseCase: GetClientByIdUseCase,
     private updateClientUseCase: UpdateClientUseCase,
     private deleteClientUseCase: DeleteClientUseCase,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private searchService: SearchService
   ) {}
 
   // State selectors
@@ -120,36 +125,59 @@ export class ClientFacade {
     );
   }
 
-  // Actions
+  // Actions - NOUVELLES MÉTHODES AVEC API DE RECHERCHE
+  getClientById(clientId: number): Observable<ClientEntity | null> {
+    return this.getClientByIdUseCase.execute(clientId);
+  }
+
   loadClients(params?: Partial<GetClientsParams>): Observable<PaginationResult<ClientEntity>> {
     this.updateState({ isLoading: true, error: null });
 
-    const loadParams: GetClientsParams = {
-      ...this.state$.value.filters,
-      ...params
+    // Convertir les paramètres vers le nouveau format API de recherche
+    const filters: FilterOptions = {
+      search: params?.search || this.state$.value.filters.search,
+      type: params?.type || this.state$.value.filters.type,
+      page: params?.page || this.state$.value.filters.page,
+      per_page: params?.perPage || this.state$.value.filters.perPage,
+      sort_by: 'name',
+      sort_order: 'asc'
     };
 
-    return this.getClientsUseCase.execute(loadParams).pipe(
+    // Utiliser le nouveau service de recherche au lieu des anciens use cases
+    return this.searchService.loadClientsWithAdvancedFilters(filters).pipe(
       tap(result => {
-        if (result.success && result.data) {
-          this.updateState({
-            clients: result.data.items,
-            pagination: result.data.pagination,
-            filters: { ...this.state$.value.filters, ...params },
-            isLoading: false,
-            error: null
-          });
-        } else {
-          const error = new AppError('LOAD_CLIENTS_ERROR', result.error || 'Erreur lors du chargement des clients', result.error || 'Erreur lors du chargement des clients');
-          this.updateState({
-            isLoading: false,
-            error
-          });
-        }
+        // Convertir les résultats de recherche vers les entités clients
+        const clientEntities = result.clients.map(client => this.convertSearchResultToClientEntity(client));
+
+        this.updateState({
+          clients: clientEntities,
+          pagination: {
+            currentPage: result.pagination.current_page,
+            totalPages: result.pagination.total_pages,
+            totalItems: result.pagination.total_items,
+            perPage: result.pagination.per_page
+          },
+          filters: {
+            search: filters.search,
+            type: filters.type,
+            page: filters.page || 1,
+            perPage: filters.per_page || 15
+          },
+          isLoading: false,
+          error: null
+        });
       }),
-      map(result => result.data!),
+      map(result => ({
+        items: result.clients.map(client => this.convertSearchResultToClientEntity(client)),
+        pagination: {
+          currentPage: result.pagination.current_page,
+          totalPages: result.pagination.total_pages,
+          totalItems: result.pagination.total_items,
+          perPage: result.pagination.per_page
+        }
+      })),
       catchError(error => {
-        const appError = error instanceof AppError ? error : new AppError('LOAD_CLIENTS_ERROR', 'Erreur inattendue lors du chargement des clients', 'Erreur inattendue lors du chargement des clients');
+        const appError = error instanceof AppError ? error : new AppError('LOAD_CLIENTS_ERROR', 'Erreur lors du chargement des clients', error.message || 'Erreur inattendue');
         this.updateState({
           isLoading: false,
           error: appError
@@ -165,6 +193,36 @@ export class ClientFacade {
         });
       })
     );
+  }
+
+  // Méthode de conversion des résultats de recherche vers ClientEntity
+  private convertSearchResultToClientEntity(searchResult: ClientSearchResult): ClientEntity {
+    return ClientEntity.create({
+      id: searchResult.id,
+      clientId: searchResult.client_id,
+      name: searchResult.name,
+      type: searchResult.type,
+      email: searchResult.email,
+      phone: searchResult.phone,
+      address: searchResult.address,
+      siret: searchResult.siret,
+      sector: searchResult.sector,
+      website: searchResult.website,
+      notes: searchResult.notes,
+      isActive: searchResult.is_active,
+      createdBy: searchResult.created_by,
+      createdAt: new Date(searchResult.created_at),
+      updatedAt: new Date(searchResult.updated_at),
+      creator: searchResult.creator,
+      categories_count: searchResult.categories_count,
+      categories_summary: searchResult.categories_summary ?
+        searchResult.categories_summary.map(group => ({
+          type: group.type as any, // Type conversion for CategoryGroup -> CategorySummary
+          count: group.count,
+          categories: group.categories
+        })) : [],
+      categories: [] // Les catégories complètes ne sont pas retournées par l'API de recherche
+    });
   }
 
   createClient(clientData: CreateClientRequest, userId: string): Observable<ClientEntity> {
@@ -185,22 +243,31 @@ export class ClientFacade {
 
           return of(result.data);
         } else {
-          const error = new AppError('CREATE_CLIENT_ERROR', result.error || 'Erreur lors de la création du client', result.error || 'Erreur lors de la création du client', result.validationErrors);
+          // Utiliser les messages d'erreur exacts du serveur
+          const errorMessage = result.error || 'Erreur lors de la création du client';
+          const error = new AppError('CREATE_CLIENT_ERROR', errorMessage, errorMessage, result.validationErrors);
           this.updateState({
             isCreating: false,
             error
           });
 
+          this.messageService.showError(errorMessage);
           return throwError(() => error);
         }
       }),
       catchError(error => {
-        const appError = error instanceof AppError ? error : new AppError('CREATE_CLIENT_ERROR', 'Erreur inattendue lors de la création du client', 'Erreur inattendue lors de la création du client');
+        console.error('Error creating client:', error);
+
         this.updateState({
           isCreating: false,
-          error: appError
+          error: error
         });
-        throw appError;
+
+        // L'ErrorService a déjà traité l'erreur HTTP et créé l'AppError avec le bon message
+        // Afficher directement le message de l'erreur traitée
+        this.messageService.showError(error.userMessage || error.message || 'Erreur lors de la création du client');
+
+        throw error;
       })
     );
   }
@@ -225,25 +292,29 @@ export class ClientFacade {
 
           // Success message handled at component level
         } else {
-          const error = new AppError('UPDATE_CLIENT_ERROR', result.error || 'Erreur lors de la mise à jour du client', result.error || 'Erreur lors de la mise à jour du client', result.validationErrors);
+          // Utiliser les messages d'erreur exacts du serveur
+          const errorMessage = result.error || 'Erreur lors de la mise à jour du client';
+          const error = new AppError('UPDATE_CLIENT_ERROR', errorMessage, errorMessage, result.validationErrors);
           this.updateState({
             isUpdating: false,
             error
           });
 
-          // Error handling is done at component level
-          // Don't show messages here to avoid duplicates
+          this.messageService.showError(errorMessage);
         }
       }),
       map(result => result.data!),
       catchError(error => {
-        const appError = error instanceof AppError ? error : new AppError('UPDATE_CLIENT_ERROR', 'Erreur inattendue lors de la mise à jour du client', 'Erreur inattendue lors de la mise à jour du client');
+        console.error('Error updating client:', error);
+
         this.updateState({
           isUpdating: false,
-          error: appError
+          error: error
         });
-        // Error message handled at component level
-        throw appError;
+
+        // L'ErrorService a déjà traité l'erreur HTTP et créé l'AppError avec le bon message
+        this.messageService.showError(error.userMessage || error.message || 'Erreur lors de la mise à jour du client');
+        throw error;
       })
     );
   }
@@ -266,32 +337,70 @@ export class ClientFacade {
 
           // Success message handled at component level
         } else {
-          const error = new AppError('DELETE_CLIENT_ERROR', result.error || 'Erreur lors de la suppression du client', result.error || 'Erreur lors de la suppression du client');
+          // Utiliser les messages d'erreur exacts du serveur
+          const errorMessage = result.error || 'Erreur lors de la suppression du client';
+          const error = new AppError('DELETE_CLIENT_ERROR', errorMessage, errorMessage);
           this.updateState({
             isDeleting: false,
             error
           });
-          // Error message handled at component level
+          this.messageService.showError(errorMessage);
         }
       }),
       map(() => undefined),
       catchError(error => {
-        const appError = error instanceof AppError ? error : new AppError('DELETE_CLIENT_ERROR', 'Erreur inattendue lors de la suppression du client', 'Erreur inattendue lors de la suppression du client');
+        console.error('Error deleting client:', error);
+
         this.updateState({
           isDeleting: false,
-          error: appError
+          error: error
         });
-        // Error message handled at component level
-        throw appError;
+
+        // L'ErrorService a déjà traité l'erreur HTTP et créé l'AppError avec le bon message
+        this.messageService.showError(error.userMessage || error.message || 'Erreur lors de la suppression du client');
+        throw error;
       })
     );
   }
 
-  // Filter and search actions
+  // NOUVELLES MÉTHODES DE RECHERCHE ET FILTRAGE
+
+  /**
+   * Recherche rapide pour autocomplétion
+   */
+  quickSearchClients(query: string): Observable<import('../../../shared/interfaces/search.interface').SearchResult[]> {
+    return this.searchService.searchClients(query, { limit: 10, fuzzy: true });
+  }
+
+  /**
+   * Recherche complète avec filtres avancés
+   */
+  performCompleteClientSearch(query: string, additionalFilters?: FilterOptions): Observable<{
+    quickResults: import('../../../shared/interfaces/search.interface').SearchResult[];
+    filteredResults: {
+      entities: ClientSearchResult[];
+      pagination: any;
+      total: number;
+    };
+  }> {
+    return this.searchService.performCompleteSearch('clients', query, additionalFilters).pipe(
+      map(result => ({
+        quickResults: result.quickResults,
+        filteredResults: {
+          entities: result.filteredResults.entities as ClientSearchResult[],
+          pagination: result.filteredResults.pagination,
+          total: result.filteredResults.total
+        }
+      }))
+    );
+  }
+
+  // Filter and search actions - MISES À JOUR POUR UTILISER LA NOUVELLE API
   setSearch(search: string): void {
     this.updateState({
       filters: { ...this.state$.value.filters, search, page: 1 }
     });
+    // Utiliser la nouvelle API au lieu de l'ancienne
     this.loadClients({ search, page: 1 }).subscribe();
   }
 
@@ -299,6 +408,7 @@ export class ClientFacade {
     this.updateState({
       filters: { ...this.state$.value.filters, type, page: 1 }
     });
+    // Utiliser la nouvelle API au lieu de l'ancienne
     this.loadClients({ type, page: 1 }).subscribe();
   }
 
@@ -306,7 +416,69 @@ export class ClientFacade {
     this.updateState({
       filters: { ...this.state$.value.filters, page }
     });
+    // Utiliser la nouvelle API
     this.loadClients({ page }).subscribe();
+  }
+
+  /**
+   * Méthode améliorée pour définir plusieurs filtres à la fois
+   */
+  setFilters(filters: Partial<FilterOptions>): void {
+    const newFilters = {
+      ...this.state$.value.filters,
+      ...filters,
+      page: 1 // Reset page when filters change
+    };
+
+    this.updateState({ filters: newFilters });
+    this.loadClients(newFilters).subscribe();
+  }
+
+  /**
+   * Méthode pour effectuer une recherche avec highlighting
+   */
+  searchWithHighlighting(query: string): Observable<{
+    clients: ClientEntity[];
+    highlightedQuery: string;
+    totalFound: number;
+  }> {
+    if (!query || query.length < 2) {
+      return of({
+        clients: this.state$.value.clients,
+        highlightedQuery: '',
+        totalFound: this.state$.value.clients.length
+      });
+    }
+
+    const filters: FilterOptions = {
+      search: query,
+      page: 1,
+      per_page: 50,
+      sort_by: 'name',
+      sort_order: 'asc'
+    };
+
+    return this.searchService.loadClientsWithAdvancedFilters(filters).pipe(
+      map(result => ({
+        clients: result.clients.map(client => this.convertSearchResultToClientEntity(client)),
+        highlightedQuery: query,
+        totalFound: result.total
+      }))
+    );
+  }
+
+  /**
+   * Obtenir les suggestions de recherche basées sur l'historique
+   */
+  getSearchSuggestions(): string[] {
+    return this.searchService.getSearchSuggestions('clients');
+  }
+
+  /**
+   * Effacer l'historique des recherches
+   */
+  clearSearchHistory(): void {
+    this.searchService.clearSearchHistory('clients');
   }
 
   setCurrentClient(client: ClientEntity | null): void {

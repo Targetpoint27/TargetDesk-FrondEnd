@@ -23,7 +23,6 @@ export * from '../domain/repositories/auth.repository';
 export * from '../domain/repositories/user.repository';
 export * from '../domain/repositories/client.repository';
 export * from '../domain/use-cases/auth/login.use-case';
-export * from '../domain/use-cases/auth/register.use-case';
 export * from '../domain/use-cases/auth/logout.use-case';
 export * from '../domain/use-cases/client';
 

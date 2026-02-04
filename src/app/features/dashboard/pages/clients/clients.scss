@@ -3,8 +3,31 @@
  */
 
 .clients-page {
+  position: relative; // Required for absolute positioning of overlay
   padding: 16px;
   background: #fafbfc;
+  height: 100%; // Ensure full height for proper overlay positioning
+
+  // Quand le formulaire est ouvert, tableau et formulaire doivent être stack (collés)
+  &.panel-open {
+    .clients-content {
+      width: calc(100% - 40%); // Prend exactement l'espace restant, pas d'espacement
+      transition: width 0.3s ease-out; // Animation fluide
+    }
+
+    // Responsive pour tablettes et mobiles
+    @media (max-width: 1200px) {
+      .clients-content {
+        width: calc(100% - 45%); // Exactement l'espace restant pour tablettes
+      }
+    }
+
+    @media (max-width: 768px) {
+      .clients-content {
+        width: 100%; // Pleine largeur sur petits écrans
+      }
+    }
+  }
 }
 
 /* Page Header */
@@ -86,62 +109,131 @@
   color: #374151;
   border: 1px solid #d1d5db;
 
-  &:hover:not(:disabled) {
+  &:hover:not(:disabled):not(.active) {
     background: #f9fafb;
     border-color: #9ca3af;
+    color: #374151; // Force la couleur du texte au survol
   }
 
   &.active {
     background: #4f46e5;
     color: white;
     border-color: #4f46e5;
+
+    &:hover:not(:disabled) {
+      background: #4338ca;
+      color: white; // Force la couleur blanche au survol quand actif
+      border-color: #4338ca;
+    }
   }
 }
 
-/* Compact Filters */
-.filters-section {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  background: white;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  border: 1px solid #e5e7eb;
+/* QuickSearch Component Styling */
+app-quick-search {
+  display: block;
+  margin-bottom: 32px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
 
-  @media (max-width: 768px) {
-    flex-direction: column;
+/* Filters Section - Design épuré */
+.filters-section {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  .filters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f8fafc;
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .filter-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #6366f1;
+      font-weight: 500;
+
+      .clear-filters {
+        background: none;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+
+        &:hover {
+          color: #ef4444;
+          background: #fef2f2;
+        }
+      }
+    }
+  }
+
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
   }
 }
 
 .filter-group {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 
   label {
     display: block;
-    margin-bottom: 4px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
-    color: #374151;
+    color: #475569;
+    margin: 0;
   }
 
   .form-input, .form-select {
     width: 100%;
-    padding: 6px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    font-size: 13px;
-    background: white;
-    color: #1f2937;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #fafbfc;
+    color: #1e293b;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:focus {
       outline: none;
-      border-color: #4f46e5;
-      color: #111827;
-      box-shadow: 0 0 0 1px #4f46e5;
+      border-color: #6366f1;
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+      transform: translateY(-1px);
     }
 
     &::placeholder {
-      color: #9ca3af;
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    &:hover {
+      border-color: #cbd5e1;
+      background: #ffffff;
     }
   }
 }
@@ -427,54 +519,6 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Pagination - Style identique aux contacts */
-.pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
-
-  .pagination-info {
-    font-size: 13px;
-    color: #6b7280;
-  }
-
-  .pagination-controls {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .pagination-current {
-    font-size: 13px;
-    color: #374151;
-    font-weight: 500;
-  }
-}
-
-.pagination-btn {
-  padding: 8px 16px;
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  color: #374151;
-
-  &:hover:not(:disabled) {
-    background: #f9fafb;
-    border-color: #9ca3af;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
 
 // Categories column styling
 .client-categories {
@@ -700,5 +744,312 @@
     .clients-table {
       min-width: 700px;
     }
+  }
+}
+
+/* ===== OVERLAY PANEL LAYOUT ===== */
+
+/* Main content - always full width */
+.clients-content {
+  width: 100%;
+  position: relative;
+  padding: 0; // Remove padding to maximize space
+
+  // For loading and empty states
+  .loading-state,
+  .empty-state {
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Simple table container - natural scroll behavior */
+.clients-table-container {
+  width: 100%;
+  overflow-x: auto; // Horizontal scroll when needed
+  overflow-y: auto; // Vertical scroll when needed
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+
+  .clients-table {
+    // SOLUTION 1: Largeur fixe gelée pour garantir le scroll horizontal
+    width: 1400px;           // Largeur fixe suffisante pour dépasser 50% écran
+    min-width: 1400px;       // Force cette largeur minimum
+    table-layout: fixed;     // Largeurs colonnes strictement respectées
+    border-collapse: collapse;
+    background: #ffffff;
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      white-space: nowrap;   // Empêche le texte de casser
+      overflow: hidden;      // Cache le débordement de texte
+      text-overflow: ellipsis; // Ajoute "..." si texte trop long
+    }
+
+    th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #374151;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    // Largeurs fixes optimales en pixels (total = 1400px)
+    th:nth-child(1), td:nth-child(1) { width: 280px; } // Nom / Raison sociale
+    th:nth-child(2), td:nth-child(2) { width: 120px; } // Type
+    th:nth-child(3), td:nth-child(3) { width: 320px; } // Email
+    th:nth-child(4), td:nth-child(4) { width: 160px; } // Téléphone
+    th:nth-child(5), td:nth-child(5) { width: 200px; } // Secteur
+    th:nth-child(6), td:nth-child(6) { width: 240px; } // Catégories
+    th:nth-child(7), td:nth-child(7) { width: 140px; } // Date création
+    th:nth-child(8), td:nth-child(8) { width: 140px; } // Actions
+  }
+}
+
+/* Form overlay panel - simple floating form */
+.form-overlay-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 40%; // Augmenté de 25% à 40%
+  max-width: 600px; // Largeur max augmentée
+  min-width: 350px; // Largeur minimale augmentée
+  z-index: 1000;
+  pointer-events: none; // Allow clicks to pass through when closed
+
+  &.open {
+    pointer-events: auto; // Enable interactions when open
+  }
+
+  // Responsive breakpoints
+  @media (max-width: 1200px) {
+    width: 45%; // Tablettes grandes - plus large
+    max-width: 550px;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%; // Mobiles : pleine largeur
+    max-width: none;
+    min-width: none;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%; // Petits mobiles
+  }
+
+  .form-panel-content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    background: #ffffff;
+    border-left: 1px solid #e5e7eb;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-out;
+    margin: 0;
+    padding: 0;
+  }
+
+  &.open .form-panel-content {
+    transform: translateX(0);
+  }
+
+  .form-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    margin: 0; // Remove any margin
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    // Close button now uses Bootstrap classes
+  }
+
+  .form-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 20px 0 20px; // Pas de padding en bas
+    margin: 0; // Remove any margin
+
+    .client-form {
+      max-width: none;
+      background: transparent;
+      border: none;
+      padding: 0;
+      box-shadow: none;
+
+      .form-section {
+        margin-bottom: 32px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        h3 {
+          margin: 0 0 16px 0;
+          font-size: 16px;
+          font-weight: 600;
+          color: #374151;
+          padding-bottom: 8px;
+          border-bottom: 1px solid #f3f4f6;
+        }
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+
+        label {
+          display: block;
+          margin-bottom: 6px;
+          font-weight: 500;
+          font-size: 14px;
+          color: #374151;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 14px;
+          transition: border-color 0.2s ease;
+
+          &:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+          }
+
+          &.error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+          }
+        }
+
+        .error-text {
+          display: block;
+          margin-top: 4px;
+          font-size: 12px;
+          color: #ef4444;
+        }
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .form-actions {
+        position: sticky;
+        bottom: 0;
+        background: #ffffff;
+        padding: 20px 20px 20px 20px; // Padding sur tous les côtés pour éviter que les boutons touchent les bords
+        margin-top: 32px;
+        margin-bottom: 0; // Supprimer toute marge inférieure
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+
+        .btn-secondary,
+        .btn-primary {
+          padding: 10px 20px;
+          border-radius: 6px;
+          font-weight: 500;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+        }
+
+        .btn-secondary {
+          border: 1px solid #d1d5db;
+          background: #ffffff;
+          color: #374151;
+
+          &:hover:not(:disabled) {
+            background: #f9fafb;
+            border-color: #9ca3af;
+          }
+        }
+
+        .btn-primary {
+          border: 1px solid #3b82f6;
+          background: #3b82f6;
+          color: #ffffff;
+
+          &:hover:not(:disabled) {
+            background: #2563eb;
+            border-color: #2563eb;
+          }
+
+          .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Animation keyframes */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments for overlay panel */
+@media (max-width: 768px) {
+  .form-overlay-panel .form-panel-content {
+    width: 100%;
+    max-width: none;
+  }
+
+  .form-panel-body {
+    padding: 16px !important;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr !important;
   }
 }

@@ -69,8 +69,8 @@ export class CrmApiRepository extends CrmRepository {
   createNote(clientId: number, request: CreateNoteRequest): Observable<ClientNote> {
     return this.apiService.post<{ data: ClientNote }>(`clients/${clientId}/notes`, request)
       .pipe(
-        map(response => response.data),
-        catchError(error => this.handleError(error, 'Erreur lors de la création de la note'))
+        map(response => response.data)
+        // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
       );
   }
 
@@ -85,15 +85,15 @@ export class CrmApiRepository extends CrmRepository {
   updateNote(noteId: number, request: UpdateNoteRequest): Observable<ClientNote> {
     return this.apiService.put<{ data: ClientNote }>(`notes/${noteId}`, request)
       .pipe(
-        map(response => response.data),
-        catchError(error => this.handleError(error, 'Erreur lors de la mise à jour de la note'))
+        map(response => response.data)
+        // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
       );
   }
 
   deleteNote(noteId: number): Observable<void> {
     return this.apiService.delete<void>(`notes/${noteId}`)
       .pipe(
-        catchError(error => this.handleError(error, 'Erreur lors de la suppression de la note'))
+        // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
       );
   }
 
@@ -149,8 +149,8 @@ export class CrmApiRepository extends CrmRepository {
   createCall(clientId: number, request: CreateCallRequest): Observable<ClientCall> {
     return this.apiService.post<{ data: ClientCall }>(`clients/${clientId}/calls`, request)
       .pipe(
-        map(response => response.data),
-        catchError(error => this.handleError(error, 'Erreur lors de l\'enregistrement de l\'appel'))
+        map(response => response.data)
+        // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
       );
   }
 
@@ -165,15 +165,15 @@ export class CrmApiRepository extends CrmRepository {
   updateCall(callId: number, request: UpdateCallRequest): Observable<ClientCall> {
     return this.apiService.put<{ data: ClientCall }>(`calls/${callId}`, request)
       .pipe(
-        map(response => response.data),
-        catchError(error => this.handleError(error, 'Erreur lors de la mise à jour de l\'appel'))
+        map(response => response.data)
+        // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
       );
   }
 
   deleteCall(callId: number): Observable<void> {
     return this.apiService.delete<void>(`calls/${callId}`)
       .pipe(
-        catchError(error => this.handleError(error, 'Erreur lors de la suppression de l\'appel'))
+        // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
       );
   }
 
@@ -213,8 +213,8 @@ export class CrmApiRepository extends CrmRepository {
   createAppointment(clientId: number, request: CreateAppointmentRequest): Observable<ClientAppointment> {
     return this.apiService.post<{ data: ClientAppointment }>(`clients/${clientId}/appointments`, request)
       .pipe(
-        map(response => response.data),
-        catchError(error => this.handleError(error, 'Erreur lors de la création du rendez-vous'))
+        map(response => response.data)
+        // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
       );
   }
 
@@ -229,15 +229,15 @@ export class CrmApiRepository extends CrmRepository {
   updateAppointment(appointmentId: number, request: UpdateAppointmentRequest): Observable<ClientAppointment> {
     return this.apiService.put<{ data: ClientAppointment }>(`appointments/${appointmentId}`, request)
       .pipe(
-        map(response => response.data),
-        catchError(error => this.handleError(error, 'Erreur lors de la mise à jour du rendez-vous'))
+        map(response => response.data)
+        // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
       );
   }
 
   deleteAppointment(appointmentId: number): Observable<void> {
     return this.apiService.delete<void>(`appointments/${appointmentId}`)
       .pipe(
-        catchError(error => this.handleError(error, 'Erreur lors de la suppression du rendez-vous'))
+        // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
       );
   }
 

@@ -21,37 +21,15 @@ export class CreateSupplierUseCase {
   constructor(private supplierRepository: SupplierRepository) {}
 
   execute(request: CreateSupplierRequest, userId: string): Observable<UseCaseResult<SupplierEntity>> {
-    return this.validateRequest(request).pipe(
-      switchMap(validation => {
-        if (!validation.isValid) {
-          return of({
-            success: false,
-            validationErrors: validation.errors
-          });
-        }
-
-        return this.checkUniqueness(request).pipe(
-          switchMap(uniquenessValidation => {
-            if (!uniquenessValidation.isValid) {
-              return of({
-                success: false,
-                validationErrors: uniquenessValidation.errors
-              });
-            }
-
-            return this.createSupplier(request).pipe(
-              map(supplier => ({
-                success: true,
-                data: supplier,
-                events: [this.createDomainEvent(supplier, userId)]
-              })),
-              catchError(error => of({
-                success: false,
-                error: this.getErrorMessage(error)
-              }))
-            );
-          })
-        );
+    return this.createSupplier(request).pipe(
+      map(supplier => ({
+        success: true,
+        data: supplier,
+        events: [this.createDomainEvent(supplier, userId)]
+      })),
+      catchError(error => {
+        // Propager l'erreur HTTP directement sans la transformer
+        throw error;
       })
     );
   }

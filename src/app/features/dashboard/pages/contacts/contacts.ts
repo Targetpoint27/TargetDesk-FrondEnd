@@ -1,8 +1,10 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subject, combineLatest, map } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { PermissionService } from '../../../../core/auth/permission.service';
+import { PERMISSIONS } from '../../../../domain/models/permission.models';
 
 import { ContactEntity, ContactFilters, ContactPagination } from '../../../../domain/entities/contact.entity';
 import { ContactFacade, ContactsState } from '../../../../application/facades/contact.facade';
@@ -61,6 +63,14 @@ export class ContactsComponent implements OnInit, OnDestroy {
   // Contact en cours de suppression
   contactToDelete: ContactEntity | null = null;
 
+  // Permission observables
+  canCreateContact$!: Observable<boolean>;
+  canUpdateContact$!: Observable<boolean>;
+  canDeleteContact$!: Observable<boolean>;
+  canViewContact$!: Observable<boolean>;
+
+  private permissionService = inject(PermissionService);
+
   constructor(
     private contactFacade: ContactFacade,
     private notificationService: SimpleNotificationService,
@@ -100,6 +110,12 @@ export class ContactsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Initialize permission observables
+    this.canCreateContact$ = this.permissionService.hasPermission(PERMISSIONS.CONTACTS_CREATE);
+    this.canUpdateContact$ = this.permissionService.hasPermission(PERMISSIONS.CONTACTS_UPDATE);
+    this.canDeleteContact$ = this.permissionService.hasPermission(PERMISSIONS.CONTACTS_DELETE);
+    this.canViewContact$ = this.permissionService.hasPermission(PERMISSIONS.CONTACTS_READ);
+
     // Charger les contacts au démarrage
     this.contactFacade.loadContacts();
 

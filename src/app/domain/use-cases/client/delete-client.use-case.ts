@@ -34,10 +34,8 @@ export class DeleteClientUseCase {
       }),
       catchError(error => {
         console.error(`Delete UseCase: Failed to delete client ${clientId}:`, error);
-        return of({
-          success: false,
-          error: this.getErrorMessage(error)
-        });
+        // Propager l'erreur HTTP directement sans la transformer
+        throw error;
       })
     );
   }
@@ -78,15 +76,4 @@ export class DeleteClientUseCase {
     };
   }
 
-  private getErrorMessage(error: any): string {
-    if (error?.message) {
-      return error.message;
-    }
-
-    if (typeof error === 'string') {
-      return error;
-    }
-
-    return 'Une erreur inattendue s\'est produite lors de la suppression du client';
-  }
 }

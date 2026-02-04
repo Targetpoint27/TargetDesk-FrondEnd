@@ -10,6 +10,7 @@ import { SupplierEntity } from '../../../domain/entities/supplier.entity';
 import { PaginationResult } from '../../../domain/repositories/supplier.repository';
 import { AppError } from '../../../core/error/error.service';
 import { MessageService } from '../../../shared/services/message.service';
+import { SearchService } from '../../../shared/services/search.service';
 
 // Use cases
 import {
@@ -20,6 +21,7 @@ import {
 } from '../../../domain/use-cases/supplier';
 import { GetSuppliersParams } from '../../../domain/use-cases/supplier/get-suppliers.use-case';
 import { CreateSupplierRequest, UpdateSupplierRequest } from '../../../domain/models/supplier.models';
+import { FilterOptions, SupplierSearchResult } from '../../../shared/interfaces/search.interface';
 
 // State interfaces
 export interface SuppliersState {
@@ -72,7 +74,8 @@ export class SupplierFacade {
     private getSuppliersUseCase: GetSuppliersUseCase,
     private updateSupplierUseCase: UpdateSupplierUseCase,
     private deleteSupplierUseCase: DeleteSupplierUseCase,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private searchService: SearchService
   ) {}
 
   // State selectors
@@ -122,36 +125,59 @@ export class SupplierFacade {
     );
   }
 
-  // Actions
+  // Actions - NOUVELLES MÉTHODES AVEC API DE RECHERCHE
   loadSuppliers(params?: Partial<GetSuppliersParams>): Observable<PaginationResult<SupplierEntity>> {
     this.updateState({ isLoading: true, error: null });
 
-    const loadParams: GetSuppliersParams = {
-      ...this.state$.value.filters,
-      ...params
+    // Convertir les paramètres vers le nouveau format API de recherche
+    const filters: FilterOptions = {
+      search: params?.search || this.state$.value.filters.search,
+      type: params?.type || this.state$.value.filters.type,
+      relation_type: params?.relationType || this.state$.value.filters.relationType,
+      sector: params?.sector || this.state$.value.filters.sector,
+      page: params?.page || this.state$.value.filters.page,
+      per_page: params?.perPage || this.state$.value.filters.perPage,
+      sort_by: 'name',
+      sort_order: 'asc'
     };
 
-    return this.getSuppliersUseCase.execute(loadParams).pipe(
+    // Utiliser le nouveau service de recherche au lieu des anciens use cases
+    return this.searchService.loadSuppliersWithAdvancedFilters(filters).pipe(
       tap(result => {
-        if (result.success && result.data) {
-          this.updateState({
-            suppliers: result.data.items,
-            pagination: result.data.pagination,
-            filters: { ...this.state$.value.filters, ...params },
-            isLoading: false,
-            error: null
-          });
-        } else {
-          const error = new AppError('LOAD_SUPPLIERS_ERROR', result.error || 'Erreur lors du chargement des fournisseurs', result.error || 'Erreur lors du chargement des fournisseurs');
-          this.updateState({
-            isLoading: false,
-            error
-          });
-        }
+        // Convertir les résultats de recherche vers les entités suppliers
+        const supplierEntities = result.suppliers.map(supplier => this.convertSearchResultToSupplierEntity(supplier));
+
+        this.updateState({
+          suppliers: supplierEntities,
+          pagination: {
+            currentPage: result.pagination.current_page,
+            totalPages: result.pagination.total_pages,
+            totalItems: result.pagination.total_items,
+            perPage: result.pagination.per_page
+          },
+          filters: {
+            search: filters.search,
+            type: filters.type,
+            relationType: filters.relation_type,
+            sector: filters.sector,
+            page: filters.page || 1,
+            perPage: filters.per_page || 15
+          },
+          isLoading: false,
+          error: null
+        });
       }),
-      map(result => result.data!),
+      map(result => ({
+        items: result.suppliers.map(supplier => this.convertSearchResultToSupplierEntity(supplier)),
+        pagination: {
+          currentPage: result.pagination.current_page,
+          totalPages: result.pagination.total_pages,
+          totalItems: result.pagination.total_items,
+          perPage: result.pagination.per_page
+        }
+      })),
       catchError(error => {
-        const appError = error instanceof AppError ? error : new AppError('LOAD_SUPPLIERS_ERROR', 'Erreur inattendue lors du chargement des fournisseurs', 'Erreur inattendue lors du chargement des fournisseurs');
+        const appError = error instanceof AppError ? error : new AppError('LOAD_SUPPLIERS_ERROR', 'Erreur lors du chargement des fournisseurs', error.message || 'Erreur inattendue');
         this.updateState({
           isLoading: false,
           error: appError
@@ -166,6 +192,31 @@ export class SupplierFacade {
           }
         });
       })
+    );
+  }
+
+  // Méthode de conversion des résultats de recherche vers SupplierEntity
+  private convertSearchResultToSupplierEntity(searchResult: SupplierSearchResult): SupplierEntity {
+    return new SupplierEntity(
+      searchResult.id,
+      searchResult.supplier_id,
+      searchResult.name,
+      searchResult.type,
+      searchResult.email,
+      searchResult.phone,
+      searchResult.address,
+      searchResult.siret,
+      searchResult.sector,
+      searchResult.website,
+      searchResult.notes,
+      searchResult.relation_type,
+      searchResult.payment_terms,
+      searchResult.delivery_delay,
+      searchResult.currency,
+      searchResult.is_active,
+      searchResult.created_by,
+      new Date(searchResult.created_at),
+      new Date(searchResult.updated_at)
     );
   }
 
@@ -292,11 +343,44 @@ export class SupplierFacade {
     );
   }
 
-  // Filter and search actions
+  // NOUVELLES MÉTHODES DE RECHERCHE ET FILTRAGE
+
+  /**
+   * Recherche rapide pour autocomplétion
+   */
+  quickSearchSuppliers(query: string): Observable<import('../../../shared/interfaces/search.interface').SearchResult[]> {
+    return this.searchService.searchSuppliers(query, { limit: 10, fuzzy: true });
+  }
+
+  /**
+   * Recherche complète avec filtres avancés
+   */
+  performCompleteSupplierSearch(query: string, additionalFilters?: FilterOptions): Observable<{
+    quickResults: import('../../../shared/interfaces/search.interface').SearchResult[];
+    filteredResults: {
+      entities: SupplierSearchResult[];
+      pagination: any;
+      total: number;
+    };
+  }> {
+    return this.searchService.performCompleteSearch('suppliers', query, additionalFilters).pipe(
+      map(result => ({
+        quickResults: result.quickResults,
+        filteredResults: {
+          entities: result.filteredResults.entities as SupplierSearchResult[],
+          pagination: result.filteredResults.pagination,
+          total: result.filteredResults.total
+        }
+      }))
+    );
+  }
+
+  // Filter and search actions - MISES À JOUR POUR UTILISER LA NOUVELLE API
   setSearch(search: string): void {
     this.updateState({
       filters: { ...this.state$.value.filters, search, page: 1 }
     });
+    // Utiliser la nouvelle API au lieu de l'ancienne
     this.loadSuppliers({ search, page: 1 }).subscribe();
   }
 
@@ -304,6 +388,7 @@ export class SupplierFacade {
     this.updateState({
       filters: { ...this.state$.value.filters, type, page: 1 }
     });
+    // Utiliser la nouvelle API au lieu de l'ancienne
     this.loadSuppliers({ type, page: 1 }).subscribe();
   }
 
@@ -311,6 +396,7 @@ export class SupplierFacade {
     this.updateState({
       filters: { ...this.state$.value.filters, relationType, page: 1 }
     });
+    // Utiliser la nouvelle API
     this.loadSuppliers({ relationType, page: 1 }).subscribe();
   }
 
@@ -318,6 +404,7 @@ export class SupplierFacade {
     this.updateState({
       filters: { ...this.state$.value.filters, sector, page: 1 }
     });
+    // Utiliser la nouvelle API
     this.loadSuppliers({ sector, page: 1 }).subscribe();
   }
 
@@ -325,7 +412,69 @@ export class SupplierFacade {
     this.updateState({
       filters: { ...this.state$.value.filters, page }
     });
+    // Utiliser la nouvelle API
     this.loadSuppliers({ page }).subscribe();
+  }
+
+  /**
+   * Méthode améliorée pour définir plusieurs filtres à la fois
+   */
+  setFilters(filters: Partial<FilterOptions>): void {
+    const newFilters = {
+      ...this.state$.value.filters,
+      ...filters,
+      page: 1 // Reset page when filters change
+    };
+
+    this.updateState({ filters: newFilters });
+    this.loadSuppliers(newFilters).subscribe();
+  }
+
+  /**
+   * Méthode pour effectuer une recherche avec highlighting
+   */
+  searchWithHighlighting(query: string): Observable<{
+    suppliers: SupplierEntity[];
+    highlightedQuery: string;
+    totalFound: number;
+  }> {
+    if (!query || query.length < 2) {
+      return of({
+        suppliers: this.state$.value.suppliers,
+        highlightedQuery: '',
+        totalFound: this.state$.value.suppliers.length
+      });
+    }
+
+    const filters: FilterOptions = {
+      search: query,
+      page: 1,
+      per_page: 50,
+      sort_by: 'name',
+      sort_order: 'asc'
+    };
+
+    return this.searchService.loadSuppliersWithAdvancedFilters(filters).pipe(
+      map(result => ({
+        suppliers: result.suppliers.map(supplier => this.convertSearchResultToSupplierEntity(supplier)),
+        highlightedQuery: query,
+        totalFound: result.total
+      }))
+    );
+  }
+
+  /**
+   * Obtenir les suggestions de recherche basées sur l'historique
+   */
+  getSearchSuggestions(): string[] {
+    return this.searchService.getSearchSuggestions('suppliers');
+  }
+
+  /**
+   * Effacer l'historique des recherches
+   */
+  clearSearchHistory(): void {
+    this.searchService.clearSearchHistory('suppliers');
   }
 
   setCurrentSupplier(supplier: SupplierEntity | null): void {

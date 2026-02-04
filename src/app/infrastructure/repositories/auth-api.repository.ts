@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, catchError } from 'rxjs/operators';
 import { AuthRepository } from '../../domain/repositories/auth.repository';
 import { AuthEntity } from '../../domain/entities/auth.entity';
 import { UserEntity } from '../../domain/entities/user.entity';
-import { LoginRequest, RegisterRequest } from '../../domain/models/auth.models';
+import { LoginRequest } from '../../domain/models/auth.models';
 import { ApiService } from '../../core/api/api.service';
 import { ErrorService, AppError } from '../../core/error/error.service';
 import { LoggingService } from '../../core/logging/logging.service';
@@ -12,7 +12,6 @@ import { EnvironmentService } from '../../core/config/environment.service';
 import { AuthMapper } from '../mappers/auth.mapper';
 import {
   LoginApiResponse,
-  RegisterApiResponse,
   LogoutApiResponse,
   RefreshTokenApiResponse,
   CurrentUserApiResponse
@@ -106,47 +105,6 @@ export class AuthApiRepository extends AuthRepository {
       );
   }
 
-  register(userData: RegisterRequest): Observable<AuthEntity> {
-    this.loggingService.info('Auth API: Register request', {
-      component: 'AuthApiRepository',
-      action: 'register',
-      data: {
-        email: userData.email,
-        name: userData.name
-      }
-    });
-
-    return this.apiService.post<RegisterApiResponse>('/auth/register', userData)
-      .pipe(
-        map(response => {
-          const apiResponse = this.apiService.unwrapApiResponse<RegisterApiResponse>(response);
-
-          if (!apiResponse.success) {
-            throw new Error(apiResponse.message || 'Registration failed');
-          }
-
-          if (!this.authMapper.validateAuthApiResponse(apiResponse.data)) {
-            throw new Error('Invalid registration response format');
-          }
-
-          return this.authMapper.toDomain(apiResponse.data);
-        }),
-        tap(auth => {
-          this.storeTokens(auth.token, auth.refreshToken);
-          this.storeUser(auth.user);
-
-          this.loggingService.info('Auth API: Registration successful', {
-            component: 'AuthApiRepository',
-            action: 'register',
-            userId: auth.user.id,
-            data: {
-              userId: auth.user.id,
-              userEmail: auth.user.email
-            }
-          });
-        })
-      );
-  }
 
   logout(): Observable<void> {
     this.loggingService.info('Auth API: Logout request', {
@@ -176,6 +134,22 @@ export class AuthApiRepository extends AuthRepository {
           this.loggingService.info('Auth API: Logout completed', {
             component: 'AuthApiRepository',
             action: 'logout'
+          });
+        }),
+        catchError(error => {
+          // Même en cas d'erreur réseau, nettoyer le stockage local
+          this.loggingService.warn('Auth API: Logout API call failed, cleaning local storage anyway', {
+            component: 'AuthApiRepository',
+            action: 'logout',
+            data: { error: error.message }
+          });
+
+          this.clearStoredAuth();
+
+          // Retourner succès car le nettoyage local est fait
+          return new Observable<void>(observer => {
+            observer.next();
+            observer.complete();
           });
         })
       );
@@ -316,13 +290,32 @@ export class AuthApiRepository extends AuthRepository {
   }
 
   private clearStoredAuth(): void {
+    // Nettoyer les clés d'authentification principales
     localStorage.removeItem(this.environmentService.auth.tokenKey);
     localStorage.removeItem(this.environmentService.auth.refreshTokenKey);
     localStorage.removeItem(this.environmentService.auth.userKey);
 
-    this.loggingService.debug('Stored auth data cleared', {
+    // Nettoyer également les clés de la facade (pour éviter les doublons)
+    localStorage.removeItem('targetdesk_auth');
+    localStorage.removeItem('targetdesk_token');
+
+    // Nettoyer toutes les clés liées à TargetDesk
+    const targetDeskKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('targetdesk_')) {
+        targetDeskKeys.push(key);
+      }
+    }
+
+    targetDeskKeys.forEach(key => {
+      localStorage.removeItem(key);
+    });
+
+    this.loggingService.debug('Stored auth data cleared completely', {
       component: 'AuthApiRepository',
-      action: 'clearStoredAuth'
+      action: 'clearStoredAuth',
+      data: { clearedKeys: targetDeskKeys }
     });
   }
 }

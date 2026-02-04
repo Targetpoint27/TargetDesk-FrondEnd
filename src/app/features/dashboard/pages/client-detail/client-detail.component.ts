@@ -1,7 +1,9 @@
 import { Component, OnInit, OnDestroy, signal, ChangeDetectorRef, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { Subject, takeUntil, switchMap, of } from 'rxjs';
+import { Subject, takeUntil, switchMap, of, Observable } from 'rxjs';
+import { PermissionService } from '../../../../core/auth/permission.service';
+import { PERMISSIONS } from '../../../../domain/models/permission.models';
 
 import { ClientEntity } from '../../../../domain/entities/client.entity';
 import { ContactEntity } from '../../../../domain/entities/contact.entity';
@@ -22,6 +24,7 @@ import { ContactFormModalComponent } from '../../../../shared/components/contact
 import { NoteFormModalComponent } from '../../../../shared/components/note-form-modal/note-form-modal.component';
 import { CallFormModalComponent } from '../../../../shared/components/call-form-modal/call-form-modal.component';
 import { AppointmentFormModalComponent } from '../../../../shared/components/appointment-form-modal/appointment-form-modal.component';
+import { ClientDocumentsComponent } from '../../../../shared/components/client-documents/client-documents.component';
 
 @Component({
   selector: 'app-client-detail',
@@ -38,7 +41,8 @@ import { AppointmentFormModalComponent } from '../../../../shared/components/app
     ContactFormModalComponent,
     NoteFormModalComponent,
     CallFormModalComponent,
-    AppointmentFormModalComponent
+    AppointmentFormModalComponent,
+    ClientDocumentsComponent
   ],
   template: `
     <div class="client-detail-page">
@@ -109,47 +113,69 @@ import { AppointmentFormModalComponent } from '../../../../shared/components/app
               </svg>
               Contacts ({{ contacts.length }})
             </button>
-            <button
-              class="tab-button"
-              [class.active]="activeTab === 'categories'"
-              (click)="setActiveTab('categories')">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-                <path d="M9 9h6v6H9z" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              Catégories
-            </button>
-            <button
-              class="tab-button"
-              [class.active]="activeTab === 'notes'"
-              (click)="setActiveTab('notes')">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2"/>
-                <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              Notes
-            </button>
-            <button
-              class="tab-button"
-              [class.active]="activeTab === 'calls'"
-              (click)="setActiveTab('calls')">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              Appels
-            </button>
-            <button
-              class="tab-button"
-              [class.active]="activeTab === 'appointments'"
-              (click)="setActiveTab('appointments')">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-                <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
-                <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
-                <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              Rendez-vous
-            </button>
+@if (canViewCategories$ | async) {
+              <button
+                class="tab-button"
+                [class.active]="activeTab === 'categories'"
+                (click)="setActiveTab('categories')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M9 9h6v6H9z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Catégories
+              </button>
+            }
+@if (canManageDocuments$ | async) {
+              <button
+                class="tab-button"
+                [class.active]="activeTab === 'documents'"
+                (click)="setActiveTab('documents')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2"/>
+                  <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
+                  <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
+                  <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Documents
+              </button>
+            }
+@if (canCreateNote$ | async) {
+              <button
+                class="tab-button"
+                [class.active]="activeTab === 'notes'"
+                (click)="setActiveTab('notes')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2"/>
+                  <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Notes
+              </button>
+            }
+@if (canCreateCall$ | async) {
+              <button
+                class="tab-button"
+                [class.active]="activeTab === 'calls'"
+                (click)="setActiveTab('calls')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Appels
+              </button>
+            }
+@if (canCreateAppointment$ | async) {
+              <button
+                class="tab-button"
+                [class.active]="activeTab === 'appointments'"
+                (click)="setActiveTab('appointments')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+                  <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+                  <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Rendez-vous
+              </button>
+            }
             <button
               class="tab-button"
               [class.active]="activeTab === 'timeline'"
@@ -171,12 +197,14 @@ import { AppointmentFormModalComponent } from '../../../../shared/components/app
                 <div class="quick-actions-card">
                   <h3>Actions rapides</h3>
                   <div class="quick-actions-grid">
-                    <button class="quick-action" (click)="callClient()">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" stroke="currentColor" stroke-width="2"/>
-                      </svg>
-                      <span>Appeler</span>
-                    </button>
+                    @if (canCreateCall$ | async) {
+                      <button class="quick-action" (click)="callClient()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span>Appeler</span>
+                      </button>
+                    }
                     <button class="quick-action" (click)="emailClient()">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="2"/>
@@ -184,24 +212,28 @@ import { AppointmentFormModalComponent } from '../../../../shared/components/app
                       </svg>
                       <span>Email</span>
                     </button>
-                    <button class="quick-action" (click)="scheduleAppointment()">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
-                        <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
-                        <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
-                      </svg>
-                      <span>RDV</span>
-                    </button>
-                    <button class="quick-action" (click)="addNote()">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2"/>
-                        <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
-                        <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
-                        <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
-                      </svg>
-                      <span>Note</span>
-                    </button>
+                    @if (canCreateAppointment$ | async) {
+                      <button class="quick-action" (click)="scheduleAppointment()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                          <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+                          <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+                          <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span>RDV</span>
+                      </button>
+                    }
+                    @if (canCreateNote$ | async) {
+                      <button class="quick-action" (click)="addNote()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2"/>
+                          <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
+                          <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
+                          <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span>Note</span>
+                      </button>
+                    }
                   </div>
                 </div>
 
@@ -316,13 +348,15 @@ import { AppointmentFormModalComponent } from '../../../../shared/components/app
                 <div class="section-card">
                   <div class="section-header">
                     <h3>Contacts ({{ contacts.length }})</h3>
-                    <button type="button" class="btn btn-small" (click)="onAddContact()">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"/>
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                      </svg>
-                      Ajouter contact
-                    </button>
+                    @if (canCreateContact$ | async) {
+                      <button type="button" class="btn btn-small" (click)="onAddContact()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="12" y1="5" x2="12" y2="19"/>
+                          <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Ajouter contact
+                      </button>
+                    }
                   </div>
 
                   <div class="contacts-container">
@@ -339,7 +373,9 @@ import { AppointmentFormModalComponent } from '../../../../shared/components/app
                         <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
                       </svg>
                       <h4>Aucun contact</h4>
-                      <button type="button" class="btn btn-primary" (click)="onAddContact()">Ajouter le premier contact</button>
+                      @if (canCreateContact$ | async) {
+                        <button type="button" class="btn btn-primary" (click)="onAddContact()">Ajouter le premier contact</button>
+                      }
                     </div>
 
                     <!-- Contacts Grid -->
@@ -358,23 +394,29 @@ import { AppointmentFormModalComponent } from '../../../../shared/components/app
                             </div>
                           </div>
                           <div class="contact-actions">
-                            <button type="button" class="btn-icon" (click)="onEditContact(contact)" title="Modifier">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                              </svg>
-                            </button>
-                            <button type="button" class="btn-icon star" *ngIf="!contact.is_primary" (click)="onMakePrimary(contact)" title="Définir comme principal">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
-                              </svg>
-                            </button>
-                            <button type="button" class="btn-icon danger" *ngIf="!contact.is_primary" (click)="onDeleteContact(contact)" title="Supprimer">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3,6 5,6 21,6"/>
-                                <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
-                              </svg>
-                            </button>
+                            @if (canUpdateContact$ | async) {
+                              <button type="button" class="btn-icon" (click)="onEditContact(contact)" title="Modifier">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                  <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                              </button>
+                            }
+                            @if ((canUpdateContact$ | async) && !contact.is_primary) {
+                              <button type="button" class="btn-icon star" (click)="onMakePrimary(contact)" title="Définir comme principal">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                  <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                                </svg>
+                              </button>
+                            }
+                            @if ((canDeleteContact$ | async) && !contact.is_primary) {
+                              <button type="button" class="btn-icon danger" (click)="onDeleteContact(contact)" title="Supprimer">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                  <polyline points="3,6 5,6 21,6"/>
+                                  <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
+                                </svg>
+                              </button>
+                            }
                           </div>
                         </div>
 
@@ -403,26 +445,28 @@ import { AppointmentFormModalComponent } from '../../../../shared/components/app
             }
 
             <!-- Categories Tab -->
-            @if (activeTab === 'categories') {
+            @if (activeTab === 'categories' && (canViewCategories$ | async)) {
               <div class="categories-content">
                 <div class="section-card">
                   <div class="section-header">
                     <h3>Catégories</h3>
-                    <button type="button" class="btn btn-small" (click)="onToggleCategoryMode()">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"/>
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                      </svg>
-                      Ajouter
-                    </button>
                   </div>
                   <app-client-categories-manager [client]="client()"></app-client-categories-manager>
                 </div>
               </div>
             }
 
+            <!-- Documents Tab -->
+            @if (activeTab === 'documents' && (canManageDocuments$ | async)) {
+              <div class="documents-content">
+                <div class="section-card">
+                  <app-client-documents [clientId]="client()?.id || 0"></app-client-documents>
+                </div>
+              </div>
+            }
+
             <!-- Notes Tab -->
-            @if (activeTab === 'notes') {
+            @if (activeTab === 'notes' && (canCreateNote$ | async)) {
               <div class="notes-content">
                 <div class="section-card">
                   <app-client-notes
@@ -435,7 +479,7 @@ import { AppointmentFormModalComponent } from '../../../../shared/components/app
             }
 
             <!-- Calls Tab -->
-            @if (activeTab === 'calls') {
+            @if (activeTab === 'calls' && (canCreateCall$ | async)) {
               <div class="calls-content">
                 <div class="section-card">
                   <app-client-calls [clientId]="client()?.id || 0"></app-client-calls>
@@ -444,7 +488,7 @@ import { AppointmentFormModalComponent } from '../../../../shared/components/app
             }
 
             <!-- Appointments Tab -->
-            @if (activeTab === 'appointments') {
+            @if (activeTab === 'appointments' && (canCreateAppointment$ | async)) {
               <div class="appointments-content">
                 <div class="section-card">
                   <app-client-appointments [clientId]="client()?.id || 0"></app-client-appointments>
@@ -550,6 +594,19 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private permissionService = inject(PermissionService);
+
+  // Permission observables
+  canUpdateClient$!: Observable<boolean>;
+  canDeleteClient$!: Observable<boolean>;
+  canCreateContact$!: Observable<boolean>;
+  canUpdateContact$!: Observable<boolean>;
+  canDeleteContact$!: Observable<boolean>;
+  canCreateNote$!: Observable<boolean>;
+  canCreateCall$!: Observable<boolean>;
+  canCreateAppointment$!: Observable<boolean>;
+  canManageDocuments$!: Observable<boolean>;
+  canViewCategories$!: Observable<boolean>;
 
   // ViewChild pour accéder aux composants enfants
   @ViewChild(ClientNotesComponent) notesComponent!: ClientNotesComponent;
@@ -577,7 +634,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   showAppointmentFormModal = false;
 
   // Tabs Management
-  activeTab: 'overview' | 'contacts' | 'categories' | 'notes' | 'calls' | 'appointments' | 'timeline' = 'overview';
+  activeTab: 'overview' | 'contacts' | 'categories' | 'documents' | 'notes' | 'calls' | 'appointments' | 'timeline' = 'overview';
 
   constructor(
     private getClientsUseCase: GetClientsUseCase,
@@ -589,6 +646,18 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Initialize permission observables
+    this.canUpdateClient$ = this.permissionService.hasPermission(PERMISSIONS.CLIENTS_UPDATE);
+    this.canDeleteClient$ = this.permissionService.hasPermission(PERMISSIONS.CLIENTS_DELETE);
+    this.canCreateContact$ = this.permissionService.hasPermission(PERMISSIONS.CONTACTS_CREATE);
+    this.canUpdateContact$ = this.permissionService.hasPermission(PERMISSIONS.CONTACTS_UPDATE);
+    this.canDeleteContact$ = this.permissionService.hasPermission(PERMISSIONS.CONTACTS_DELETE);
+    this.canCreateNote$ = this.permissionService.hasPermission(PERMISSIONS.DOCUMENTS_CREATE);
+    this.canCreateCall$ = this.permissionService.hasPermission(PERMISSIONS.CONTACTS_CREATE);
+    this.canCreateAppointment$ = this.permissionService.hasPermission(PERMISSIONS.CONTACTS_CREATE);
+    this.canManageDocuments$ = this.permissionService.hasPermission(PERMISSIONS.DOCUMENTS_CREATE);
+    this.canViewCategories$ = this.permissionService.hasPermission(PERMISSIONS.SYSTEM_VIEW);
+
     this.route.params.pipe(
       takeUntil(this.destroy$),
       switchMap((params: any) => {
@@ -871,13 +940,10 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
     }).format(date);
   }
 
-  setActiveTab(tab: 'overview' | 'contacts' | 'categories' | 'notes' | 'calls' | 'appointments' | 'timeline'): void {
+  setActiveTab(tab: 'overview' | 'contacts' | 'categories' | 'documents' | 'notes' | 'calls' | 'appointments' | 'timeline'): void {
     this.activeTab = tab;
   }
 
-  onToggleCategoryMode(): void {
-    this.messageService.showInfo('Fonctionnalité d\'ajout de catégorie en cours de développement');
-  }
 
   getUserInitials(name: string): string {
     return name

@@ -70,8 +70,12 @@ export class CategoryFacade {
       catchError(error => {
         console.error('Error creating category:', error);
         this.isCreatingSubject.next(false);
-        this.errorSubject.next('Erreur lors de la création de la catégorie');
-        this.messageService.showError('Erreur lors de la création de la catégorie');
+
+        // Utiliser le message spécifique de l'AppError traité par ErrorService
+        const errorMessage = error.userMessage || error.message || 'Erreur lors de la création de la catégorie';
+
+        this.errorSubject.next(errorMessage);
+        this.messageService.showError(errorMessage);
         return of(null);
       })
     );
@@ -92,8 +96,12 @@ export class CategoryFacade {
       catchError(error => {
         console.error('Error updating category:', error);
         this.isUpdatingSubject.next(false);
-        this.errorSubject.next('Erreur lors de la modification de la catégorie');
-        this.messageService.showError('Erreur lors de la modification de la catégorie');
+
+        // Utiliser le message spécifique de l'AppError traité par ErrorService
+        const errorMessage = error.userMessage || error.message || 'Erreur lors de la modification de la catégorie';
+
+        this.errorSubject.next(errorMessage);
+        this.messageService.showError(errorMessage);
         return of(null);
       })
     );

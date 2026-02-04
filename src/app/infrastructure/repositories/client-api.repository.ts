@@ -39,8 +39,8 @@ export class ClientApiRepository extends ClientRepository {
     return this.apiService.post<ClientApiResponse>(`${this.endpoint}`, apiRequest).pipe(
       map(response => {
         return ClientMapper.fromApiResponse(response);
-      }),
-      catchError(error => this.handleError(error, 'Erreur lors de la création du client'))
+      })
+      // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
     );
   }
 
@@ -86,8 +86,8 @@ export class ClientApiRepository extends ClientRepository {
     return this.apiService.put<ClientApiResponse>(`${this.endpoint}/${id}`, apiRequest).pipe(
       map(response => {
         return ClientMapper.fromApiResponse(response);
-      }),
-      catchError(error => this.handleError(error, 'Erreur lors de la mise à jour du client'))
+      })
+      // Supprimé catchError pour laisser l'ErrorService gérer les erreurs HTTP
     );
   }
 

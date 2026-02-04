@@ -78,9 +78,10 @@ export class LoginComponent implements OnInit, OnDestroy {
               // TODO: Handle validation errors if needed
               this.fieldErrors = {};
             } else {
-              // Use simple notification service
+              // Use simple notification service - prioritize backend message
+              const errorMessage = error.userMessage || error.message || 'Identifiants incorrects';
               this.notificationService.showError(
-                error.userMessage || 'Identifiants incorrects',
+                errorMessage,
                 'Erreur de connexion'
               );
             }
