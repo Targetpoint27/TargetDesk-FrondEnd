@@ -553,10 +553,13 @@ app-quick-search {
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .suppliers-table {
   width: 100%;
+  min-width: 1000px;
   border-collapse: collapse;
   font-size: 13px;
 

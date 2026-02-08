@@ -111,8 +111,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
             <!-- Total Clients Actifs -->
-            <div class="group relative bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border border-white/50 hover:border-blue-200/50 hover:-translate-y-1"
-                 (click)="onMetricClick('active_clients')">
+            <div class="group relative bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/50 hover:border-blue-200/50 hover:-translate-y-1">
               <!-- Gradient overlay -->
               <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
@@ -142,8 +141,7 @@
             </div>
 
             <!-- Prospects -->
-            <div class="group relative bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border border-white/50 hover:border-amber-200/50 hover:-translate-y-1"
-                 (click)="onMetricClick('prospects')">
+            <div class="group relative bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/50 hover:border-amber-200/50 hover:-translate-y-1">
               <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
               <div class="relative z-10">
@@ -287,8 +285,7 @@
             <div class="space-y-4">
               @if (getRecentInteractionsData()?.interactions?.length) {
                 @for (interaction of getRecentInteractionsData().interactions; track interaction.id) {
-                  <div class="flex items-start space-x-4 p-3 hover:bg-gray-50 rounded-xl transition-all cursor-pointer"
-                       (click)="navigateToInteraction(interaction.id)">
+                  <div class="flex items-start space-x-4 p-3 hover:bg-gray-50 rounded-xl transition-all">
                     <div class="p-2 bg-green-100 rounded-lg">
                       <i class="bi bi-person-check text-green-600 text-sm"
                          [ngClass]="{
@@ -334,8 +331,7 @@
             <div class="space-y-3">
               @if (getInactiveClientsData()?.clients?.length) {
                 @for (client of getInactiveClientsData().clients; track client.id) {
-                  <div class="flex items-center justify-between p-3 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-200 cursor-pointer"
-                       (click)="navigateToClient(client.id)">
+                  <div class="flex items-center justify-between p-3 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-200">
                     <div class="flex items-center space-x-3">
                       <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
                         <span class="text-red-600 font-medium text-xs">{{ client.days_without_interaction }}j</span>
@@ -390,8 +386,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
 
             <!-- Mes RDV aujourd'hui -->
-            <div class="group bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-blue-200"
-                 (click)="onMetricClick('appointments')">
+            <div class="group bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-blue-200">
               <div class="flex items-center justify-between mb-4">
                 <div class="p-4 bg-white rounded-xl shadow-sm group-hover:shadow-md transition-all">
                   <i class="bi bi-calendar-check-fill text-blue-600 text-2xl"></i>
@@ -413,8 +408,7 @@
             </div>
 
             <!-- Mes Prospects -->
-            <div class="group bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-amber-200"
-                 (click)="onMetricClick('prospects')">
+            <div class="group bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-amber-200">
               <div class="flex items-center justify-between mb-4">
                 <div class="p-4 bg-white rounded-xl shadow-sm group-hover:shadow-md transition-all">
                   <i class="bi bi-person-lines-fill text-amber-600 text-2xl"></i>
@@ -436,8 +430,7 @@
             </div>
 
             <!-- Tâches en retard -->
-            <div class="group bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-red-200"
-                 (click)="onMetricClick('overdue_tasks')">
+            <div class="group bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-red-200">
               <div class="flex items-center justify-between mb-4">
                 <div class="p-4 bg-white rounded-xl shadow-sm group-hover:shadow-md transition-all">
                   <i class="bi bi-clock-fill text-red-600 text-2xl"></i>

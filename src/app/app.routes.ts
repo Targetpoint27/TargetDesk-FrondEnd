@@ -25,7 +25,7 @@ export const routes: Routes = [
       },
       {
         path: 'home',
-        loadComponent: () => import('./features/dashboard/pages/dashboard-home/dashboard-home').then(c => c.DashboardHome),
+        loadComponent: () => import('./features/dashboard/pages/dashboard-refined/dashboard-refined.component').then(c => c.DashboardRefinedComponent),
         canActivate: [RoleGuard],
         data: {
           permissions: [PERMISSIONS.DASHBOARD_PERSONAL, PERMISSIONS.SYSTEM_VIEW],

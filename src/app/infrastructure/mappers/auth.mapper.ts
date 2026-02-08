@@ -49,9 +49,17 @@ export class AuthMapper {
 
   mapUserToDomain(apiUser: UserApiResponse): UserEntity {
     try {
+      // Utiliser le nom complet ou combiner first_name et last_name
+      let fullName = apiUser.name;
+      if (!fullName && apiUser.first_name) {
+        fullName = apiUser.last_name ?
+          `${apiUser.first_name} ${apiUser.last_name}` :
+          apiUser.first_name;
+      }
+
       const userEntity = UserEntity.create({
         id: apiUser.id.toString(), // Ensure it's a string
-        name: apiUser.name,
+        name: fullName || apiUser.email,
         email: apiUser.email,
         emailVerified: !!apiUser.email_verified_at,
         createdAt: apiUser.created_at ? new Date(apiUser.created_at) : new Date(),
@@ -64,7 +72,8 @@ export class AuthMapper {
         data: {
           userId: userEntity.id,
           email: userEntity.email,
-          emailVerified: userEntity.emailVerified
+          emailVerified: userEntity.emailVerified,
+          fullName: fullName
         }
       });
 

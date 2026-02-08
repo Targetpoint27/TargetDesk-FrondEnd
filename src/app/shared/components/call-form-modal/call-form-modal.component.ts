@@ -32,7 +32,7 @@ import { MessageService } from '../../services/message.service';
             <div class="form-row">
               <div class="form-group">
                 <label for="contact_id" class="form-label">Contact</label>
-                <select id="contact_id" name="contact_id" class="form-control" [(ngModel)]="formData.contact_id">
+                <select id="contact_id" name="contact_id" class="form-control" [(ngModel)]="formData.contact_id" (ngModelChange)="onContactChange($event)">
                   <option value="">Aucun contact spécifique</option>
                   <option *ngFor="let contact of contacts" [value]="contact.id">
                     {{ contact.full_name }}
@@ -41,7 +41,10 @@ import { MessageService } from '../../services/message.service';
               </div>
 
               <div class="form-group">
-                <label for="phone_number" class="form-label required">Numéro</label>
+                <label for="phone_number" class="form-label required">
+                  Numéro
+                  <span *ngIf="formData.contact_id" class="text-xs text-gray-500">(auto-complété)</span>
+                </label>
                 <input
                   type="tel"
                   id="phone_number"
@@ -51,9 +54,13 @@ import { MessageService } from '../../services/message.service';
                   #phoneControl="ngModel"
                   required
                   placeholder="0123456789"
+                  [class.bg-gray-50]="formData.contact_id"
                   autocomplete="off">
                 <div *ngIf="phoneControl.invalid && phoneControl.touched" class="form-error">
                   <div *ngIf="phoneControl.errors?.['required']">Le numéro est obligatoire</div>
+                </div>
+                <div *ngIf="formData.contact_id" class="text-xs text-gray-600 mt-1">
+                  ℹ️ Numéro récupéré du contact sélectionné
                 </div>
               </div>
             </div>
@@ -378,6 +385,27 @@ export class CallFormModalComponent implements OnInit, OnChanges {
             console.error('Error creating call:', error);
           }
         });
+    }
+  }
+
+  onContactChange(contactId: string): void {
+    if (!contactId) {
+      // Si aucun contact sélectionné, revenir au numéro par défaut
+      this.formData.phone_number = this.defaultPhone || '';
+      return;
+    }
+
+    // Trouver le contact sélectionné
+    const selectedContact = this.contacts.find(c => c.id === parseInt(contactId));
+    if (selectedContact) {
+      // Récupérer le téléphone principal du contact
+      const primaryPhone = selectedContact.getPrimaryPhone();
+      if (primaryPhone) {
+        this.formData.phone_number = primaryPhone.phone;
+      } else if (selectedContact.phones && selectedContact.phones.length > 0) {
+        // Si pas de téléphone principal, prendre le premier disponible
+        this.formData.phone_number = selectedContact.phones[0].phone;
+      }
     }
   }
 

@@ -7,7 +7,6 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AuthFacade } from '../../../features/auth/auth.facade';
 import {
   PendingReminder,
-  ReminderStatistics,
   NotificationPreferences,
   PreferencesFormData,
   TIMING_PRESETS
@@ -26,19 +25,17 @@ export class NotificationModalComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   // Tab management
-  activeTab: 'pending' | 'sent' | 'statistics' | 'preferences' = 'pending';
+  activeTab: 'pending' | 'sent' | 'preferences' = 'pending';
 
   // Data observables
   pendingReminders: PendingReminder[] = [];
   sentReminders: PendingReminder[] = [];
-  statistics: ReminderStatistics | null = null;
   preferences: NotificationPreferences | null = null;
 
   // Loading states
   loading = {
     pending: false,
     sent: false,
-    statistics: false,
     preferences: false,
     saving: false
   };
@@ -81,15 +78,12 @@ export class NotificationModalComponent implements OnInit, OnDestroy {
   }
 
   // Tab management
-  setActiveTab(tab: 'pending' | 'sent' | 'statistics' | 'preferences'): void {
+  setActiveTab(tab: 'pending' | 'sent' | 'preferences'): void {
     this.activeTab = tab;
 
     switch (tab) {
       case 'sent':
         this.loadSentReminders();
-        break;
-      case 'statistics':
-        this.loadStatistics();
         break;
       case 'preferences':
         this.loadUserPreferences();
@@ -136,25 +130,6 @@ export class NotificationModalComponent implements OnInit, OnDestroy {
       });
   }
 
-  loadStatistics(): void {
-    if (this.loading.statistics) return;
-
-    this.loading.statistics = true;
-    this.notificationService.getReminderStatistics(30)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (stats) => {
-          this.statistics = stats;
-          this.loading.statistics = false;
-          this.cdr.detectChanges();
-        },
-        error: (error) => {
-          console.error('Erreur lors du chargement des statistiques:', error);
-          this.loading.statistics = false;
-          this.cdr.detectChanges();
-        }
-      });
-  }
 
   loadUserPreferences(): void {
     if (!this.currentUserId || this.loading.preferences) return;

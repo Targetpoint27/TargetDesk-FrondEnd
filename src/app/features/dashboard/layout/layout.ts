@@ -53,6 +53,9 @@ export class DashboardLayoutComponent implements OnInit {
   // État de la modal de notifications
   isNotificationModalOpen = false;
 
+  // État du collapse de la sidebar
+  isSidebarCollapsed = false;
+
   menuItems: MenuItem[] = [
     {
       id: 'dashboard',
@@ -212,6 +215,19 @@ export class DashboardLayoutComponent implements OnInit {
 
   closeNotificationModal(): void {
     this.isNotificationModalOpen = false;
+  }
+
+  // Sidebar collapse actions
+  toggleSidebar(): void {
+    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
+
+  collapseSidebar(): void {
+    this.isSidebarCollapsed = true;
+  }
+
+  expandSidebar(): void {
+    this.isSidebarCollapsed = false;
   }
 
   @HostListener('document:click', ['$event'])

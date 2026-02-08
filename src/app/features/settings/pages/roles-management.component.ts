@@ -111,18 +111,23 @@ import { MessageService } from '../../../shared/services/message.service';
 
             <form [formGroup]="roleForm" (ngSubmit)="saveRole()" class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Nom du rôle</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  Nom du rôle <span class="text-red-500">*</span>
+                </label>
                 <input type="text" formControlName="name"
                        placeholder="ex: regional_manager"
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900">
                 <div *ngIf="roleForm.get('name')?.invalid && roleForm.get('name')?.touched"
                      class="text-red-600 text-xs mt-1">
-                  Le nom est requis
+                  <span *ngIf="roleForm.get('name')?.hasError('required')">Le nom du rôle est requis</span>
+                  <span *ngIf="roleForm.get('name')?.hasError('pattern')">Le nom doit commencer par une lettre minuscule et ne contenir que des lettres minuscules et underscores (ex: mon_role)</span>
                 </div>
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Nom d'affichage</label>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                  Nom d'affichage <span class="text-red-500">*</span>
+                </label>
                 <input type="text" formControlName="display_name"
                        placeholder="ex: Gestionnaire Régional"
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900">
@@ -245,6 +250,89 @@ import { MessageService } from '../../../shared/services/message.service';
           </div>
         </div>
       </div>
+
+      <!-- Modal des permissions -->
+      <div *ngIf="showPermissionsModal"
+           class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+           (click)="closePermissionsModal()">
+        <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] flex flex-col overflow-hidden"
+             (click)="$event.stopPropagation()">
+          <!-- Header fixe -->
+          <div class="flex-shrink-0 flex items-center justify-between p-6 border-b border-gray-200">
+            <div>
+              <h3 class="text-xl font-semibold text-slate-800">
+                Permissions du rôle
+              </h3>
+              <p class="text-sm text-slate-600 mt-1">
+                {{ selectedRoleForView?.display_name }}
+              </p>
+            </div>
+            <button (click)="closePermissionsModal()"
+                    class="text-gray-400 hover:text-gray-600 transition-colors">
+              <i class="bi bi-x-lg text-xl"></i>
+            </button>
+          </div>
+
+          <!-- Content scrollable -->
+          <div class="flex-1 p-6 overflow-y-auto">
+            <div *ngIf="selectedRoleForView?.permissions?.length === 0"
+                 class="text-center py-8">
+              <i class="bi bi-shield-x text-4xl text-gray-400 mb-3"></i>
+              <p class="text-slate-600">Aucune permission assignée à ce rôle</p>
+            </div>
+
+            <div *ngIf="selectedRoleForView && selectedRoleForView.permissions && selectedRoleForView.permissions.length > 0"
+                 class="space-y-6">
+              <div *ngFor="let module of currentRolePermissionsByModule | keyvalue"
+                   class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-medium text-slate-800 mb-3 flex items-center">
+                  <i class="bi bi-collection mr-2 text-blue-600"></i>
+                  {{ module.key | titlecase }}
+                  <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {{ module.value.length }} permission(s)
+                  </span>
+                </h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div *ngFor="let permission of module.value"
+                       class="bg-white p-3 rounded-lg border border-gray-200">
+                    <div class="flex items-center justify-between">
+                      <h5 class="font-medium text-slate-800 text-sm">
+                        {{ permission.display_name }}
+                      </h5>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                            [class.bg-green-100]="permission.action === 'read'"
+                            [class.text-green-700]="permission.action === 'read'"
+                            [class.bg-blue-100]="permission.action === 'create'"
+                            [class.text-blue-700]="permission.action === 'create'"
+                            [class.bg-orange-100]="permission.action === 'update'"
+                            [class.text-orange-700]="permission.action === 'update'"
+                            [class.bg-red-100]="permission.action === 'delete'"
+                            [class.text-red-700]="permission.action === 'delete'"
+                            [class.bg-purple-100]="!['read','create','update','delete'].includes(permission.action)"
+                            [class.text-purple-700]="!['read','create','update','delete'].includes(permission.action)">
+                        {{ permission.action }}
+                      </span>
+                    </div>
+                    <div class="text-xs text-slate-500 mt-1">
+                      {{ permission.name }} • {{ permission.scope }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer fixe -->
+          <div class="flex-shrink-0 flex justify-end p-6 border-t border-gray-200 bg-gray-50">
+            <button (click)="closePermissionsModal()"
+                    class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+              <i class="bi bi-check-circle mr-2"></i>
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `
 })
@@ -267,6 +355,10 @@ export class RolesManagementComponent implements OnInit {
   submitting = false;
   isEditing = false;
   editingRoleId: number | null = null;
+
+  // Modal des permissions
+  showPermissionsModal = false;
+  selectedRoleForView: Role | null = null;
 
   roleForm: FormGroup;
 
@@ -399,8 +491,27 @@ export class RolesManagementComponent implements OnInit {
   }
 
   viewPermissions(role: Role): void {
-    // TODO: Ouvrir un modal ou naviguer vers une page de détails des permissions
-    console.log('Permissions du rôle', role.display_name, role.permissions);
+    this.selectedRoleForView = role;
+    this.showPermissionsModal = true;
+  }
+
+  closePermissionsModal(): void {
+    this.showPermissionsModal = false;
+    this.selectedRoleForView = null;
+  }
+
+  get currentRolePermissionsByModule(): { [module: string]: Permission[] } {
+    if (!this.selectedRoleForView?.permissions) return {};
+
+    const grouped: { [module: string]: Permission[] } = {};
+    this.selectedRoleForView.permissions.forEach(permission => {
+      if (!grouped[permission.module]) {
+        grouped[permission.module] = [];
+      }
+      grouped[permission.module].push(permission);
+    });
+
+    return grouped;
   }
 
   cancelEdit(): void {
@@ -434,7 +545,22 @@ export class RolesManagementComponent implements OnInit {
         },
         error: (error) => {
           console.error('Erreur lors de l\'enregistrement du rôle:', error);
-          this.messageService.showError('Erreur lors de l\'enregistrement du rôle');
+
+          // Gestion des erreurs spécifiques
+          let errorMessage = 'Erreur lors de la création du rôle';
+
+          if (error?.error?.errors?.name) {
+            const nameErrors = error.error.errors.name;
+            if (nameErrors.includes('The name has already been taken.')) {
+              errorMessage = 'Ce nom de rôle existe déjà. Veuillez choisir un autre nom.';
+            }
+          } else if (error?.error?.message) {
+            errorMessage = error.error.message;
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+
+          this.messageService.showError(errorMessage);
           this.submitting = false;
         }
       });

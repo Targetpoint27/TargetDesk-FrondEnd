@@ -207,7 +207,8 @@ export class AuthApiRepository extends AuthRepository {
       action: 'getCurrentUser'
     });
 
-    return this.apiService.get<CurrentUserApiResponse>('/auth/user')
+
+    return this.apiService.get<CurrentUserApiResponse>('/user')
       .pipe(
         map(response => {
           const apiResponse = this.apiService.unwrapApiResponse<CurrentUserApiResponse>(response);
@@ -231,6 +232,46 @@ export class AuthApiRepository extends AuthRepository {
             userId: user.id,
             data: { userId: user.id }
           });
+        })
+      );
+  }
+
+  // Nouvelle méthode pour récupérer l'utilisateur actuel complet
+  getCurrentUserComplete(): Observable<any> {
+    this.loggingService.info('Auth API: Get current user complete request', {
+      component: 'AuthApiRepository',
+      action: 'getCurrentUserComplete'
+    });
+
+
+    return this.apiService.get<CurrentUserApiResponse>('/user')
+      .pipe(
+        map(response => {
+
+          // Vérifier d'abord si la réponse HTTP a le bon format
+          if (!response || typeof response !== 'object') {
+            throw new Error('Invalid response format');
+          }
+
+          // Pour cette API, vérifier success sur la réponse brute
+          const rawResponse = response as CurrentUserApiResponse;
+          if (!rawResponse.success) {
+            throw new Error(rawResponse.message || 'Failed to get current user');
+          }
+
+          // Retourner directement les données utilisateur complètes
+          return rawResponse.data;
+        }),
+        tap(userData => {
+          this.loggingService.info('Auth API: Current user complete retrieved', {
+            component: 'AuthApiRepository',
+            action: 'getCurrentUserComplete',
+            userId: userData.id.toString(),
+            data: { userId: userData.id.toString(), email: userData.email }
+          });
+        }),
+        catchError(error => {
+          throw error;
         })
       );
   }

@@ -11,7 +11,9 @@ import {
   CallOutcome,
   CallStats
 } from '../../../domain/models/crm.models';
+import { ContactEntity } from '../../../domain/entities/contact.entity';
 import { ManageCallsUseCase } from '../../../domain/use-cases/crm/manage-calls.use-case';
+import { GetClientContactsUseCase } from '../../../domain/use-cases/contact/get-client-contacts.use-case';
 import { MessageService } from '../../services/message.service';
 import { CallFormModalComponent } from '../call-form-modal/call-form-modal.component';
 
@@ -175,7 +177,6 @@ import { CallFormModalComponent } from '../call-form-modal/call-form-modal.compo
                 <th>Durée</th>
                 <th>Résultat</th>
                 <th>Suivi</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -266,22 +267,6 @@ import { CallFormModalComponent } from '../call-form-modal/call-form-modal.compo
                     }
                   </td>
 
-                  <!-- Actions -->
-                  <td class="actions-cell">
-                    <div class="action-buttons">
-                      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="editCall(call)" title="Modifier">
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                      @if (call.follow_up_required && !call.follow_up_completed) {
-                        <button type="button" class="btn btn-sm btn-outline-success" (click)="completeFollowUp(call)" title="Marquer suivi terminé">
-                          <i class="bi bi-check"></i>
-                        </button>
-                      }
-                      <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteCall(call)" title="Supprimer">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               }
             </tbody>
@@ -315,6 +300,7 @@ import { CallFormModalComponent } from '../call-form-modal/call-form-modal.compo
     <app-call-form-modal
       [isOpen]="isModalOpen"
       [clientId]="clientId"
+      [contacts]="contacts()"
       [defaultPhone]="defaultPhone"
       [editingCall]="selectedCall()"
       (close)="closeModal()"
@@ -331,6 +317,7 @@ export class ClientCallsComponent implements OnInit, OnDestroy {
 
   // Signals
   calls = signal<ClientCall[]>([]);
+  contacts = signal<ContactEntity[]>([]);
   stats = signal<CallStats | null>(null);
   isLoading = signal(false);
   currentPage = signal(1);
@@ -349,11 +336,13 @@ export class ClientCallsComponent implements OnInit, OnDestroy {
 
   constructor(
     private manageCallsUseCase: ManageCallsUseCase,
+    private getClientContactsUseCase: GetClientContactsUseCase,
     private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
     this.loadCalls();
+    this.loadContacts();
   }
 
   ngOnDestroy(): void {
@@ -428,6 +417,21 @@ export class ClientCallsComponent implements OnInit, OnDestroy {
   onCallSaved(call: ClientCall): void {
     this.loadCalls();
     this.closeModal();
+  }
+
+  loadContacts(): void {
+    if (!this.clientId) return;
+
+    this.getClientContactsUseCase.execute(this.clientId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.contacts.set(response.contacts);
+        },
+        error: (error) => {
+          console.error('Erreur lors du chargement des contacts:', error);
+        }
+      });
   }
 
   deleteCall(call: ClientCall): void {

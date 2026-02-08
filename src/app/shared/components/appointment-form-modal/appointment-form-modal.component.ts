@@ -58,9 +58,11 @@ import { MessageService } from '../../services/message.service';
                   class="form-control"
                   [(ngModel)]="formData.scheduled_at"
                   #dateControl="ngModel"
+                  [min]="getMinDateTime()"
                   required>
                 <div *ngIf="dateControl.invalid && dateControl.touched" class="form-error">
                   <div *ngIf="dateControl.errors?.['required']">La date est obligatoire</div>
+                  <div *ngIf="dateControl.errors?.['min']">La date ne peut pas être antérieure à maintenant</div>
                 </div>
               </div>
 
@@ -339,6 +341,14 @@ export class AppointmentFormModalComponent implements OnInit, OnChanges {
       return;
     }
 
+    // Validation de la date - empêcher les dates antérieures
+    const scheduledDate = new Date(this.formData.scheduled_at);
+    const now = new Date();
+    if (scheduledDate <= now) {
+      this.messageService.showError('La date du rendez-vous ne peut pas être antérieure à maintenant');
+      return;
+    }
+
     this.isSubmitting.set(true);
 
     // Construire la liste des participants
@@ -426,5 +436,12 @@ export class AppointmentFormModalComponent implements OnInit, OnChanges {
     };
     this.selectedContactIds.clear();
     this.externalParticipants = [];
+  }
+
+  getMinDateTime(): string {
+    const now = new Date();
+    // Ajouter 1 heure pour éviter les conflits immédiats
+    now.setHours(now.getHours() + 1);
+    return now.toISOString().slice(0, 16);
   }
 }

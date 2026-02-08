@@ -3,7 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UserService, User } from '../../../settings/user-management/user.service';
 import { SimpleNotificationService } from '../../../../shared/services/simple-notification.service';
+import { GetCurrentUserUseCase } from '../../../../domain/use-cases/auth/get-current-user.use-case';
 import { AuthService } from '../../../../shared/services/auth.service';
+import { AuthApiRepository } from '../../../../infrastructure/repositories/auth-api.repository';
+import { UserEntity } from '../../../../domain/entities/user.entity';
+import { PermissionService } from '../../../../core/auth/permission.service';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-profile',
@@ -31,7 +37,11 @@ import { AuthService } from '../../../../shared/services/auth.service';
                 <div class="flex items-center space-x-4 text-sm text-slate-500">
                   <span class="flex items-center space-x-1">
                     <i class="bi bi-shield-check text-blue-500"></i>
-                    <span>{{ getUserRole() }}</span>
+                    @if (userRole$ | async; as role) {
+                      <span>{{ role }}</span>
+                    } @else {
+                      <span>Utilisateur</span>
+                    }
                   </span>
                   <span class="flex items-center space-x-1">
                     <i class="bi bi-circle-fill text-green-500"></i>
@@ -179,13 +189,19 @@ import { AuthService } from '../../../../shared/services/auth.service';
 export class ProfileComponent implements OnInit {
   private userService = inject(UserService);
   private notificationService = inject(SimpleNotificationService);
+  private getCurrentUserUseCase = inject(GetCurrentUserUseCase);
+  private authApiRepository = inject(AuthApiRepository);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
+  private permissionService = inject(PermissionService);
 
   // State
   currentUser = signal<User | null>(null);
   isEditingProfile = signal(false);
   isLoading = signal(false);
+
+  // Observable pour le rôle principal de l'utilisateur
+  userRole$!: Observable<string>;
 
   // Forms
   profileForm: FormGroup;
@@ -202,52 +218,72 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCurrentUser();
+    this.initializeUserRole();
   }
 
   private loadCurrentUser(): void {
-    // Obtenir l'utilisateur connecté depuis le service d'auth
+    // Utiliser directement l'API /user qui retourne toutes les infos nécessaires
+    this.authApiRepository.getCurrentUserComplete().subscribe({
+      next: (userData) => {
+        // Créer l'objet User directement depuis les données de l'API
+        const user: User = {
+          id: userData.id,
+          name: userData.name,
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          email: userData.email,
+          phone: userData.phone || '',
+          department: userData.department || '',
+          status: (userData.status as 'active' | 'inactive') || 'active',
+          last_login: userData.last_login || '',
+          created_at: userData.created_at || new Date().toISOString(),
+          updated_at: userData.updated_at || new Date().toISOString(),
+          roles: userData.roles || []
+        };
+
+        this.currentUser.set(user);
+        this.profileForm.patchValue({
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          phone: user.phone || '',
+          department: user.department || ''
+        });
+      },
+      error: () => {
+        // Fallback vers le service d'auth mock
+        this.loadUserFromAuthService();
+      }
+    });
+  }
+
+  private loadUserDetails(userId: number): void {
+    this.userService.getUserById(userId).subscribe({
+      next: (user) => {
+        this.currentUser.set(user);
+        this.profileForm.patchValue({
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          phone: user.phone || '',
+          department: user.department || ''
+        });
+      },
+      error: () => {
+        // Fallback vers le service d'auth si l'utilisateur spécifique n'existe pas
+        this.loadUserFromAuthService();
+      }
+    });
+  }
+
+  private loadUserFromAuthService(): void {
+    // Utiliser l'ID depuis le service d'auth mock
     const currentUser = this.authService.getCurrentUser();
     if (currentUser && currentUser.id) {
-      this.userService.getUserById(currentUser.id).subscribe({
-        next: (user) => {
-          this.currentUser.set(user);
-          this.profileForm.patchValue({
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email,
-            phone: user.phone || '',
-            department: user.department || ''
-          });
-        },
-        error: (error) => {
-          console.error('Error loading user profile:', error);
-          this.notificationService.showError(
-            'Erreur lors du chargement du profil',
-            'Erreur'
-          );
-        }
-      });
+      this.loadUserDetails(currentUser.id);
     } else {
-      // Fallback pour le développement - utiliser l'ID 1
-      this.userService.getUserById(1).subscribe({
-        next: (user) => {
-          this.currentUser.set(user);
-          this.profileForm.patchValue({
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email,
-            phone: user.phone || '',
-            department: user.department || ''
-          });
-        },
-        error: (error) => {
-          console.error('Error loading user profile:', error);
-          this.notificationService.showError(
-            'Erreur lors du chargement du profil',
-            'Erreur'
-          );
-        }
-      });
+      // Dernier fallback - ID 1 pour le développement
+      this.loadUserDetails(1);
     }
   }
 
@@ -348,5 +384,20 @@ export class ProfileComponent implements OnInit {
     }
 
     return user.roles[0].display_name || user.roles[0].name || 'Utilisateur';
+  }
+
+  private initializeUserRole(): void {
+    // Initialize user role observable comme dans le layout
+    this.userRole$ = this.permissionService.getUserPermissions().pipe(
+      map(permissions => {
+        if (!permissions?.roles?.length) {
+          return 'Utilisateur';
+        }
+
+        // Get the first role's description or name
+        const primaryRole = permissions.roles[0];
+        return primaryRole.description || primaryRole.name || 'Utilisateur';
+      })
+    );
   }
 }

@@ -182,7 +182,6 @@ import { AppointmentFormModalComponent } from '../appointment-form-modal/appoint
                 <th>Durée</th>
                 <th>Statut</th>
                 <th>Lieu</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -295,17 +294,6 @@ import { AppointmentFormModalComponent } from '../appointment-form-modal/appoint
                     <span class="location">{{ appointment.location || 'Non spécifié' }}</span>
                   </td>
 
-                  <!-- Actions -->
-                  <td class="actions-cell">
-                    <div class="action-buttons">
-                      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="editAppointment(appointment)" title="Modifier">
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                      <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteAppointment(appointment)" title="Supprimer">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               }
             </tbody>

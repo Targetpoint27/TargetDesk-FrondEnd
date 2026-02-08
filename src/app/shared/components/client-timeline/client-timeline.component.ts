@@ -191,25 +191,6 @@ import { EnvironmentService } from '../../../core/config/environment.service';
                     }
                   </div>
 
-                  <div class="timeline-actions">
-                    <a
-                      [href]="getDetailUrl(item)"
-                      target="_blank"
-                      class="action-btn"
-                      title="Voir les détails">
-                      <i class="bi bi-eye"></i>
-                      Détails
-                    </a>
-                    <button
-                      *ngIf="canEditItem(item)"
-                      type="button"
-                      class="action-btn"
-                      (click)="editItem(item)"
-                      title="Modifier">
-                      <i class="bi bi-pencil"></i>
-                      Modifier
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>

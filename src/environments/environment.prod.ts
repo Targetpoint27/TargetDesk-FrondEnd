@@ -1,7 +1,9 @@
 export const environment = {
   production: true,
+  apiUrl: 'https://targetdesk.fr/api/public/api/v1',
+  apiBaseUrl: 'https://targetdesk.fr/api/public/api/v1',
   api: {
-    baseUrl: 'https://motivational-nickel-rabbit.148-230-126-127.cpanel.site/test/api/public/api/v1',
+    baseUrl: 'https://targetdesk.fr/api/public/api/v1',
     timeout: 30000,
     retryAttempts: 2
   },

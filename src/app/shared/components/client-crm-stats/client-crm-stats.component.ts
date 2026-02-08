@@ -279,7 +279,7 @@ export class ClientCrmStatsComponent implements OnInit, OnDestroy {
     const currentStats = this.stats();
     if (!currentStats || !currentStats.calls || currentStats.calls.total_calls === 0) return null;
 
-    const rate = Math.round((currentStats.calls.positive_calls / currentStats.calls.total_calls) * 100);
+    const rate = Math.round((currentStats.calls.positive_calls / currentStats.calls.total_calls) * 1000) / 10;
     return rate;
   });
 
@@ -287,7 +287,7 @@ export class ClientCrmStatsComponent implements OnInit, OnDestroy {
     const currentStats = this.stats();
     if (!currentStats || !currentStats.appointments || currentStats.appointments.total_appointments === 0) return null;
 
-    const rate = Math.round((currentStats.appointments.completed / currentStats.appointments.total_appointments) * 100);
+    const rate = Math.round((currentStats.appointments.completed / currentStats.appointments.total_appointments) * 1000) / 10;
     return rate;
   });
 

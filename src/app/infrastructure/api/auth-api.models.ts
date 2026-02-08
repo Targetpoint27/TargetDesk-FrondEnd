@@ -3,10 +3,22 @@
 export interface UserApiResponse {
   id: number | string; // API can return number, but we convert to string
   name: string;
+  first_name?: string;
+  last_name?: string;
   email: string;
   email_verified_at?: string | null;
+  status?: string;
+  phone?: string;
+  department?: string;
+  last_login?: string;
   created_at?: string;
   updated_at?: string;
+  roles?: Array<{
+    id: number;
+    name: string;
+    display_name: string;
+    description?: string;
+  }>;
 }
 
 export interface AuthApiResponse {

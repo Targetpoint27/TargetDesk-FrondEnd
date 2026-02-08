@@ -24,12 +24,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    background: var(--color-primary);
-    color: var(--color-white);
-    border-radius: var(--border-radius-md);
     margin-bottom: var(--spacing-md);
+
+    .logo-image {
+      height: 120px;
+      width: auto;
+      max-width: 300px;
+    }
 
     svg {
       width: 24px;
