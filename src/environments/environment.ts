@@ -3,7 +3,7 @@ export const environment = {
   apiUrl: 'http://localhost:8000/api/v1',
   apiBaseUrl: 'http://localhost:8000/api/v1',
   api: {
-    baseUrl: 'http://localhost:8000/api/v1',
+    baseUrl: 'http://targetdesk-backend.test/api/v1',
     timeout: 30000,
     retryAttempts: 3
   },

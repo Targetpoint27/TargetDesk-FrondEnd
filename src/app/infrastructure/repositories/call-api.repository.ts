@@ -1,0 +1,177 @@
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { CallRepository } from '../../domain/repositories/call.repository';
+import {
+  Call,
+  CreateCallRequest,
+  UpdateCallRequest,
+  ChangeStatusRequest,
+  ScheduleCallbackRequest,
+  CloseCallRequest,
+  CallbackResultRequest,
+  CallNote,
+  CallResponse,
+  CallListResponse
+} from '../../domain/models/call.model';
+import { ApiService } from '../../core/api/api.service';
+import { CallMapper } from '../mappers/call.mapper';
+
+@Injectable()
+export class CallApiRepository extends CallRepository {
+  private readonly BASE_PATH = '/call-center';
+
+  constructor(
+    private apiService: ApiService,
+    private mapper: CallMapper
+  ) {
+    super();
+  }
+
+  getMyQueue(): Observable<Call[]> {
+    return this.apiService
+      .get<any>(`${this.BASE_PATH}/calls/my-queue`)
+      .pipe(
+        map(response => {
+          // Backend returns: { success, message, data: { total, urgent_count, calls: [...] } }
+          const calls = response.data?.calls || [];
+          return calls.map((call: any) => this.mapper.toDomain(call));
+        })
+      );
+  }
+
+  getDepartmentQueue(): Observable<Call[]> {
+    return this.apiService
+      .get<any>(`${this.BASE_PATH}/calls/department-queue`)
+      .pipe(
+        map(response => {
+          const calls = response.data?.calls || [];
+          return calls.map((call: any) => this.mapper.toDomain(call));
+        })
+      );
+  }
+
+  getCallbacks(): Observable<Call[]> {
+    return this.apiService
+      .get<any>(`${this.BASE_PATH}/calls/callbacks`)
+      .pipe(
+        map(response => {
+          // Backend returns: { success, message, data: { total, overdue_count, calls: [...] } }
+          const calls = response.data?.calls || [];
+          return calls.map((call: any) => this.mapper.toDomain(call));
+        })
+      );
+  }
+
+  searchCalls(query: string): Observable<Call[]> {
+    return this.apiService
+      .get<any>(`${this.BASE_PATH}/calls/search`, {
+        params: { q: query }
+      })
+      .pipe(
+        map(response => {
+          const calls = response.data?.calls || response.data || [];
+          return Array.isArray(calls) ? calls.map((call: any) => this.mapper.toDomain(call)) : [];
+        })
+      );
+  }
+
+  getAllCalls(): Observable<Call[]> {
+    return this.apiService
+      .get<any>(`${this.BASE_PATH}/calls`)
+      .pipe(
+        map(response => {
+          const calls = response.data?.calls || response.data || [];
+          return Array.isArray(calls) ? calls.map((call: any) => this.mapper.toDomain(call)) : [];
+        })
+      );
+  }
+
+  getCallDetails(id: number): Observable<Call> {
+    return this.apiService
+      .get<CallResponse>(`${this.BASE_PATH}/calls/${id}`)
+      .pipe(
+        map(response => this.mapper.toDomain(response.data))
+      );
+  }
+
+  createCall(data: CreateCallRequest): Observable<Call> {
+    return this.apiService
+      .post<CallResponse>(`${this.BASE_PATH}/calls`, data)
+      .pipe(
+        map(response => this.mapper.toDomain(response.data))
+      );
+  }
+
+  updateCall(id: number, data: UpdateCallRequest): Observable<Call> {
+    return this.apiService
+      .put<CallResponse>(`${this.BASE_PATH}/calls/${id}`, data)
+      .pipe(
+        map(response => this.mapper.toDomain(response.data))
+      );
+  }
+
+  changeStatus(id: number, data: ChangeStatusRequest): Observable<Call> {
+    return this.apiService
+      .put<CallResponse>(`${this.BASE_PATH}/calls/${id}/status`, data)
+      .pipe(
+        map(response => this.mapper.toDomain(response.data))
+      );
+  }
+
+  closeCall(id: number, data: CloseCallRequest): Observable<Call> {
+    return this.apiService
+      .post<CallResponse>(`${this.BASE_PATH}/calls/${id}/close`, data)
+      .pipe(
+        map(response => this.mapper.toDomain(response.data))
+      );
+  }
+
+  assignToMe(id: number): Observable<Call> {
+    return this.apiService
+      .post<CallResponse>(`${this.BASE_PATH}/calls/${id}/assign-to-me`, {})
+      .pipe(
+        map(response => this.mapper.toDomain(response.data))
+      );
+  }
+
+  scheduleCallback(id: number, data: ScheduleCallbackRequest): Observable<Call> {
+    return this.apiService
+      .put<CallResponse>(`${this.BASE_PATH}/calls/${id}/schedule`, data)
+      .pipe(
+        map(response => this.mapper.toDomain(response.data))
+      );
+  }
+
+  recordCallbackResult(id: number, data: CallbackResultRequest): Observable<Call> {
+    return this.apiService
+      .post<CallResponse>(`${this.BASE_PATH}/calls/${id}/callback-result`, data)
+      .pipe(
+        map(response => this.mapper.toDomain(response.data))
+      );
+  }
+
+  linkClient(id: number, clientId: number): Observable<Call> {
+    return this.apiService
+      .post<CallResponse>(`${this.BASE_PATH}/calls/${id}/link-client`, { client_id: clientId })
+      .pipe(
+        map(response => this.mapper.toDomain(response.data))
+      );
+  }
+
+  getNotes(callId: number): Observable<CallNote[]> {
+    return this.apiService
+      .get<any>(`${this.BASE_PATH}/calls/${callId}/notes`)
+      .pipe(
+        map(response => response.data?.notes || response.data || [])
+      );
+  }
+
+  addNote(callId: number, note: string, isImportant: boolean): Observable<CallNote> {
+    return this.apiService
+      .post<any>(`${this.BASE_PATH}/calls/${callId}/notes`, { note, is_important: isImportant })
+      .pipe(
+        map(response => response.data)
+      );
+  }
+}

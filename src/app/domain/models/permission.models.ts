@@ -146,6 +146,18 @@ export const PERMISSIONS = {
   CATEGORIES_CREATE: 'system.manage',
   CATEGORIES_EDIT: 'system.manage',
   CATEGORIES_DELETE: 'system.manage',
+
+  // Call Center Module
+  CALL_CENTER_ACCESS: 'call_center.access',
+  CALL_CENTER_CREATE: 'call_center.create',
+  CALL_CENTER_VIEW: 'call_center.view',
+  CALL_CENTER_UPDATE: 'call_center.update',
+  CALL_CENTER_CLOSE: 'call_center.close',
+  CALL_CENTER_ASSIGN: 'call_center.assign',
+  CALL_CENTER_NOTES: 'call_center.notes',
+  CALL_CENTER_SUPERVISOR: 'call_center.supervisor',
+  CALL_CENTER_MANAGER: 'call_center.manager',
+  CALL_CENTER_ADMIN: 'call_center.admin',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];

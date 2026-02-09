@@ -131,6 +131,49 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'dashboard',
+    loadComponent: () => import('./features/dashboard/layout/layout').then(c => c.DashboardLayoutComponent),
+    canActivate: [AuthGuard],
+    children: [
+      {
+        path: '',
+        redirectTo: 'home',
+        pathMatch: 'full'
+      },
+      {
+        path: 'home',
+        loadComponent: () => import('./features/dashboard/pages/dashboard-refined/dashboard-refined.component').then(c => c.DashboardRefinedComponent),
+        canActivate: [RoleGuard],
+        data: {
+          permissions: [PERMISSIONS.DASHBOARD_PERSONAL, PERMISSIONS.SYSTEM_VIEW],
+          requireAllPermissions: false
+        }
+      },
+      {
+        path: 'clients',
+        loadComponent: () => import('./features/dashboard/pages/clients/clients').then(c => c.Clients),
+        // ... rest of clients config
+      },
+      // ... all other dashboard routes ...
+      {
+        path: 'profile',
+        loadComponent: () => import('./features/dashboard/pages/profile/profile').then(c => c.ProfileComponent)
+      },
+      
+      // ✅ ADD THIS HERE - CALL CENTER INSIDE DASHBOARD
+      {
+        path: 'call-center',
+        loadComponent: () => import('./features/dashboard/pages/call-center/dashboard/call-center-dashboard.component')
+          .then(c => c.CallCenterDashboardComponent),
+        canActivate: [RoleGuard],
+        data: {
+          permissions: [PERMISSIONS.CALL_CENTER_ACCESS, PERMISSIONS.DASHBOARD_PERSONAL],
+          requireAllPermissions: false
+        }
+      }
+    ]
+  },
+  {
     path: 'unauthorized',
     loadComponent: () => import('./features/shared/pages/unauthorized.component').then(c => c.UnauthorizedComponent)
   },

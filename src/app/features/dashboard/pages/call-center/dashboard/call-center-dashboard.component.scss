@@ -1,0 +1,28 @@
+// Call Center Dashboard Styles
+// Matches the existing dashboard style
+
+:host {
+  display: block;
+}
+
+// Smooth animations
+.transition-all {
+  transition: all 0.2s ease;
+}
+
+// Custom scrollbar for lists
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}

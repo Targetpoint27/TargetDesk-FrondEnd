@@ -101,6 +101,15 @@ export class DashboardLayoutComponent implements OnInit {
       requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
       active: false,
       visible: false
+    },
+    {
+      id: 'call-center',
+      label: 'Call Center',
+      icon: 'phone',
+      route: '/dashboard/call-center',
+      requiredPermissions: [PERMISSIONS.CALL_CENTER_ACCESS, PERMISSIONS.DASHBOARD_PERSONAL],
+      active: false,
+      visible: false
     }
   ];
 

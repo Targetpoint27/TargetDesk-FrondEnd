@@ -15,6 +15,7 @@ import { ContactRepository } from './domain/repositories/contact.repository';
 import { ImportExportRepository } from './domain/repositories/import-export.repository';
 import { CrmRepository } from './domain/repositories/crm.repository';
 import { TimelineRepository } from './domain/repositories/timeline.repository';
+import { CallRepository } from './domain/repositories/call.repository';
 
 // Infrastructure Layer - Repository implementations
 import { AuthApiRepository } from './infrastructure/repositories/auth-api.repository';
@@ -24,6 +25,7 @@ import { ContactApiRepository } from './infrastructure/repositories/contact-api.
 import { ImportExportApiRepository } from './infrastructure/repositories/import-export-api.repository';
 import { CrmApiRepository } from './infrastructure/repositories/crm-api.repository';
 import { ApiTimelineRepository } from './infrastructure/repositories/api-timeline.repository';
+import { CallApiRepository } from './infrastructure/repositories/call-api.repository';
 
 // Core Services
 import { EnvironmentService } from './core/config/environment.service';
@@ -52,6 +54,7 @@ import { AuthMapper } from './infrastructure/mappers/auth.mapper';
 import { ClientMapper } from './infrastructure/mappers/client.mapper';
 import { SupplierMapper } from './infrastructure/mappers/supplier.mapper';
 import { ContactMapper } from './infrastructure/mappers/contact.mapper';
+import { CallMapper } from './infrastructure/mappers/call.mapper';
 
 // Use Cases
 import { LoginUseCase } from './domain/use-cases/auth/login.use-case';
@@ -65,6 +68,15 @@ import { ManageNotesUseCase } from './domain/use-cases/crm/manage-notes.use-case
 import { ManageCallsUseCase } from './domain/use-cases/crm/manage-calls.use-case';
 import { ManageAppointmentsUseCase } from './domain/use-cases/crm/manage-appointments.use-case';
 import { ManageTimelineUseCase } from './domain/use-cases/crm/manage-timeline.use-case';
+import {
+  GetMyQueueUseCase,
+  CreateCallUseCase,
+  GetCallDetailsUseCase,
+  UpdateCallUseCase,
+  ChangeCallStatusUseCase,
+  CloseCallUseCase,
+  GetCallbacksUseCase
+} from './domain/use-cases/call';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -170,8 +182,23 @@ export const appConfig: ApplicationConfig = {
     ClientFacade,
     SupplierFacade,
     ContactFacade,
+    
+    // Call Center Mappers
+    CallMapper,
 
-    // TODO: Add other providers as needed
-    // Guards, Interceptors, etc.
+    // Call Center Repository Implementations
+    {
+      provide: CallRepository,
+      useClass: CallApiRepository
+    },
+
+    // Call Center Use Cases
+    GetMyQueueUseCase,
+    CreateCallUseCase,
+    GetCallDetailsUseCase,
+    UpdateCallUseCase,
+    ChangeCallStatusUseCase,
+    CloseCallUseCase,
+    GetCallbacksUseCase,
   ]
 };
