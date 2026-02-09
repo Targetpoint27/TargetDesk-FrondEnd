@@ -52,7 +52,7 @@ export class CallCenterDashboardComponent implements OnInit, OnDestroy {
           totalInQueue: myQueue.length,
           totalCallbacks: callbacks.length,
           urgentCalls: myQueue.filter(call => 
-            call.urgency === 'haute' || call.urgency === 'critique'
+            call.urgency === 'urgent' || call.urgency === 'critique'
           ).length,
           newCalls: myQueue.filter(call => call.status === 'nouveau').length
         };

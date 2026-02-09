@@ -159,17 +159,30 @@ export const routes: Routes = [
         path: 'profile',
         loadComponent: () => import('./features/dashboard/pages/profile/profile').then(c => c.ProfileComponent)
       },
-      
-      // ✅ ADD THIS HERE - CALL CENTER INSIDE DASHBOARD
       {
         path: 'call-center',
-        loadComponent: () => import('./features/dashboard/pages/call-center/dashboard/call-center-dashboard.component')
-          .then(c => c.CallCenterDashboardComponent),
         canActivate: [RoleGuard],
         data: {
           permissions: [PERMISSIONS.CALL_CENTER_ACCESS, PERMISSIONS.DASHBOARD_PERSONAL],
           requireAllPermissions: false
-        }
+        },
+        children: [
+          {
+            path: '',
+            redirectTo: 'dashboard',
+            pathMatch: 'full'
+          },
+          {
+            path: 'dashboard',
+            loadComponent: () => import('./features/dashboard/pages/call-center/dashboard/call-center-dashboard.component')
+              .then(c => c.CallCenterDashboardComponent)
+          },
+          {
+            path: 'create-call',
+            loadComponent: () => import('./features/dashboard/pages/call-center/create-call/create-call.component')
+              .then(c => c.CreateCallComponent)
+          }
+        ]
       }
     ]
   },

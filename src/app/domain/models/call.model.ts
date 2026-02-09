@@ -1,7 +1,7 @@
 // Call types
 export type CallType = 'entrant' | 'sortant';
 export type CallStatus = 'nouveau' | 'en_cours' | 'en_attente' | 'resolu' | 'cloture' | 'a_rappeler';
-export type CallUrgency = 'basse' | 'normale' | 'haute' | 'critique';
+export type CallUrgency = 'normal' | 'urgent' | 'critique';
 
 // Call interface
 export interface Call {
@@ -51,8 +51,12 @@ export interface CreateCallRequest {
   caller_email?: string;
   client_id?: number;
   contact_id?: number;
-  department_id: number;
+  custom_motif?: string;
   motif_id?: number;
+  outbound_reason?: string;
+  call_result?: string;
+  call_duration_seconds?: number;
+  department_id: number;
   object: string;
   summary: string;
   urgency?: CallUrgency;
@@ -132,6 +136,10 @@ export interface CallMotif {
   display_order: number;
   is_active: boolean;
   children?: CallMotif[];
+  parent?: CallMotif;
+  department?: Department;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface User {
