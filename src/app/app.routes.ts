@@ -190,6 +190,11 @@ export const routes: Routes = [
             loadComponent: () => import('./features/dashboard/pages/call-center/search-calls/search-calls.component')
               .then(c => c.SearchCallsComponent)
           },
+          {
+            path: 'department-queue',
+            loadComponent: () => import('./features/dashboard/pages/call-center/department-queue/department-queue.component')
+              .then(c => c.DepartmentQueueComponent)
+          },
         ]
       }
     ]

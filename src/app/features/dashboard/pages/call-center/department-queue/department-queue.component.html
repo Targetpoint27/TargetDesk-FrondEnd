@@ -1,0 +1,83 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <button routerLink="/dashboard/call-center/dashboard" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+        <i class="bi bi-arrow-left text-xl text-gray-600"></i>
+      </button>
+      <div>
+        <h2 class="text-2xl font-bold text-gray-900">File du Département</h2>
+        <p class="text-gray-500 text-sm">Tous les appels en attente de traitement par votre équipe</p>
+      </div>
+    </div>
+    <button (click)="onRefresh()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 text-sm font-medium transition-all">
+      <i class="bi bi-arrow-clockwise"></i> Actualiser
+    </button>
+  </div>
+
+  <div class="bg-white/60 backdrop-blur-sm rounded-2xl border border-white/60 shadow-sm overflow-hidden">
+    <div *ngIf="isLoading$ | async" class="p-20 flex flex-col items-center justify-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-100 border-t-blue-600"></div>
+    </div>
+
+    <div *ngIf="!(isLoading$ | async) && (calls$ | async) as calls" class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-gray-50/50 border-b border-gray-100">
+          <tr>
+            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Identifiant</th>
+            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Client / Contact</th>
+            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Objet</th>
+            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Statut</th>
+            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Agent</th>
+            <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let call of calls" 
+              (click)="viewCall(call.id)"
+              class="hover:bg-white/50 transition-colors cursor-pointer group">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div [class]="getUrgencyClass(call.urgency)" class="w-2 h-2 rounded-full shadow-sm"></div>
+                <span class="text-sm font-mono font-bold text-gray-900">{{ call.call_id }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <p class="text-sm font-semibold text-gray-900">{{ call.caller_name || call.phone_number }}</p>
+              <p class="text-xs text-gray-500">{{ call.time_elapsed }}</p>
+            </td>
+            <td class="px-6 py-4">
+              <p class="text-sm text-gray-700 truncate max-w-xs">{{ call.object }}</p>
+            </td>
+            <td class="px-6 py-4">
+              <span [class]="getStatusClass(call.status)" class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
+                {{ call.status.replace('_', ' ') }}
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <div *ngIf="call.assigned_agent" class="flex items-center gap-2">
+                <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-[10px] font-bold">
+                  {{ call.assigned_agent.name.charAt(0) }}
+                </div>
+                <span class="text-xs text-gray-600">{{ call.assigned_agent.name }}</span>
+              </div>
+              <span *ngIf="!call.assigned_agent" class="text-xs text-amber-600 font-medium italic">Non assigné</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <button 
+                *ngIf="!call.assigned_to"
+                (click)="onAssign(call.id, $event)"
+                class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-bold transition-all shadow-md shadow-blue-100">
+                <i class="bi bi-hand-index-thumb"></i> S'assigner
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div *ngIf="calls.length === 0" class="p-20 text-center">
+        <i class="bi bi-inbox text-5xl text-gray-200"></i>
+        <p class="mt-4 text-gray-500 font-medium">Aucun appel dans la file du département</p>
+      </div>
+    </div>
+  </div>
+</div>

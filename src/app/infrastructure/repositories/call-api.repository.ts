@@ -11,8 +11,7 @@ import {
   CloseCallRequest,
   CallbackResultRequest,
   CallNote,
-  CallResponse,
-  CallListResponse
+  CallResponse
 } from '../../domain/models/call.model';
 import { ApiService } from '../../core/api/api.service';
 import { CallMapper } from '../mappers/call.mapper';
@@ -33,7 +32,6 @@ export class CallApiRepository extends CallRepository {
       .get<any>(`${this.BASE_PATH}/calls/my-queue`)
       .pipe(
         map(response => {
-          // Backend returns: { success, message, data: { total, urgent_count, calls: [...] } }
           const calls = response.data?.calls || [];
           return calls.map((call: any) => this.mapper.toDomain(call));
         })
@@ -45,6 +43,7 @@ export class CallApiRepository extends CallRepository {
       .get<any>(`${this.BASE_PATH}/calls/department-queue`)
       .pipe(
         map(response => {
+          // Backend structure: { success, message, data: { total, unassigned_count, ..., calls: [...] } }
           const calls = response.data?.calls || [];
           return calls.map((call: any) => this.mapper.toDomain(call));
         })
@@ -56,7 +55,6 @@ export class CallApiRepository extends CallRepository {
       .get<any>(`${this.BASE_PATH}/calls/callbacks`)
       .pipe(
         map(response => {
-          // Backend returns: { success, message, data: { total, overdue_count, calls: [...] } }
           const calls = response.data?.calls || [];
           return calls.map((call: any) => this.mapper.toDomain(call));
         })
@@ -173,34 +171,27 @@ export class CallApiRepository extends CallRepository {
     );
   }
 
-  // ========== NEW METHODS FOR SESSION 6 ==========
-
-  // Search calls
   search(query: string): Observable<any> {
     return this.apiService
       .get<any>(`${this.BASE_PATH}/calls/search`, {
         params: { q: query }
       })
       .pipe(
-        map(response => response) // Return full response (includes data array)
+        map(response => response)
       );
   }
 
-  // Filter calls
   filter(filters: any): Observable<any> {
-    // Build query params object
     const params: any = {};
-    
     Object.keys(filters).forEach(key => {
       if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
         params[`filter[${key}]`] = filters[key];
       }
     });
-    
     return this.apiService
       .get<any>(`${this.BASE_PATH}/calls`, { params })
       .pipe(
-        map(response => response) // Return full response (includes total, filters_applied, calls)
+        map(response => response)
       );
   }
 }

@@ -17,6 +17,14 @@
         <span class="group-hover:text-blue-600 transition-colors">Rechercher</span>
       </button>
 
+      <!-- Department Queue Button -->
+      <button 
+        routerLink="/dashboard/call-center/department-queue"
+        class="bg-white/50 hover:bg-white text-gray-600 px-4 py-2.5 rounded-xl transition-all duration-200 border border-transparent hover:border-indigo-300 flex items-center gap-2 text-sm font-medium group">
+        <i class="bi bi-people group-hover:text-indigo-600 transition-colors"></i>
+        <span class="group-hover:text-indigo-600 transition-colors">File Département</span>
+      </button>
+
       <!-- Refresh Button -->
       <button 
         (click)="refreshData()"

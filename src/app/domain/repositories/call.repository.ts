@@ -38,5 +38,5 @@ export abstract class CallRepository {
   abstract addNote(callId: number, data: { note: string; is_important?: boolean }): Observable<CallNote>;
 
   abstract search(query: string): Observable<any>;
-abstract filter(filters: any): Observable<any>;
+  abstract filter(filters: any): Observable<any>;
 }

@@ -5,3 +5,5 @@ export * from './update-call.use-case';
 export * from './change-call-status.use-case';
 export * from './close-call.use-case';
 export * from './get-callbacks.use-case';
+export * from './get-department-queue.use-case';
+export * from './assign-to-me.use-case';
