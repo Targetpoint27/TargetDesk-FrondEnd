@@ -121,7 +121,7 @@ export interface ScheduleCallbackRequest {
 // Close Call Request
 export interface CloseCallRequest {
   resolution_summary: string;
-  final_result: string;
+  final_result: 'resolu_satisfait' | 'resolu_insatisfait' | 'transfere' | 'non_resolu';
 }
 
 // Callback Result Request

@@ -1,19 +1,23 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Observable, Subject, takeUntil } from 'rxjs';
 
-import { Call } from '../../../../../domain/models/call.model';
+
+import { Call, CallStatus } from '../../../../../domain/models/call.model';
 import { CallFacade } from '../../../call-center/calls/call.facade';
 
 import { EditCallModalComponent } from '../edit-call-modal/edit-call-modal.component';
 import { UpdateCallRequest } from '../../../../../domain/models/call.model';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
+import { CloseCallModalComponent } from '../close-call-modal/close-call-modal.component';
+import { CloseCallRequest } from '../../../../../domain/models/call.model';
+
 @Component({
   selector: 'app-call-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, EditCallModalComponent, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, EditCallModalComponent, CloseCallModalComponent, ReactiveFormsModule],
   templateUrl: './call-details.component.html',
   styleUrl: './call-details.component.scss'
 })
@@ -23,14 +27,28 @@ export class CallDetailsComponent implements OnInit, OnDestroy {
   call$!: Observable<Call | null>;
   isLoading$!: Observable<boolean>;
 
-    // Modal state
-    isEditModalOpen = false;
-    departments: any[] = [];
+  // Modal state
+  isEditModalOpen = false;
+  departments: any[] = [];
 
-    // Note form
-    showNoteForm = false;
-    noteForm!: FormGroup;
-    isAddingNote = false;
+  // Note form
+  showNoteForm = false;
+  noteForm!: FormGroup;
+  isAddingNote = false;
+
+  // Close modal state
+  isCloseModalOpen = false;
+
+  // Status dropdown state
+  showStatusDropdown = false;
+  availableStatuses: Array<{ value: CallStatus; label: string; color: string }> = [
+    { value: 'nouveau', label: 'Nouveau', color: 'text-green-700' },
+    { value: 'a_traiter', label: 'À traiter', color: 'text-yellow-700' },
+    { value: 'en_cours', label: 'En cours', color: 'text-blue-700' },
+    { value: 'en_attente', label: 'En attente', color: 'text-orange-700' },
+    { value: 'resolu', label: 'Résolu', color: 'text-purple-700' },
+    { value: 'a_rappeler', label: 'À rappeler', color: 'text-red-700' }
+  ];
 
   constructor(
     private route: ActivatedRoute,
@@ -48,10 +66,23 @@ export class CallDetailsComponent implements OnInit, OnDestroy {
     });
   }
 
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent): void {
+      // Close status dropdown when clicking outside
+      if (this.showStatusDropdown) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.relative')) {
+          this.closeStatusDropdown();
+        }
+      }
+    }
+
   ngOnInit(): void {
     const callId = Number(this.route.snapshot.params['id']);
     this.callFacade.loadCallDetails(callId).subscribe();
   }
+  
+
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -92,57 +123,109 @@ export class CallDetailsComponent implements OnInit, OnDestroy {
     });
   }
 
-    // Edit Modal Methods
-    openEditModal(call: any): void {
-    // Extract departments from call or you can fetch them separately
-    if (call.department) {
-        this.departments = [call.department]; // For now, just use current department
-        // TODO: Fetch all departments if needed
+  // Edit Modal Methods
+  openEditModal(call: any): void {
+  // Extract departments from call or you can fetch them separately
+  if (call.department) {
+      this.departments = [call.department]; // For now, just use current department
+      // TODO: Fetch all departments if needed
+  }
+  this.isEditModalOpen = true;
+  }
+
+  closeEditModal(): void {
+  this.isEditModalOpen = false;
+  }
+
+  handleSaveCall(updateData: UpdateCallRequest): void {
+  const callId = Number(this.route.snapshot.params['id']);
+  
+  this.callFacade.updateCall(callId, updateData).subscribe({
+      next: () => {
+      this.closeEditModal();
+      this.callFacade.loadCallDetails(callId).subscribe();
+      },
+      error: (error) => {
+      console.error('Error updating call:', error);
+      }
+  });
+  }
+
+  // Note Methods
+  toggleNoteForm(): void {
+  this.showNoteForm = !this.showNoteForm;
+  if (!this.showNoteForm) {
+      this.noteForm.reset({ is_important: false });
+  }
+  }
+
+  handleAddNote(): void {
+    if (this.noteForm.valid && !this.isAddingNote) {
+      this.isAddingNote = true;
+      const callId = Number(this.route.snapshot.params['id']);
+      
+      this.callFacade.addNote(callId, this.noteForm.value).subscribe({
+      next: () => {
+          this.isAddingNote = false;
+          this.toggleNoteForm();
+          this.callFacade.loadCallDetails(callId).subscribe();
+      },
+      error: () => {
+          this.isAddingNote = false;
+      }
+      });
     }
-    this.isEditModalOpen = true;
+  }
+
+  // Status Dropdown Methods
+  toggleStatusDropdown(): void {
+    this.showStatusDropdown = !this.showStatusDropdown;
+  }
+
+  closeStatusDropdown(): void {
+    this.showStatusDropdown = false;
+  }
+
+  handleStatusChange(newStatus: CallStatus, currentCall: any): void {
+    if (newStatus === currentCall.status) {
+      this.closeStatusDropdown();
+      return;
     }
 
-    closeEditModal(): void {
-    this.isEditModalOpen = false;
-    }
-
-    handleSaveCall(updateData: UpdateCallRequest): void {
     const callId = Number(this.route.snapshot.params['id']);
     
-    this.callFacade.updateCall(callId, updateData).subscribe({
-        next: () => {
-        this.closeEditModal();
+    this.callFacade.changeCallStatus(callId, { status: newStatus }).subscribe({
+      next: () => {
+        this.closeStatusDropdown();
         this.callFacade.loadCallDetails(callId).subscribe();
-        },
-        error: (error) => {
-        console.error('Error updating call:', error);
-        }
+      },
+      error: (error) => {
+        console.error('Error changing status:', error);
+        this.closeStatusDropdown();
+      }
     });
-    }
+  }
 
-    // Note Methods
-    toggleNoteForm(): void {
-    this.showNoteForm = !this.showNoteForm;
-    if (!this.showNoteForm) {
-        this.noteForm.reset({ is_important: false });
-    }
-    }
+  // Close Call Modal Methods
+  openCloseModal(): void {
+    this.isCloseModalOpen = true;
+  }
 
-    handleAddNote(): void {
-    if (this.noteForm.valid && !this.isAddingNote) {
-        this.isAddingNote = true;
-        const callId = Number(this.route.snapshot.params['id']);
-        
-        this.callFacade.addNote(callId, this.noteForm.value).subscribe({
-        next: () => {
-            this.isAddingNote = false;
-            this.toggleNoteForm();
-            this.callFacade.loadCallDetails(callId).subscribe();
-        },
-        error: () => {
-            this.isAddingNote = false;
-        }
-        });
-    }
-    }
+  closeCloseModal(): void {
+    this.isCloseModalOpen = false;
+  }
+
+  handleCloseCall(closeData: any): void {
+    const callId = Number(this.route.snapshot.params['id']);
+    
+    this.callFacade.closeCall(callId, closeData as CloseCallRequest).subscribe({
+      next: () => {
+        this.closeCloseModal();
+        this.callFacade.loadCallDetails(callId).subscribe();
+      },
+      error: (error) => {
+        console.error('Error closing call:', error);
+      }
+    });
+  }
 }
