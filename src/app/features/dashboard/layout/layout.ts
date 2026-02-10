@@ -18,6 +18,18 @@ export interface MenuItem {
   requiredPermissions: string[];
   active?: boolean;
   visible?: boolean;
+  subMenus?: SubMenuItem[];
+  isExpanded?: boolean;
+}
+
+export interface SubMenuItem {
+  id: string;
+  label: string;
+  icon: string;
+  route: string;
+  requiredPermissions: string[];
+  active?: boolean;
+  visible?: boolean;
 }
 
 @Component({
@@ -101,6 +113,63 @@ export class DashboardLayoutComponent implements OnInit {
       requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
       active: false,
       visible: false
+    },
+    {
+      id: 'projects',
+      label: 'Projets',
+      icon: 'work',
+      route: '/dashboard/projects',
+      requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+      active: false,
+      visible: false,
+      isExpanded: false,
+      subMenus: [
+        {
+          id: 'projects-dashboard',
+          label: 'Tableau de bord',
+          icon: 'dashboard',
+          route: '/dashboard/projects/dashboard',
+          requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+          active: false,
+          visible: false
+        },
+        {
+          id: 'projects-list',
+          label: 'Liste des projets',
+          icon: 'list',
+          route: '/dashboard/projects/list',
+          requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+          active: false,
+          visible: false
+        },
+        {
+          id: 'projects-create',
+          label: 'Nouveau projet',
+          icon: 'add',
+          route: '/dashboard/projects/create',
+          requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+          active: false,
+          visible: false
+        },
+        {
+          id: 'projects-statistics',
+          label: 'Statistiques',
+          icon: 'analytics',
+          route: '/dashboard/projects/statistics',
+          requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+          active: false,
+          visible: false
+        },
+        {
+          id: 'my-projects',
+          label: 'Mes projets',
+          icon: 'person',
+          route: '/dashboard/projects/my-projects',
+          requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+          active: false,
+          visible: false
+        }
+      ]
     }
   ];
 
@@ -146,12 +215,52 @@ export class DashboardLayoutComponent implements OnInit {
   }
 
   onMenuClick(menuItem: MenuItem): void {
-    // Update active state
-    this.menuItems.forEach(item => item.active = false);
+    // Si le menu a des sous-menus, on toggle l'expansion
+    if (menuItem.subMenus && menuItem.subMenus.length > 0) {
+      // Reset all active states first
+      this.resetAllActiveStates();
+      // Then toggle expansion and set as active
+      menuItem.isExpanded = !menuItem.isExpanded;
+      menuItem.active = true;
+      // Ne pas naviguer si c'est un menu parent avec sous-menus
+      return;
+    }
+
+    // Reset all active states first
+    this.resetAllActiveStates();
+    // Set this menu as active
     menuItem.active = true;
 
     // Navigate to route
     this.router.navigate([menuItem.route]);
+  }
+
+  private resetAllActiveStates(): void {
+    // Reset in the original array
+    this.menuItems.forEach(item => {
+      item.active = false;
+      if (item.subMenus) {
+        item.subMenus.forEach(sub => sub.active = false);
+      }
+    });
+  }
+
+  onSubMenuClick(parentMenu: MenuItem, subMenuItem: SubMenuItem): void {
+    // Reset all active states first
+    this.resetAllActiveStates();
+
+    // Set parent and submenu as active
+    parentMenu.active = true;
+    subMenuItem.active = true;
+
+    // Navigate to submenu route
+    this.router.navigate([subMenuItem.route]);
+  }
+
+  toggleSubMenu(menuItem: MenuItem): void {
+    if (menuItem.subMenus && menuItem.subMenus.length > 0) {
+      menuItem.isExpanded = !menuItem.isExpanded;
+    }
   }
 
   // User actions
@@ -264,7 +373,21 @@ export class DashboardLayoutComponent implements OnInit {
         // Check permissions for each menu item
         const permissionChecks = this.menuItems.map(item =>
           this.permissionService.hasAnyPermission(item.requiredPermissions as any).pipe(
-            map(hasPermission => ({ ...item, visible: hasPermission }))
+            map(hasPermission => {
+              // Use reference to the original item to maintain active states
+              const menuItem = item;
+              menuItem.visible = hasPermission;
+
+              // Check permissions for subMenus if they exist
+              if (menuItem.subMenus && hasPermission) {
+                menuItem.subMenus = menuItem.subMenus.map(subMenu => {
+                  subMenu.visible = hasPermission; // Same permissions for now, can be customized later
+                  return subMenu;
+                });
+              }
+
+              return menuItem;
+            })
           )
         );
 
@@ -278,11 +401,25 @@ export class DashboardLayoutComponent implements OnInit {
   private updateActiveMenu(): void {
     const currentUrl = this.router.url;
 
-    // Update active state for visible menu items
-    this.visibleMenuItems$.subscribe(visibleItems => {
-      visibleItems.forEach(item => {
-        item.active = this.isMenuActive(item.route, currentUrl);
-      });
+    // Update active state directly on menuItems array
+    this.menuItems.forEach(item => {
+      item.active = this.isMenuActive(item.route, currentUrl);
+
+      // Check subMenus for active state
+      if (item.subMenus) {
+        let hasActiveSubMenu = false;
+        item.subMenus.forEach(subMenu => {
+          subMenu.active = this.isMenuActive(subMenu.route, currentUrl);
+          if (subMenu.active) {
+            hasActiveSubMenu = true;
+            item.isExpanded = true; // Auto-expand if submenu is active
+          }
+        });
+        // Set parent as active if any submenu is active
+        if (hasActiveSubMenu) {
+          item.active = true;
+        }
+      }
     });
   }
 
@@ -293,11 +430,25 @@ export class DashboardLayoutComponent implements OnInit {
         map(event => (event as NavigationEnd).url)
       )
       .subscribe(url => {
-        // Update active state for visible menu items on route changes
-        this.visibleMenuItems$.subscribe(visibleItems => {
-          visibleItems.forEach(item => {
-            item.active = this.isMenuActive(item.route, url);
-          });
+        // Update active state directly on menuItems array on route changes
+        this.menuItems.forEach(item => {
+          item.active = this.isMenuActive(item.route, url);
+
+          // Check subMenus for active state
+          if (item.subMenus) {
+            let hasActiveSubMenu = false;
+            item.subMenus.forEach(subMenu => {
+              subMenu.active = this.isMenuActive(subMenu.route, url);
+              if (subMenu.active) {
+                hasActiveSubMenu = true;
+                item.isExpanded = true; // Auto-expand if submenu is active
+              }
+            });
+            // Set parent as active if any submenu is active
+            if (hasActiveSubMenu) {
+              item.active = true;
+            }
+          }
         });
       });
   }
@@ -319,5 +470,32 @@ export class DashboardLayoutComponent implements OnInit {
     }
 
     return false;
+  }
+
+  // Helper methods for CSS class binding
+  getMenuButtonClasses(menuItem: MenuItem): string {
+    const baseClasses = 'text-gray-700 hover:bg-gray-50 bg-transparent';
+
+    if (!menuItem.active) {
+      return baseClasses;
+    }
+
+    // Active menu with submenus
+    if (menuItem.subMenus && menuItem.subMenus.length > 0) {
+      return 'bg-blue-50 text-blue-800 border-l-4 border-blue-600';
+    }
+
+    // Active menu without submenus
+    return 'bg-blue-100 text-blue-900 border-l-4 border-blue-600';
+  }
+
+  getArrowClasses(menuItem: MenuItem): string {
+    const baseClasses = 'text-gray-400';
+
+    if (menuItem.active) {
+      return 'text-blue-600';
+    }
+
+    return baseClasses;
   }
 }

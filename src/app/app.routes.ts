@@ -76,6 +76,33 @@ export const routes: Routes = [
         path: 'profile',
         loadComponent: () => import('./features/dashboard/pages/profile/profile').then(c => c.ProfileComponent)
       },
+      {
+        path: 'projects',
+        loadChildren: () => import('./features/projects/projects.routes').then(r => r.PROJECTS_ROUTES),
+        canActivate: [RoleGuard],
+        data: {
+          permissions: [PERMISSIONS.SYSTEM_VIEW],
+          title: 'Gestion des Projets'
+        }
+      },
+      {
+        path: 'tasks',
+        loadChildren: () => import('./features/tasks/tasks.routes').then(r => r.TASKS_ROUTES),
+        canActivate: [RoleGuard],
+        data: {
+          permissions: [PERMISSIONS.SYSTEM_VIEW],
+          title: 'Gestion des Tâches'
+        }
+      },
+      {
+        path: 'time-tracking',
+        loadChildren: () => import('./features/time-tracking/time-tracking.routes').then(r => r.timeTrackingRoutes),
+        canActivate: [RoleGuard],
+        data: {
+          permissions: [PERMISSIONS.SYSTEM_VIEW],
+          title: 'Suivi du Temps'
+        }
+      },
     ]
   },
   {
