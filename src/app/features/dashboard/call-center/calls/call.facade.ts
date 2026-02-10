@@ -16,6 +16,8 @@ import { ChangeCallStatusUseCase } from '../../../../domain/use-cases/call/chang
 import { CloseCallUseCase } from '../../../../domain/use-cases/call/close-call.use-case';
 import { GetCallbacksUseCase } from '../../../../domain/use-cases/call/get-callbacks.use-case';
 import { MessageService } from '../../../../shared/services/message.service';
+import { AddCallNoteUseCase, AddCallNoteRequest } from '../../../../domain/use-cases/call/add-call-note.use-case';
+import { CallNote } from '../../../../domain/models/call.model';
 
 @Injectable({
   providedIn: 'root'
@@ -47,6 +49,7 @@ export class CallFacade {
     private changeCallStatusUseCase: ChangeCallStatusUseCase,
     private closeCallUseCase: CloseCallUseCase,
     private getCallbacksUseCase: GetCallbacksUseCase,
+    private addCallNoteUseCase: AddCallNoteUseCase,
     private messageService: MessageService
   ) {}
 
@@ -234,6 +237,32 @@ export class CallFacade {
         this.isUpdatingSubject.next(false);
 
         const errorMessage = error.userMessage || error.message || 'Erreur lors de la clôture de l\'appel';
+        this.errorSubject.next(errorMessage);
+        this.messageService.showError(errorMessage);
+        return of(null);
+      })
+    );
+  }
+
+  /**
+   * Add note to call
+   */
+  addNote(callId: number, request: AddCallNoteRequest): Observable<CallNote | null> {
+    this.isUpdatingSubject.next(true);
+    this.errorSubject.next(null);
+
+    return this.addCallNoteUseCase.execute(callId, request).pipe(
+      tap(note => {
+        this.isUpdatingSubject.next(false);
+        this.messageService.showSuccess('Note ajoutée avec succès');
+        // Reload call details to show new note
+        this.loadCallDetails(callId).subscribe();
+      }),
+      catchError(error => {
+        console.error('Error adding note:', error);
+        this.isUpdatingSubject.next(false);
+
+        const errorMessage = error.userMessage || error.message || 'Erreur lors de l\'ajout de la note';
         this.errorSubject.next(errorMessage);
         this.messageService.showError(errorMessage);
         return of(null);

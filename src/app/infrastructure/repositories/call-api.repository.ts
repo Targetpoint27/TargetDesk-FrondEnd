@@ -167,11 +167,9 @@ export class CallApiRepository extends CallRepository {
       );
   }
 
-  addNote(callId: number, note: string, isImportant: boolean): Observable<CallNote> {
-    return this.apiService
-      .post<any>(`${this.BASE_PATH}/calls/${callId}/notes`, { note, is_important: isImportant })
-      .pipe(
-        map(response => response.data)
-      );
-  }
+  addNote(callId: number, data: { note: string; is_important?: boolean }): Observable<CallNote> {
+  return this.apiService.post<any>(`/call-center/calls/${callId}/notes`, data).pipe(
+    map(response => response.data)
+  );
+}
 }
