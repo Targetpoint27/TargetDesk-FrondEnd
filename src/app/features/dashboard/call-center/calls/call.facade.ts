@@ -5,7 +5,7 @@
  */
 
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap, catchError, of, map } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, of, map, throwError } from 'rxjs';
 
 import { Call, CreateCallRequest, UpdateCallRequest, ChangeStatusRequest, CloseCallRequest } from '../../../../domain/models/call.model';
 import { GetMyQueueUseCase } from '../../../../domain/use-cases/call/get-my-queue.use-case';
@@ -18,6 +18,8 @@ import { GetCallbacksUseCase } from '../../../../domain/use-cases/call/get-callb
 import { MessageService } from '../../../../shared/services/message.service';
 import { AddCallNoteUseCase, AddCallNoteRequest } from '../../../../domain/use-cases/call/add-call-note.use-case';
 import { CallNote } from '../../../../domain/models/call.model';
+import { SearchCallsUseCase } from '../../../../domain/use-cases/call/search-calls.use-case';
+import { FilterCallsUseCase } from '../../../../domain/use-cases/call/filter-calls.use-case';
 
 @Injectable({
   providedIn: 'root'
@@ -50,7 +52,9 @@ export class CallFacade {
     private closeCallUseCase: CloseCallUseCase,
     private getCallbacksUseCase: GetCallbacksUseCase,
     private addCallNoteUseCase: AddCallNoteUseCase,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private searchCallsUseCase: SearchCallsUseCase,
+  private filterCallsUseCase: FilterCallsUseCase,
   ) {}
 
   // ===== LOAD OPERATIONS =====
@@ -266,6 +270,28 @@ export class CallFacade {
         this.errorSubject.next(errorMessage);
         this.messageService.showError(errorMessage);
         return of(null);
+      })
+    );
+  }
+
+  // Search calls
+  searchCalls(query: string): Observable<Call[]> {
+    return this.searchCallsUseCase.execute(query).pipe(
+      catchError(error => {
+        console.error('Error searching calls:', error);
+        this.messageService.showError('Erreur lors de la recherche');
+        return of([]);
+      })
+    );
+  }
+
+  // Filter calls
+  filterCalls(filters: any): Observable<any> {
+    return this.filterCallsUseCase.execute(filters).pipe(
+      catchError(error => {
+        console.error('Error filtering calls:', error);
+        this.messageService.showError('Erreur lors du filtrage');
+        return of({ total: 0, filters_applied: {}, calls: [] });
       })
     );
   }

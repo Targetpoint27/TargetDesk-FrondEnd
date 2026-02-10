@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+// Smooth transitions
+* {
+  transition: all 0.2s ease-in-out;
+}
+
+// Custom scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #3B82F6, #6366F1);
+  border-radius: 9999px;
+
+  &:hover {
+    background: linear-gradient(to bottom, #2563EB, #4F46E5);
+  }
+}
+
+// Table hover effect
+table tbody tr:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}

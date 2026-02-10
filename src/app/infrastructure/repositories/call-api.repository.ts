@@ -168,8 +168,39 @@ export class CallApiRepository extends CallRepository {
   }
 
   addNote(callId: number, data: { note: string; is_important?: boolean }): Observable<CallNote> {
-  return this.apiService.post<any>(`/call-center/calls/${callId}/notes`, data).pipe(
-    map(response => response.data)
-  );
-}
+    return this.apiService.post<any>(`/call-center/calls/${callId}/notes`, data).pipe(
+      map(response => response.data)
+    );
+  }
+
+  // ========== NEW METHODS FOR SESSION 6 ==========
+
+  // Search calls
+  search(query: string): Observable<any> {
+    return this.apiService
+      .get<any>(`${this.BASE_PATH}/calls/search`, {
+        params: { q: query }
+      })
+      .pipe(
+        map(response => response) // Return full response (includes data array)
+      );
+  }
+
+  // Filter calls
+  filter(filters: any): Observable<any> {
+    // Build query params object
+    const params: any = {};
+    
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+        params[`filter[${key}]`] = filters[key];
+      }
+    });
+    
+    return this.apiService
+      .get<any>(`${this.BASE_PATH}/calls`, { params })
+      .pipe(
+        map(response => response) // Return full response (includes total, filters_applied, calls)
+      );
+  }
 }

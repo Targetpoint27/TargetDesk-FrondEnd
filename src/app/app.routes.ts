@@ -152,9 +152,7 @@ export const routes: Routes = [
       {
         path: 'clients',
         loadComponent: () => import('./features/dashboard/pages/clients/clients').then(c => c.Clients),
-        // ... rest of clients config
       },
-      // ... all other dashboard routes ...
       {
         path: 'profile',
         loadComponent: () => import('./features/dashboard/pages/profile/profile').then(c => c.ProfileComponent)
@@ -186,7 +184,12 @@ export const routes: Routes = [
             path: 'calls/:id',
             loadComponent: () => import('./features/dashboard/pages/call-center/call-details/call-details.component')
               .then(c => c.CallDetailsComponent)
-          }
+          },
+          {
+            path: 'search',
+            loadComponent: () => import('./features/dashboard/pages/call-center/search-calls/search-calls.component')
+              .then(c => c.SearchCallsComponent)
+          },
         ]
       }
     ]
