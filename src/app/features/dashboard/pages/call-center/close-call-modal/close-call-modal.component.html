@@ -4,8 +4,8 @@
   <!-- Modal Panel -->
   <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden" (click)="$event.stopPropagation()">
     
-    <!-- Header -->
-    <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-5">
+    <!-- Header - BLUE THEME -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center">
@@ -15,7 +15,7 @@
           </div>
           <div>
             <h2 class="text-xl font-bold text-white">Clôturer l'Appel</h2>
-            <p class="text-green-100 text-sm">{{ call.call_id }}</p>
+            <p class="text-blue-100 text-sm">{{ call.call_id }}</p>
           </div>
         </div>
         
@@ -48,9 +48,9 @@
     <form [formGroup]="closeForm" (ngSubmit)="handleSubmit()" class="p-6 space-y-6 max-h-[calc(90vh-280px)] overflow-y-auto">
       
       <!-- Call Summary (Read-only) -->
-      <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
-        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Résumé de l'appel</p>
-        <p class="text-sm text-gray-700">{{ call.summary }}</p>
+      <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+        <p class="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-2">Résumé de l'appel</p>
+        <p class="text-sm text-blue-800">{{ call.summary }}</p>
       </div>
 
       <!-- Resolution Summary -->
@@ -63,7 +63,7 @@
           formControlName="resolution_summary"
           rows="6"
           [class.border-red-300]="isFieldInvalid('resolution_summary')"
-          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none bg-white text-gray-900"
+          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none bg-white text-gray-900"
           placeholder="Décrivez comment l'appel a été résolu, les actions prises, et tout détail important..."></textarea>
         <p *ngIf="isFieldInvalid('resolution_summary')" class="mt-1 text-sm text-red-600">
           {{ getFieldError('resolution_summary') }}
@@ -81,8 +81,8 @@
           <label 
             *ngFor="let option of finalResultOptions"
             class="relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all hover:border-gray-300"
-            [class.border-green-500]="closeForm.get('final_result')?.value === option.value"
-            [class.bg-green-50]="closeForm.get('final_result')?.value === option.value"
+            [class.border-blue-500]="closeForm.get('final_result')?.value === option.value"
+            [class.bg-blue-50]="closeForm.get('final_result')?.value === option.value"
             [class.border-gray-200]="closeForm.get('final_result')?.value !== option.value">
             <input
               type="radio"
@@ -97,7 +97,7 @@
             </div>
             <svg 
               *ngIf="closeForm.get('final_result')?.value === option.value"
-              class="w-5 h-5 text-green-600 absolute top-3 right-3" 
+              class="w-5 h-5 text-blue-600 absolute top-3 right-3" 
               fill="currentColor" 
               viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
@@ -110,7 +110,7 @@
       </div>
     </form>
 
-    <!-- Footer Actions -->
+    <!-- Footer Actions - BLUE THEME -->
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-3">
       <button
         type="button"
@@ -122,7 +122,7 @@
         type="submit"
         (click)="handleSubmit()"
         [disabled]="closeForm.invalid || isSubmitting"
-        class="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg">
+        class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg">
         {{ isSubmitting ? 'Clôture en cours...' : 'Clôturer l\'appel' }}
       </button>
     </div>
