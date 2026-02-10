@@ -181,6 +181,11 @@ export const routes: Routes = [
             path: 'create-call',
             loadComponent: () => import('./features/dashboard/pages/call-center/create-call/create-call.component')
               .then(c => c.CreateCallComponent)
+          },
+          {
+            path: 'calls/:id',
+            loadComponent: () => import('./features/dashboard/pages/call-center/call-details/call-details.component')
+              .then(c => c.CallDetailsComponent)
           }
         ]
       }

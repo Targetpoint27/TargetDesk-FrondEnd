@@ -54,7 +54,7 @@ export class DashboardLayoutComponent implements OnInit {
   isNotificationModalOpen = false;
 
   // État du collapse de la sidebar
-  isSidebarCollapsed = false;
+  isSidebarCollapsed = false; // Start expanded by default
 
   menuItems: MenuItem[] = [
     {
@@ -122,6 +122,9 @@ export class DashboardLayoutComponent implements OnInit {
 
   ngOnInit(): void {
     this.currentUser$ = this.authFacade.user$;
+
+    // Set initial sidebar state based on screen size
+    this.initializeSidebarState();
 
     // Initialize user role observable
     this.userRole$ = this.permissionService.getUserPermissions().pipe(
@@ -227,8 +230,19 @@ export class DashboardLayoutComponent implements OnInit {
   }
 
   // Sidebar collapse actions
+  initializeSidebarState(): void {
+    // On mobile (< 768px), start collapsed. On desktop, start expanded.
+    if (typeof window !== 'undefined') {
+      this.isSidebarCollapsed = window.innerWidth < 768;
+    }
+  }
+
   toggleSidebar(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
+
+  closeSidebar(): void {
+    this.isSidebarCollapsed = true;
   }
 
   collapseSidebar(): void {

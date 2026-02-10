@@ -1,28 +1,142 @@
-// Call Center Dashboard Styles
-// Matches the existing dashboard style
+// Call Center Dashboard - Gentle & Subtle Styling
+// Focuses on soft gradients, smooth transitions, and refined aesthetics
 
+// Gentle pulse animation for urgent calls
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+// Soft gradient shimmer for loading states
+@keyframes soft-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+// Component-specific refinements
 :host {
   display: block;
+  
+  // Stat cards hover enhancement
+  .stats-card {
+    &:hover {
+      transform: translateY(-2px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  // Call list item subtle interactions
+  .call-item {
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      background: linear-gradient(to right, rgba(59, 130, 246, 0.1), transparent);
+      transition: width 0.3s ease;
+    }
+    
+    &:hover::before {
+      width: 100%;
+    }
+  }
 }
 
-// Smooth animations
-.transition-all {
+// Direction indicator animations
+.direction-indicator {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+// Urgency dot animations
+.urgency-dot {
+  &.critical {
+    animation: gentle-pulse 2s ease-in-out infinite;
+  }
+}
+
+// Smooth badge transitions
+.call-badge {
   transition: all 0.2s ease;
+  
+  &:hover {
+    filter: brightness(1.05);
+  }
 }
 
-// Custom scrollbar for lists
-::-webkit-scrollbar {
-  width: 6px;
+// Empty state styling
+.empty-state {
+  svg {
+    transition: all 0.3s ease;
+  }
+  
+  &:hover svg {
+    transform: translateY(-2px);
+    opacity: 0.7;
+  }
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+// Subtle focus states
+button, a {
+  &:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.4);
+    outline-offset: 2px;
+    border-radius: 0.75rem;
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
+// Glass morphism enhancement
+.glass-card {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  
+  @supports not (backdrop-filter: blur(12px)) {
+    background: rgba(255, 255, 255, 0.85);
+  }
 }
 
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
+// Responsive refinements
+@media (max-width: 768px) {
+  // Stack stats vertically with more breathing room on mobile
+  .stats-grid {
+    gap: 1rem;
+  }
+  
+  // Adjust call list spacing
+  .call-item {
+    padding: 1rem 0.75rem;
+  }
+}
+
+// Accessibility enhancements
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Dark mode preparations (for future)
+@media (prefers-color-scheme: dark) {
+  :host {
+    // Reserved for dark mode implementation
+  }
 }

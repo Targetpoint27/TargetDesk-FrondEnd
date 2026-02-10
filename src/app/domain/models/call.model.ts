@@ -1,6 +1,6 @@
 // Call types
 export type CallType = 'entrant' | 'sortant';
-export type CallStatus = 'nouveau' | 'en_cours' | 'en_attente' | 'resolu' | 'cloture' | 'a_rappeler';
+export type CallStatus = 'nouveau' | 'a_traiter' | 'en_cours' | 'en_attente' | 'resolu' | 'cloture' | 'a_rappeler' | 'annule';
 export type CallUrgency = 'normal' | 'urgent' | 'critique';
 
 // Call interface
@@ -16,31 +16,59 @@ export interface Call {
   department_id: number;
   assigned_to?: number;
   motif_id?: number;
+  custom_motif?: string;
   object: string;
   summary: string;
   status: CallStatus;
   urgency: CallUrgency;
   resolution_summary?: string;
+  final_result?: string;
+  
+  // Callback fields
   scheduled_callback_date?: string;
   scheduled_callback_time?: string;
   callback_reason?: string;
   callback_notes?: string;
   callback_attempts: number;
   last_callback_at?: string;
-  call_duration?: number;
-  notes_count?: number;
+  
+  // Outbound fields
+  outbound_reason?: string;
+  call_result?: string;
+  call_duration_seconds?: number;
+  
+  // Related to
+  related_to_type?: string;
+  related_to_id?: number;
+  
+  // Timestamps
   created_by: number;
   closed_by?: number;
   closed_at?: string;
   created_at: string;
   updated_at: string;
+  deleted_at?: string;
+  reopened_at?: string;
+  
+  // Treatment
+  treatment_time_seconds?: number;
+  reopen_reason?: string;
+  
+  // Meta
+  notes_count?: number;
+  time_elapsed?: string;
+  is_active?: boolean;
   
   // Relationships
   department?: Department;
   assignee?: User;
+  assigned_agent?: User;
   client?: Client;
+  contact?: any;
   creator?: User;
+  closer?: User;
   motif?: CallMotif;
+  notes?: CallNote[];
 }
 
 // Create Call Request
@@ -79,25 +107,29 @@ export interface UpdateCallRequest {
 export interface ChangeStatusRequest {
   status: CallStatus;
   resolution_summary?: string;
+  comment?: string;
 }
 
 // Schedule Callback Request
 export interface ScheduleCallbackRequest {
-  scheduled_callback_date: string;
-  scheduled_callback_time: string;
-  callback_reason: string;
-  callback_notes?: string;
+  date: string;
+  time: string;
+  reason?: string;
+  notes?: string;
 }
 
 // Close Call Request
 export interface CloseCallRequest {
   resolution_summary: string;
+  final_result: string;
 }
 
 // Callback Result Request
 export interface CallbackResultRequest {
-  callback_result: string;
-  next_action: string;
+  call_result: string;
+  summary: string;
+  reschedule_date?: string;
+  reschedule_time?: string;
 }
 
 // API Response types
@@ -123,6 +155,7 @@ export interface Department {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  deleted_at?: string;
 }
 
 export interface CallMotif {
@@ -145,9 +178,17 @@ export interface CallMotif {
 export interface User {
   id: number;
   name: string;
+  first_name?: string;
+  last_name?: string;
   email: string;
+  email_verified_at?: string;
   status: string;
   department_id?: number;
+  phone?: string;
+  department?: Department | null;
+  last_login?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Client {
@@ -162,9 +203,10 @@ export interface Client {
 export interface CallNote {
   id: number;
   call_id: number;
-  user_id: number;
   note: string;
   is_important: boolean;
+  created_by: number;
   created_at: string;
-  user?: User;
+  updated_at: string;
+  creator?: User;
 }

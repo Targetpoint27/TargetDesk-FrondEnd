@@ -160,4 +160,26 @@ export class CallCenterDashboardComponent implements OnInit, OnDestroy {
       minute: '2-digit'
     });
   }
+
+  getCallDirectionClass(direction: string): string {
+    switch (direction) {
+      case 'incoming':
+        return 'bg-gradient-to-br from-teal-50 to-cyan-100/50 text-teal-600';
+      case 'outgoing':
+        return 'bg-gradient-to-br from-indigo-50 to-purple-100/50 text-indigo-600';
+      default:
+        return 'bg-gray-100 text-gray-600';
+    }
+  }
+
+  getCallDirectionLabel(direction: string): string {
+    switch (direction) {
+      case 'incoming':
+        return 'Entrant';
+      case 'outgoing':
+        return 'Sortant';
+      default:
+        return 'Inconnu';
+    }
+  }
 }

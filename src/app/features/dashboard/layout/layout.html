@@ -149,11 +149,24 @@
 
   <!-- Main Layout avec flex-1 pour occuper l'espace restant -->
   <div class="flex-1 flex overflow-hidden">
+    <!-- Mobile Overlay Backdrop -->
+    @if (!isSidebarCollapsed) {
+      <div 
+        class="fixed top-16 left-0 right-0 bottom-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
+        (click)="closeSidebar()"
+      ></div>
+    }
+    
     <!-- Menu latéral avec état collapse -->
     <aside
-      class="flex-shrink-0 bg-white/80 backdrop-blur-sm border-r border-white/60 shadow-lg transition-all duration-300 ease-in-out"
+      class="flex-shrink-0 bg-white/80 backdrop-blur-sm border-r border-white/60 shadow-lg transition-all duration-300 ease-in-out
+             fixed md:relative top-16 md:top-0 inset-y-0 left-0 z-50 md:z-auto
+             h-[calc(100vh-4rem)] md:h-auto
+             md:translate-x-0"
       [class.w-64]="!isSidebarCollapsed"
       [class.w-16]="isSidebarCollapsed"
+      [class.translate-x-0]="!isSidebarCollapsed"
+      [class.-translate-x-full]="isSidebarCollapsed"
     >
       <div class="h-full overflow-y-auto">
         <!-- Navigation Menu -->
@@ -164,6 +177,7 @@
               @for (menuItem of visibleMenuItems$ | async; track menuItem.id) {
                 <a
                   [routerLink]="menuItem.route"
+                  (click)="closeSidebar()"
                   routerLinkActive="bg-blue-200 text-blue-900 rounded-lg font-medium"
                   [routerLinkActiveOptions]="{ exact: false }"
                   class="group flex items-center p-2 text-gray-700 w-full text-left transition-all duration-200 hover:bg-gray-50 no-underline rounded-lg relative"
