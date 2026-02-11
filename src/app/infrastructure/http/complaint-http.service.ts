@@ -19,6 +19,12 @@ export class ComplaintHttpService extends ComplaintRepository {
     return this.getAll(filters);
   }
 
+  override getById(id: number): Observable<Complaint> {
+    return this.apiService.get<any>(`${this.endpoint}/${id}`).pipe(
+      map(response => this.apiService.unwrapApiResponse(response) as Complaint)
+    );
+  }
+
   // Renamed to match the Facade call and added explicit typing
   getAll(filters?: any): Observable<ComplaintListResponse> {
     return this.apiService.get<any>(this.endpoint, { params: filters }).pipe(

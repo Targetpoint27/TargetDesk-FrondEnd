@@ -7,6 +7,8 @@ export abstract class ComplaintRepository {
     overdue_count: number;
     complaints: Complaint[];
   }>;
+
+  abstract getById(id: number): Observable<Complaint>;
   
   abstract create(request: StoreComplaintRequest): Observable<Complaint>;
   

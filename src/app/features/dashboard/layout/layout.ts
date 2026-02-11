@@ -117,7 +117,7 @@ export class DashboardLayoutComponent implements OnInit {
       label: 'Réclamations',
       icon: 'complaints',
       route: '/dashboard/complaints',
-      requiredPermissions: [PERMISSIONS.CALL_CENTER_ACCESS],
+      requiredPermissions: [PERMISSIONS.CALL_CENTER_ACCESS, PERMISSIONS.DASHBOARD_PERSONAL],
       active: false,
       visible: false
     },

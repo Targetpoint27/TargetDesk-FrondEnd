@@ -76,87 +76,7 @@ export const routes: Routes = [
         path: 'profile',
         loadComponent: () => import('./features/dashboard/pages/profile/profile').then(c => c.ProfileComponent)
       },
-    ]
-  },
-  {
-    path: 'settings',
-    loadComponent: () => import('./features/settings/settings-layout.component').then(c => c.SettingsLayoutComponent),
-    canActivate: [AuthGuard, RoleGuard],
-    data: {
-      permissions: [PERMISSIONS.SYSTEM_VIEW]
-    },
-    children: [
-      {
-        path: '',
-        redirectTo: 'my-permissions',
-        pathMatch: 'full'
-      },
-      {
-        path: 'my-permissions',
-        loadComponent: () => import('./features/settings/pages/my-permissions.component').then(c => c.MyPermissionsComponent)
-      },
-      // Routes Admin - Basées sur les endpoints disponibles
-      {
-        path: 'user-management',
-        loadComponent: () => import('./features/settings/user-management/user-management.component').then(c => c.UserManagementComponent),
-        canActivate: [RoleGuard],
-        data: {
-          permissions: [PERMISSIONS.USERS_READ]
-        }
-      },
-      {
-        path: 'roles-management',
-        loadComponent: () => import('./features/settings/pages/roles-management.component').then(c => c.RolesManagementComponent),
-        canActivate: [RoleGuard],
-        data: {
-          permissions: [PERMISSIONS.ROLES_READ]
-        }
-      },
-      {
-        path: 'permissions-management',
-        loadComponent: () => import('./features/settings/pages/permissions-management.component').then(c => c.PermissionsManagementComponent),
-        canActivate: [RoleGuard],
-        data: {
-          permissions: [PERMISSIONS.PERMISSIONS_READ]
-        }
-      },
-      {
-        path: 'users-roles',
-        loadComponent: () => import('./features/settings/pages/users-roles.component').then(c => c.UsersRolesComponent),
-        canActivate: [RoleGuard],
-        data: {
-          permissions: [PERMISSIONS.ROLES_ASSIGN]
-        }
-      }
-    ]
-  },
-  {
-    path: 'dashboard',
-    loadComponent: () => import('./features/dashboard/layout/layout').then(c => c.DashboardLayoutComponent),
-    canActivate: [AuthGuard],
-    children: [
-      {
-        path: '',
-        redirectTo: 'home',
-        pathMatch: 'full'
-      },
-      {
-        path: 'home',
-        loadComponent: () => import('./features/dashboard/pages/dashboard-refined/dashboard-refined.component').then(c => c.DashboardRefinedComponent),
-        canActivate: [RoleGuard],
-        data: {
-          permissions: [PERMISSIONS.DASHBOARD_PERSONAL, PERMISSIONS.SYSTEM_VIEW],
-          requireAllPermissions: false
-        }
-      },
-      {
-        path: 'clients',
-        loadComponent: () => import('./features/dashboard/pages/clients/clients').then(c => c.Clients),
-      },
-      {
-        path: 'profile',
-        loadComponent: () => import('./features/dashboard/pages/profile/profile').then(c => c.ProfileComponent)
-      },
+      // Call Center Sub-Module
       {
         path: 'call-center',
         canActivate: [RoleGuard],
@@ -194,28 +114,89 @@ export const routes: Routes = [
             path: 'department-queue',
             loadComponent: () => import('./features/dashboard/pages/call-center/department-queue/department-queue.component')
               .then(c => c.DepartmentQueueComponent)
-          },{
-              path: 'callbacks',
-              loadComponent: () => import('./features/dashboard/pages/call-center/callbacks/callbacks-list.component')
-                .then(c => c.CallbacksListComponent)
-            }
+          },
+          {
+            path: 'callbacks',
+            loadComponent: () => import('./features/dashboard/pages/call-center/callbacks/callbacks-list.component')
+              .then(c => c.CallbacksListComponent)
+          }
+        ]
+      },
+      // Complaints Sub-Module
+      {
+        path: 'complaints',
+        canActivate: [RoleGuard],
+        data: {
+          // MATCH the permissions here as well
+          permissions: [PERMISSIONS.CALL_CENTER_ACCESS, PERMISSIONS.DASHBOARD_PERSONAL],
+          requireAllPermissions: false // This ensures EITHER permission works
+        },
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/dashboard/pages/complaints/complaints-list/complaints-list.component')
+              .then(m => m.ComplaintsListComponent),
+            title: 'Gestion des Réclamations'
+          },
+          {
+            path: ':id',
+            loadComponent: () => import('./features/dashboard/pages/complaints/complaint-details/complaint-details.component')
+              .then(m => m.ComplaintDetailsComponent),
+            title: 'Détails de la Réclamation'
+          }
         ]
       }
     ]
   },
   {
-  path: 'dashboard/complaints',
+    path: 'settings',
+    loadComponent: () => import('./features/settings/settings-layout.component').then(c => c.SettingsLayoutComponent),
+    canActivate: [AuthGuard, RoleGuard],
+    data: {
+      permissions: [PERMISSIONS.SYSTEM_VIEW]
+    },
     children: [
       {
         path: '',
-        loadComponent: () => import('./features/dashboard/pages/complaints/complaints-list/complaints-list.component').then(m => m.ComplaintsListComponent),
-        title: 'Gestion des Réclamations'
+        redirectTo: 'my-permissions',
+        pathMatch: 'full'
       },
-      // {
-      //   path: ':id',
-      //   loadComponent: () => import('./features/dashboard/pages/complaints/complaint-details/complaint-details.component').then(m => m.ComplaintDetailsComponent),
-      //   title: 'Détails de la Réclamation'
-      // }
+      {
+        path: 'my-permissions',
+        loadComponent: () => import('./features/settings/pages/my-permissions.component').then(c => c.MyPermissionsComponent)
+      },
+      {
+        path: 'user-management',
+        loadComponent: () => import('./features/settings/user-management/user-management.component').then(c => c.UserManagementComponent),
+        canActivate: [RoleGuard],
+        data: {
+          permissions: [PERMISSIONS.USERS_READ]
+        }
+      },
+      {
+        path: 'roles-management',
+        loadComponent: () => import('./features/settings/pages/roles-management.component').then(c => c.RolesManagementComponent),
+        canActivate: [RoleGuard],
+        data: {
+          permissions: [PERMISSIONS.ROLES_READ]
+        }
+      },
+      {
+        path: 'permissions-management',
+        loadComponent: () => import('./features/settings/pages/permissions-management.component').then(c => c.PermissionsManagementComponent),
+        canActivate: [RoleGuard],
+        data: {
+          permissions: [PERMISSIONS.PERMISSIONS_READ]
+        }
+      },
+      {
+        path: 'users-roles',
+        loadComponent: () => import('./features/settings/pages/users-roles.component').then(c => c.UsersRolesComponent),
+        canActivate: [RoleGuard],
+        data: {
+          permissions: [PERMISSIONS.ROLES_ASSIGN]
+        }
+      }
     ]
   },
   {

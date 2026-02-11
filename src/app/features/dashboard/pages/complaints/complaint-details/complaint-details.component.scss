@@ -1,0 +1,113 @@
+/* Complaint Details Layout */
+
+.status-badge {
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &.ouverte {
+    background-color: var(--color-gray-100);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+  }
+
+  &.en_analyse {
+    background-color: var(--color-warning);
+    color: var(--color-white);
+  }
+
+  &.resolue {
+    background-color: var(--color-success);
+    color: var(--color-white);
+  }
+}
+
+/* Left context panel */
+.context-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  padding: var(--spacing-6);
+  box-shadow: var(--shadow-sm);
+
+  .context-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-4);
+  }
+
+  .context-item {
+    margin-bottom: var(--spacing-4);
+    
+    label {
+      display: block;
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-gray-400);
+      text-transform: uppercase;
+      margin-bottom: var(--spacing-1);
+    }
+    
+    p {
+      color: var(--color-gray-900);
+      font-weight: var(--font-weight-semibold);
+      margin: 0;
+    }
+  }
+}
+
+/* Right investigation form */
+.investigation-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  padding: var(--spacing-8);
+  box-shadow: var(--shadow-lg);
+
+  h2 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-900);
+    margin-bottom: var(--spacing-6);
+  }
+
+  .form-group {
+    margin-bottom: var(--spacing-6);
+
+    label {
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-gray-500);
+      text-transform: uppercase;
+      margin-bottom: var(--spacing-2);
+    }
+
+    textarea {
+      background-color: var(--color-gray-50);
+      border: 1px solid var(--color-gray-200);
+      color: var(--color-gray-900);
+      
+      &:focus {
+        background-color: var(--color-white);
+        border-color: var(--color-primary);
+      }
+    }
+  }
+}
+
+.btn-save {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  padding: var(--spacing-3) var(--spacing-8);
+  font-weight: var(--font-weight-bold);
+  box-shadow: var(--shadow-md);
+
+  &:hover {
+    background-color: var(--color-primary-dark);
+  }
+}
