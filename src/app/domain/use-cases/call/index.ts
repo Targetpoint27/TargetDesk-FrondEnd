@@ -7,3 +7,6 @@ export * from './close-call.use-case';
 export * from './get-callbacks.use-case';
 export * from './get-department-queue.use-case';
 export * from './assign-to-me.use-case';
+export * from './store-missed-call.use-case';
+export * from './schedule-callback.use-case';
+export * from './record-callback-result.use-case';

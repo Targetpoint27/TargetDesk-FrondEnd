@@ -1,14 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CallRepository } from '../../repositories/call.repository';
+import { Call, StoreMissedCallRequest } from '../../models/call.model';
 
 @Injectable({
   providedIn: 'root'
 })
-export class GetCallbacksUseCase {
+export class StoreMissedCallUseCase {
   constructor(private callRepository: CallRepository) {}
 
-  execute(): Observable<any> {
-    return this.callRepository.getCallbacks();
+  execute(request: StoreMissedCallRequest): Observable<Call> {
+    return this.callRepository.storeMissedCall(request);
   }
 }

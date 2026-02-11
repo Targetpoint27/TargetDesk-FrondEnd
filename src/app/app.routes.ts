@@ -194,7 +194,11 @@ export const routes: Routes = [
             path: 'department-queue',
             loadComponent: () => import('./features/dashboard/pages/call-center/department-queue/department-queue.component')
               .then(c => c.DepartmentQueueComponent)
-          },
+          },{
+  path: 'callbacks',
+  loadComponent: () => import('./features/dashboard/pages/call-center/callbacks/callbacks-list.component')
+    .then(c => c.CallbacksListComponent)
+}
         ]
       }
     ]

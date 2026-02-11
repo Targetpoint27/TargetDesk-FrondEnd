@@ -1,8 +1,3 @@
-/**
- * Call Center Dashboard Component
- * Main dashboard for call center agents
- */
-
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -34,11 +29,12 @@ interface DashboardState {
 export class CallCenterDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
-  // State observable
   state$: Observable<DashboardState>;
+  overdueCount$: Observable<number>;
 
   constructor(private callFacade: CallFacade) {
-    // Combine facade observables to create view state
+    this.overdueCount$ = this.callFacade.overdueCount$;
+
     this.state$ = combineLatest([
       this.callFacade.myQueue$,
       this.callFacade.callbacks$,
@@ -47,7 +43,6 @@ export class CallCenterDashboardComponent implements OnInit, OnDestroy {
     ]).pipe(
       takeUntil(this.destroy$),
       map(([myQueue, callbacks, isLoading, error]) => {
-        // Calculate stats
         const stats = {
           totalInQueue: myQueue.length,
           totalCallbacks: callbacks.length,
@@ -69,7 +64,6 @@ export class CallCenterDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Load initial data
     this.loadDashboardData();
   }
 
@@ -78,13 +72,11 @@ export class CallCenterDashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // Data loading
   loadDashboardData(): void {
     this.callFacade.loadMyQueue().subscribe();
     this.callFacade.loadCallbacks().subscribe();
   }
 
-  // UI Actions
   refreshData(): void {
     this.loadDashboardData();
   }
@@ -93,7 +85,6 @@ export class CallCenterDashboardComponent implements OnInit, OnDestroy {
     this.callFacade.clearError();
   }
 
-  // Utility methods for template
   getUrgencyClass(urgency: string): string {
     switch (urgency) {
       case 'critique':
@@ -158,13 +149,11 @@ export class CallCenterDashboardComponent implements OnInit, OnDestroy {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    // Relative time for recent calls
     if (diffMins < 1) return 'À l\'instant';
     if (diffMins < 60) return `Il y a ${diffMins}min`;
     if (diffHours < 24) return `Il y a ${diffHours}h`;
     if (diffDays < 7) return `Il y a ${diffDays}j`;
     
-    // Absolute date for older calls
     return date.toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit'

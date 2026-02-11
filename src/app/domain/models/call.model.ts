@@ -23,6 +23,8 @@ export interface Call {
   urgency: CallUrgency;
   resolution_summary?: string;
   final_result?: string;
+  is_overdue?: boolean;
+  time_until?: string;
   
   // Callback fields
   scheduled_callback_date?: string;
@@ -101,6 +103,15 @@ export interface UpdateCallRequest {
   object?: string;
   summary?: string;
   urgency?: CallUrgency;
+}
+
+// Store Missed Call Request
+export interface StoreMissedCallRequest {
+  phone_number: string;
+  department_id: number;
+  caller_name?: string;
+  notes?: string;
+  client_id?: number;
 }
 
 // Change Status Request

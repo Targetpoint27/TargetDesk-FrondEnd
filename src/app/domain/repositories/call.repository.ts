@@ -7,6 +7,7 @@ import {
   ScheduleCallbackRequest,
   CloseCallRequest,
   CallbackResultRequest,
+  StoreMissedCallRequest,
   CallNote
 } from '../models/call.model';
 
@@ -14,7 +15,7 @@ export abstract class CallRepository {
   // Get calls
   abstract getMyQueue(): Observable<Call[]>;
   abstract getDepartmentQueue(): Observable<Call[]>;
-  abstract getCallbacks(): Observable<Call[]>;
+  abstract getCallbacks(): Observable<any>; // Updated to handle metadata
   abstract searchCalls(query: string): Observable<Call[]>;
   abstract getAllCalls(): Observable<Call[]>;
   
@@ -27,6 +28,7 @@ export abstract class CallRepository {
   abstract assignToMe(id: number): Observable<Call>;
   
   // Callback operations
+  abstract storeMissedCall(data: StoreMissedCallRequest): Observable<Call>;
   abstract scheduleCallback(id: number, data: ScheduleCallbackRequest): Observable<Call>;
   abstract recordCallbackResult(id: number, data: CallbackResultRequest): Observable<Call>;
   

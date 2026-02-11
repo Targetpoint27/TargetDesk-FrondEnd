@@ -77,7 +77,10 @@ import {
   CloseCallUseCase,
   GetCallbacksUseCase,
   GetDepartmentQueueUseCase,
-  AssignToMeUseCase
+  AssignToMeUseCase,
+  StoreMissedCallUseCase,
+  ScheduleCallbackUseCase,
+  RecordCallbackResultUseCase
 } from './domain/use-cases/call';
 
 export const appConfig: ApplicationConfig = {
@@ -204,5 +207,8 @@ export const appConfig: ApplicationConfig = {
     GetCallbacksUseCase,
     GetDepartmentQueueUseCase,
     AssignToMeUseCase,
+    StoreMissedCallUseCase,  
+    ScheduleCallbackUseCase,
+    RecordCallbackResultUseCase
   ]
 };

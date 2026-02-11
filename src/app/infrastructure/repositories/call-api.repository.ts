@@ -10,6 +10,7 @@ import {
   ScheduleCallbackRequest,
   CloseCallRequest,
   CallbackResultRequest,
+  StoreMissedCallRequest,
   CallNote,
   CallResponse
 } from '../../domain/models/call.model';
@@ -44,17 +45,6 @@ export class CallApiRepository extends CallRepository {
       .pipe(
         map(response => {
           // Backend structure: { success, message, data: { total, unassigned_count, ..., calls: [...] } }
-          const calls = response.data?.calls || [];
-          return calls.map((call: any) => this.mapper.toDomain(call));
-        })
-      );
-  }
-
-  getCallbacks(): Observable<Call[]> {
-    return this.apiService
-      .get<any>(`${this.BASE_PATH}/calls/callbacks`)
-      .pipe(
-        map(response => {
           const calls = response.data?.calls || [];
           return calls.map((call: any) => this.mapper.toDomain(call));
         })
@@ -133,22 +123,6 @@ export class CallApiRepository extends CallRepository {
       );
   }
 
-  scheduleCallback(id: number, data: ScheduleCallbackRequest): Observable<Call> {
-    return this.apiService
-      .put<CallResponse>(`${this.BASE_PATH}/calls/${id}/schedule`, data)
-      .pipe(
-        map(response => this.mapper.toDomain(response.data))
-      );
-  }
-
-  recordCallbackResult(id: number, data: CallbackResultRequest): Observable<Call> {
-    return this.apiService
-      .post<CallResponse>(`${this.BASE_PATH}/calls/${id}/callback-result`, data)
-      .pipe(
-        map(response => this.mapper.toDomain(response.data))
-      );
-  }
-
   linkClient(id: number, clientId: number): Observable<Call> {
     return this.apiService
       .post<CallResponse>(`${this.BASE_PATH}/calls/${id}/link-client`, { client_id: clientId })
@@ -192,6 +166,47 @@ export class CallApiRepository extends CallRepository {
       .get<any>(`${this.BASE_PATH}/calls`, { params })
       .pipe(
         map(response => response)
+      );
+  }
+
+  getCallbacks(): Observable<any> {
+  return this.apiService
+    .get<any>(`${this.BASE_PATH}/calls/callbacks`)
+    .pipe(
+      map(response => {
+        // Backend returns { success, message, data: { total, overdue_count, calls: [...] } }
+        const data = response.data || {};
+        const calls = data.calls || [];
+        return {
+          total: data.total || 0,
+          overdueCount: data.overdue_count || 0,
+          calls: calls.map((call: any) => this.mapper.toDomain(call))
+        };
+      })
+    );
+  }
+
+  storeMissedCall(data: StoreMissedCallRequest): Observable<Call> {
+  return this.apiService
+    .post<CallResponse>(`${this.BASE_PATH}/calls/missed`, data)
+    .pipe(
+      map(response => this.mapper.toDomain(response.data))
+    );
+  }
+
+  scheduleCallback(id: number, data: ScheduleCallbackRequest): Observable<Call> {
+    return this.apiService
+      .put<CallResponse>(`${this.BASE_PATH}/calls/${id}/schedule`, data)
+      .pipe(
+        map(response => this.mapper.toDomain(response.data))
+      );
+  }
+
+  recordCallbackResult(id: number, data: CallbackResultRequest): Observable<Call> {
+    return this.apiService
+      .post<CallResponse>(`${this.BASE_PATH}/calls/${id}/callback-result`, data)
+      .pipe(
+        map(response => this.mapper.toDomain(response.data))
       );
   }
 }
