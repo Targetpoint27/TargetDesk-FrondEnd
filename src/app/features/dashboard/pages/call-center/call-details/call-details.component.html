@@ -45,6 +45,16 @@
             </div>
             
             <div class="flex items-center gap-3">
+              <!-- Schedule Button -->
+              <button 
+                (click)="openScheduleModal()"
+                class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all duration-200"
+                title="Programmer un rappel">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </button>
+
               <!-- Edit Button -->
               <button 
                 (click)="openEditModal(call)"
@@ -146,6 +156,50 @@
         
         <!-- Left Column - Call Information -->
         <div class="lg:col-span-2 space-y-6">
+
+          <!-- Scheduled Callback Card -->
+          <div *ngIf="call.scheduled_callback_date" 
+              class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-6 mb-6 shadow-sm animate-fade-in">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3 text-amber-800">
+                <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shadow-sm">
+                  <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-bold text-sm uppercase tracking-widest">Rappel Programmé</h3>
+                  <p class="text-[10px] font-medium opacity-80" *ngIf="call.callback_attempts > 0">
+                    {{ call.callback_attempts }} tentative(s) déjà effectuée(s)
+                  </p>
+                </div>
+              </div>
+              
+              <span *ngIf="call.is_overdue" class="px-3 py-1 bg-red-600 text-white text-[10px] font-black rounded-lg animate-pulse uppercase tracking-tighter">
+                En retard
+              </span>
+              </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-1">
+                <label class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Date & Heure</label>
+                <p class="text-gray-900 font-bold">
+                  {{ formatDate(call.scheduled_callback_date) }} à {{ call.scheduled_callback_time }}
+                </p>
+              </div>
+              <div class="space-y-1">
+                <label class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Motif du rappel</label>
+                <p class="text-gray-900 font-bold italic">
+                  "{{ call.callback_reason || 'Aucun motif spécifié' }}"
+                </p>
+              </div>
+            </div>
+
+            <div *ngIf="call.callback_notes" class="mt-4 pt-4 border-t border-amber-200/50">
+              <label class="text-[10px] font-black text-amber-600 uppercase tracking-widest block mb-1">Instructions de rappel</label>
+              <p class="text-sm text-amber-900 leading-relaxed">{{ call.callback_notes }}</p>
+            </div>
+          </div>
           
           <!-- Contact Information Card -->
           <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
@@ -502,3 +556,10 @@
   (click)="closeStatusDropdown()"
   class="fixed inset-0 z-[60]">
 </div>
+<!-- Schedule Modal -->
+<app-schedule-callback-modal
+  *ngIf="isScheduleModalOpen && (call$ | async) as call"
+  [call]="call"
+  (onClose)="closeScheduleModal()"
+  (onSubmit)="handleScheduleCallback($event)">
+</app-schedule-callback-modal>

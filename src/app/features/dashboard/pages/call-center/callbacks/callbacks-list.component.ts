@@ -29,7 +29,7 @@ export class CallbacksListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.callFacade.loadCallbacks().subscribe();
+    this.callFacade.loadCallbacks().pipe(takeUntil(this.destroy$)).subscribe();
   }
 
   ngOnDestroy(): void {
@@ -45,29 +45,21 @@ export class CallbacksListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/call-center/calls', callId]);
   }
 
-  openResultModal(call: Call, event: Event): void {
-    event.stopPropagation();
-    // Logic for US-CC-020 result modal will go here
-    console.log('Opening Result Modal for call:', call.id);
-  }
-
   formatDate(date: any): string {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      year: 'numeric'
     });
   }
 
   getUrgencyClass(urgency: string): string {
     const map: any = {
-      'critique': 'bg-red-500 text-white shadow-lg shadow-red-100',
-      'urgent': 'bg-orange-500 text-white shadow-lg shadow-orange-100',
-      'normal': 'bg-blue-500 text-white shadow-lg shadow-blue-100'
+      'critique': 'bg-red-50 text-red-600 border border-red-100',
+      'urgent': 'bg-orange-50 text-orange-600 border border-orange-100',
+      'normal': 'bg-blue-50 text-blue-600 border border-blue-100'
     };
-    return map[urgency] || 'bg-gray-500 text-white';
+    return map[urgency] || 'bg-gray-50 text-gray-600';
   }
 }

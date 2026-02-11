@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Observable, Subject, takeUntil } from 'rxjs';
+import { ScheduleCallbackModalComponent } from '../../../../../shared/components/callback-modals/schedule-callback-modal.component';
+import { ScheduleCallbackRequest } from '../../../../../domain/models/call.model';
 
 
 import { Call, CallStatus } from '../../../../../domain/models/call.model';
@@ -17,11 +19,12 @@ import { CloseCallRequest } from '../../../../../domain/models/call.model';
 @Component({
   selector: 'app-call-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, EditCallModalComponent, CloseCallModalComponent, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, EditCallModalComponent, CloseCallModalComponent, ReactiveFormsModule, ScheduleCallbackModalComponent],
   templateUrl: './call-details.component.html',
   styleUrl: './call-details.component.scss'
 })
 export class CallDetailsComponent implements OnInit, OnDestroy {
+  isScheduleModalOpen = false;
   private destroy$ = new Subject<void>();
   
   call$!: Observable<Call | null>;
@@ -225,6 +228,28 @@ export class CallDetailsComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error closing call:', error);
+      }
+    });
+  }
+
+  openScheduleModal(): void {
+    this.isScheduleModalOpen = true;
+  }
+
+  closeScheduleModal(): void {
+    this.isScheduleModalOpen = false;
+  }
+
+  handleScheduleCallback(data: ScheduleCallbackRequest): void {
+    const callId = Number(this.route.snapshot.params['id']);
+    
+    this.callFacade.scheduleCall(callId, data).subscribe({
+      next: () => {
+        this.closeScheduleModal();
+        this.callFacade.loadCallDetails(callId).subscribe();
+      },
+      error: (error) => {
+        console.error('Error scheduling callback:', error);
       }
     });
   }
