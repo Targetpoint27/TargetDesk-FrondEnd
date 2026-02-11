@@ -9,9 +9,82 @@
 </head>
 <body>
   <app-root>
-    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial;">
-      Chargement...
+    <div class="loading-container">
+      <div class="loader">
+        <div class="loader-logo">
+          <i class="bi bi-target"></i>
+        </div>
+        <div class="loader-spinner"></div>
+        <div class="loader-text">TargetDesk</div>
+        <div class="loader-subtitle">Chargement en cours...</div>
+      </div>
     </div>
+
+    <style>
+      .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: white;
+      }
+
+      .loader {
+        text-align: center;
+        animation: fadeIn 0.5s ease-in;
+      }
+
+      .loader-logo {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        animation: pulse 2s infinite;
+      }
+
+      .loader-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        margin: 0 auto 1.5rem auto;
+        animation: spin 1s linear infinite;
+      }
+
+      .loader-text {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        letter-spacing: 2px;
+      }
+
+      .loader-subtitle {
+        font-size: 1rem;
+        opacity: 0.8;
+        animation: blink 2s infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+      }
+
+      @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes blink {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 1; }
+      }
+    </style>
   </app-root>
 </body>
 </html>

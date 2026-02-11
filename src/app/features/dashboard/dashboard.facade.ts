@@ -1,6 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Observable, BehaviorSubject, combineLatest, of } from 'rxjs';
-import { map, switchMap, tap, catchError, share } from 'rxjs/operators';
+import { Observable, BehaviorSubject, combineLatest, of, timer } from 'rxjs';
+import { map, switchMap, tap, catchError, share, retry, retryWhen, delay, take } from 'rxjs/operators';
 import { DashboardService } from '../../shared/services/dashboard.service';
 import { AuthService } from '../../shared/services/auth.service';
 import {
@@ -92,14 +92,99 @@ export class DashboardFacade {
     this.initializeConfig();
   }
 
+  // ===== HELPER METHODS =====
+
+  /**
+   * Détecte si l'erreur est liée au réseau
+   */
+  private isNetworkError(error: any): boolean {
+    // Network-related errors that should trigger retry
+    if (!error) return false;
+
+    const networkErrorCodes = [0, 408, 429, 500, 502, 503, 504];
+    const networkErrorMessages = ['timeout', 'network', 'connection', 'NETWORK_ERROR'];
+
+    // Check status codes
+    if (networkErrorCodes.includes(error.status)) {
+      return true;
+    }
+
+    // Check error messages
+    const errorMessage = (error.message || '').toLowerCase();
+    if (networkErrorMessages.some(msg => errorMessage.includes(msg))) {
+      return true;
+    }
+
+    // Check for undefined errors (often network related)
+    if (error.status === undefined && error.message === 'Http failure response for (unknown url): 0 Unknown Error') {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Retourne un message d'erreur approprié
+   */
+  private getErrorMessage(error: any): string {
+    console.log('[DashboardFacade] Analyzing error for message:', error);
+
+    // Network errors
+    if (this.isNetworkError(error)) {
+      return 'Problème de connexion détecté. Vérifiez votre réseau et réessayez.';
+    }
+
+    // New user errors
+    if (this.isNewUserError(error)) {
+      return 'Bienvenue ! Votre tableau de bord se configurera automatiquement après vos premières interactions.';
+    }
+
+    // Authentication errors
+    if (error?.status === 401 || error?.status === 403) {
+      return 'Session expirée. Veuillez vous reconnecter.';
+    }
+
+    // Server errors
+    if (error?.status >= 500) {
+      return 'Erreur serveur temporaire. Veuillez réessayer dans quelques instants.';
+    }
+
+    // Undefined error (common in production navigation issues)
+    if (error === 'undefined' || error?.message === 'undefined' || error?.status === undefined) {
+      return 'Erreur de chargement temporaire. Cliquez sur "Réessayer" ou actualisez la page.';
+    }
+
+    // Generic fallback
+    return 'Erreur lors du chargement des données. Veuillez réessayer.';
+  }
+
+  /**
+   * Détecte si l'erreur est liée à un nouvel utilisateur
+   */
+  private isNewUserError(error: any): boolean {
+    // Codes d'erreur typiques pour nouveaux utilisateurs
+    const newUserErrorCodes = [404, 'NO_DATA', 'EMPTY_PORTFOLIO', 'USER_NOT_INITIALIZED'];
+    const errorCode = error?.status || error?.code || error?.message;
+
+    return newUserErrorCodes.some(code =>
+      errorCode === code || (typeof errorCode === 'string' && errorCode.includes('NO_DATA'))
+    );
+  }
+
   // ===== INITIALISATION =====
 
   /**
    * Initialise la configuration selon le rôle de l'utilisateur
    */
   private initializeConfig(): void {
-    // Récupérer le rôle de l'utilisateur depuis AuthService
-    const userRole = this.authService.getCurrentUser()?.role || 'commercial';
+    // Récupérer le rôle de l'utilisateur depuis AuthService avec fallback sécurisé
+    const user = this.authService.getCurrentUser();
+    const userRole = user?.role || 'commercial';
+
+    // Vérifier que l'utilisateur a des permissions de base
+    if (!user) {
+      console.warn('DashboardFacade: Aucun utilisateur connecté, utilisation du mode par défaut');
+    }
 
     const dashboardType = this.isDashboardManager(userRole) ? 'commercial' : 'personal';
 
@@ -109,6 +194,8 @@ export class DashboardFacade {
       autoRefresh: true,
       refreshInterval: 300000
     });
+
+    console.log(`DashboardFacade: Configuration initialisée pour ${userRole} - Type: ${dashboardType}`);
   }
 
   /**
@@ -227,27 +314,98 @@ export class DashboardFacade {
    * Charge les données commerciales
    */
   private loadCommercialData(params: DashboardQueryParams): Observable<any> {
+    const startTime = Date.now();
+    console.log('[DashboardFacade] Starting loadCommercialData', { params, timestamp: startTime });
+
     return combineLatest([
-      this.dashboardService.getCommercialOverview(params),
-      this.dashboardService.getCommercialStats(params),
-      this.dashboardService.getClientsEvolution(params),
-      this.dashboardService.getCommercialRecentInteractions(10),
-      this.dashboardService.getInactiveClients(30, 20)
+      this.dashboardService.getCommercialOverview(params).pipe(
+        tap(() => console.log('[DashboardFacade] Commercial overview loaded')),
+        catchError(error => {
+          console.warn('[DashboardFacade] Commercial overview failed:', error);
+          return of({ data: { metrics: this.getDefaultCommercialMetrics() } });
+        })
+      ),
+      this.dashboardService.getCommercialStats(params).pipe(
+        tap(() => console.log('[DashboardFacade] Commercial stats loaded')),
+        catchError(error => {
+          console.warn('[DashboardFacade] Commercial stats failed:', error);
+          return of({ data: this.getDefaultStats() });
+        })
+      ),
+      this.dashboardService.getClientsEvolution(params).pipe(
+        tap(() => console.log('[DashboardFacade] Clients evolution loaded')),
+        catchError(error => {
+          console.warn('[DashboardFacade] Clients evolution failed:', error);
+          return of({ data: this.getDefaultEvolution() });
+        })
+      ),
+      this.dashboardService.getCommercialRecentInteractions(10).pipe(
+        tap(() => console.log('[DashboardFacade] Recent interactions loaded')),
+        catchError(error => {
+          console.warn('[DashboardFacade] Recent interactions failed:', error);
+          return of({ data: this.getDefaultInteractions() });
+        })
+      ),
+      this.dashboardService.getInactiveClients(30, 20).pipe(
+        tap(() => console.log('[DashboardFacade] Inactive clients loaded')),
+        catchError(error => {
+          console.warn('[DashboardFacade] Inactive clients failed:', error);
+          return of({ data: this.getDefaultInactiveClients() });
+        })
+      )
     ]).pipe(
+      // Add retry logic with exponential backoff for network issues
+      retryWhen(errors =>
+        errors.pipe(
+          tap(error => {
+            const isNetworkError = this.isNetworkError(error);
+            console.warn('[DashboardFacade] Retrying due to error:', error, { isNetworkError });
+          }),
+          delay(1000), // Wait 1 second before retrying
+          take(2) // Maximum 2 retries
+        )
+      ),
       tap(([overview, stats, evolution, interactions, inactiveClients]) => {
+        const loadTime = Date.now() - startTime;
+        console.log(`[DashboardFacade] All commercial data loaded successfully in ${loadTime}ms`);
+
+        // Gestion sécurisée des données pour nouveaux utilisateurs
         this._commercialData.set({
-          overview: overview.data.metrics,
-          stats: stats.data,
-          evolution: evolution.data,
-          interactions: interactions.data,
-          inactiveClients: inactiveClients.data
+          overview: overview?.data?.metrics || this.getDefaultCommercialMetrics(),
+          stats: stats?.data || this.getDefaultStats(),
+          evolution: evolution?.data || this.getDefaultEvolution(),
+          interactions: interactions?.data || this.getDefaultInteractions(),
+          inactiveClients: inactiveClients?.data || this.getDefaultInactiveClients()
         });
         this._loading.set(false);
+        this._error.set(null); // Clear any previous errors on success
       }),
       catchError(error => {
+        const loadTime = Date.now() - startTime;
         this._loading.set(false);
-        this._error.set('Erreur lors du chargement des données commerciales');
-        console.error('Commercial data load error:', error);
+
+        console.error(`[DashboardFacade] Commercial data load failed after ${loadTime}ms:`, {
+          error: error,
+          message: error?.message,
+          status: error?.status,
+          statusText: error?.statusText,
+          url: error?.url,
+          stack: error?.stack?.split('\n').slice(0, 5)
+        });
+
+        // Enhanced error classification
+        const errorMessage = this.getErrorMessage(error);
+        this._error.set(errorMessage);
+
+        // Always provide fallback data to prevent broken UI
+        this._commercialData.set({
+          overview: this.getDefaultCommercialMetrics(),
+          stats: this.getDefaultStats(),
+          evolution: this.getDefaultEvolution(),
+          interactions: this.getDefaultInteractions(),
+          inactiveClients: this.getDefaultInactiveClients()
+        });
+
         return of(null);
       }),
       share()
@@ -258,27 +416,98 @@ export class DashboardFacade {
    * Charge les données personnelles
    */
   private loadPersonalData(params: DashboardQueryParams): Observable<any> {
+    const startTime = Date.now();
+    console.log('[DashboardFacade] Starting loadPersonalData', { params, timestamp: startTime });
+
     return combineLatest([
-      this.dashboardService.getPersonalOverview(params),
-      this.dashboardService.getPersonalPortfolio(params),
-      this.dashboardService.getTodaysTasks(),
-      this.dashboardService.getUpcomingAppointments(7, 10),
-      this.dashboardService.getPersonalRecentInteractions(10)
+      this.dashboardService.getPersonalOverview(params).pipe(
+        tap(() => console.log('[DashboardFacade] Personal overview loaded')),
+        catchError(error => {
+          console.warn('[DashboardFacade] Personal overview failed:', error);
+          return of({ data: { metrics: this.getDefaultPersonalMetrics() } });
+        })
+      ),
+      this.dashboardService.getPersonalPortfolio(params).pipe(
+        tap(() => console.log('[DashboardFacade] Personal portfolio loaded')),
+        catchError(error => {
+          console.warn('[DashboardFacade] Personal portfolio failed:', error);
+          return of({ data: this.getDefaultPortfolio() });
+        })
+      ),
+      this.dashboardService.getTodaysTasks().pipe(
+        tap(() => console.log('[DashboardFacade] Today tasks loaded')),
+        catchError(error => {
+          console.warn('[DashboardFacade] Today tasks failed:', error);
+          return of({ data: this.getDefaultTasks() });
+        })
+      ),
+      this.dashboardService.getUpcomingAppointments(7, 10).pipe(
+        tap(() => console.log('[DashboardFacade] Upcoming appointments loaded')),
+        catchError(error => {
+          console.warn('[DashboardFacade] Upcoming appointments failed:', error);
+          return of({ data: this.getDefaultAppointments() });
+        })
+      ),
+      this.dashboardService.getPersonalRecentInteractions(10).pipe(
+        tap(() => console.log('[DashboardFacade] Personal recent interactions loaded')),
+        catchError(error => {
+          console.warn('[DashboardFacade] Personal recent interactions failed:', error);
+          return of({ data: this.getDefaultInteractions() });
+        })
+      )
     ]).pipe(
+      // Add retry logic with exponential backoff for network issues
+      retryWhen(errors =>
+        errors.pipe(
+          tap(error => {
+            const isNetworkError = this.isNetworkError(error);
+            console.warn('[DashboardFacade] Retrying personal data due to error:', error, { isNetworkError });
+          }),
+          delay(1000), // Wait 1 second before retrying
+          take(2) // Maximum 2 retries
+        )
+      ),
       tap(([overview, portfolio, todayTasks, appointments, interactions]) => {
+        const loadTime = Date.now() - startTime;
+        console.log(`[DashboardFacade] All personal data loaded successfully in ${loadTime}ms`);
+
+        // Gestion sécurisée des données pour nouveaux utilisateurs
         this._personalData.set({
-          overview: overview.data.metrics,
-          portfolio: portfolio.data,
-          todayTasks: todayTasks.data,
-          upcomingAppointments: appointments.data,
-          interactions: interactions.data
+          overview: overview?.data?.metrics || this.getDefaultPersonalMetrics(),
+          portfolio: portfolio?.data || this.getDefaultPortfolio(),
+          todayTasks: todayTasks?.data || this.getDefaultTasks(),
+          upcomingAppointments: appointments?.data || this.getDefaultAppointments(),
+          interactions: interactions?.data || this.getDefaultInteractions()
         });
         this._loading.set(false);
+        this._error.set(null); // Clear any previous errors on success
       }),
       catchError(error => {
+        const loadTime = Date.now() - startTime;
         this._loading.set(false);
-        this._error.set('Erreur lors du chargement des données personnelles');
-        console.error('Personal data load error:', error);
+
+        console.error(`[DashboardFacade] Personal data load failed after ${loadTime}ms:`, {
+          error: error,
+          message: error?.message,
+          status: error?.status,
+          statusText: error?.statusText,
+          url: error?.url,
+          stack: error?.stack?.split('\n').slice(0, 5)
+        });
+
+        // Enhanced error classification
+        const errorMessage = this.getErrorMessage(error);
+        this._error.set(errorMessage);
+
+        // Always provide fallback data to prevent broken UI
+        this._personalData.set({
+          overview: this.getDefaultPersonalMetrics(),
+          portfolio: this.getDefaultPortfolio(),
+          todayTasks: this.getDefaultTasks(),
+          upcomingAppointments: this.getDefaultAppointments(),
+          interactions: this.getDefaultInteractions()
+        });
+
         return of(null);
       }),
       share()
@@ -480,6 +709,123 @@ export class DashboardFacade {
     } else {
       return this._personalData().overview !== null;
     }
+  }
+
+  // ===== MÉTHODES UTILITAIRES POUR NOUVEAUX UTILISATEURS =====
+
+
+  /**
+   * Retourne des métriques commerciales par défaut
+   */
+  private getDefaultCommercialMetrics(): CommercialMetrics {
+    return {
+      total_active_clients: 0,
+      total_prospects: 0,
+      new_clients_this_period: 0,
+      total_suppliers: 0
+    };
+  }
+
+  /**
+   * Retourne des métriques personnelles par défaut
+   */
+  private getDefaultPersonalMetrics(): PersonalMetrics {
+    return {
+      my_active_clients: 0,
+      my_prospects: 0,
+      my_appointments_upcoming: 0,
+      my_overdue_tasks: 0,
+      my_interactions_this_period: 0
+    };
+  }
+
+  /**
+   * Retourne des statistiques par défaut
+   */
+  private getDefaultStats(): CommercialStats {
+    return {
+      clients_by_status: [],
+      clients_by_type: [],
+      clients_by_sector: []
+    };
+  }
+
+  /**
+   * Retourne une évolution par défaut
+   */
+  private getDefaultEvolution(): ClientsEvolution {
+    return {
+      evolution_data: [],
+      period: 'month',
+      date_range: {
+        start: '',
+        end: ''
+      }
+    };
+  }
+
+  /**
+   * Retourne des interactions par défaut
+   */
+  private getDefaultInteractions(): RecentInteractionsData {
+    return {
+      interactions: [],
+      total_found: 0
+    };
+  }
+
+  /**
+   * Retourne des clients inactifs par défaut
+   */
+  private getDefaultInactiveClients(): InactiveClientsData {
+    return {
+      clients: [],
+      total_found: 0,
+      days_threshold: 30
+    };
+  }
+
+  /**
+   * Retourne un portefeuille personnel par défaut
+   */
+  private getDefaultPortfolio(): PersonalPortfolio {
+    return {
+      portfolio_evolution: [],
+      performance_metrics: {
+        conversion_rate: 0,
+        avg_interactions_per_client: 0,
+        most_active_day: 'Lundi',
+        total_clients: 0,
+        clients_with_interactions: 0
+      }
+    };
+  }
+
+  /**
+   * Retourne des tâches par défaut
+   */
+  private getDefaultTasks(): TodayTasksData {
+    return {
+      appointments_today: [],
+      follow_ups_due: [],
+      summary: {
+        total_appointments_today: 0,
+        total_follow_ups_due: 0,
+        urgent_tasks: 0,
+        completion_rate: 0
+      }
+    };
+  }
+
+  /**
+   * Retourne des rendez-vous par défaut
+   */
+  private getDefaultAppointments(): UpcomingAppointmentsData {
+    return {
+      appointments: [],
+      total_found: 0,
+      days_ahead: 7
+    };
   }
 
   // ===== CLEANUP =====

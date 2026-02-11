@@ -161,9 +161,9 @@ export class Suppliers implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Initialize permission observables
     this.canCreateSupplier$ = this.permissionService.hasPermission(PERMISSIONS.SUPPLIERS_CREATE);
-    this.canUpdateSupplier$ = this.permissionService.hasPermission(PERMISSIONS.SUPPLIERS_EDIT);
-    this.canDeleteSupplier$ = this.permissionService.hasPermission(PERMISSIONS.SUPPLIERS_DELETE);
-    this.canViewSupplier$ = this.permissionService.hasPermission(PERMISSIONS.SUPPLIERS_VIEW);
+    this.canUpdateSupplier$ = this.permissionService.canManageSuppliers();
+    this.canDeleteSupplier$ = this.permissionService.canManageSuppliers();
+    this.canViewSupplier$ = this.permissionService.canReadSuppliers();
 
     // Load suppliers on component initialization
     this.supplierFacade.loadSuppliers().subscribe();

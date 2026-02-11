@@ -36,6 +36,7 @@ import { MessageService } from './shared/services/message.service';
 
 // Core Auth Services
 import { PermissionService } from './core/auth/permission.service';
+import { ChunkErrorHandlerService } from './core/services/chunk-error-handler.service';
 
 // Guards
 import { AuthGuard } from './core/guards/auth.guard';
@@ -89,6 +90,7 @@ export const appConfig: ApplicationConfig = {
 
     // Core Auth Services
     PermissionService,
+    ChunkErrorHandlerService,
 
     // Guards
     AuthGuard,

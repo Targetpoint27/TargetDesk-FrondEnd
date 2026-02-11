@@ -311,27 +311,63 @@ export class PermissionService {
   }
 
   canManageClients(): Observable<boolean> {
-    return this.canAccessWithFallback('clients', 'create').pipe(
-      map(canCreate => canCreate),
-      catchError(() => this.canAccessWithFallback('clients', 'update')),
-      catchError(() => this.hasPermission(PERMISSIONS.CLIENTS_DELETE))
-    );
+    return this.hasAnyPermission([
+      PERMISSIONS.CLIENTS_CREATE,
+      PERMISSIONS.CLIENTS_UPDATE,
+      PERMISSIONS.CLIENTS_UPDATE_TEAM,
+      PERMISSIONS.CLIENTS_DELETE
+    ]);
   }
 
   canReadClients(): Observable<boolean> {
-    return this.canAccessWithFallback('clients', 'read');
+    return this.hasAnyPermission([
+      PERMISSIONS.CLIENTS_READ,
+      PERMISSIONS.CLIENTS_READ_TEAM
+    ]);
   }
 
   canExportClients(): Observable<boolean> {
-    return this.canAccessWithFallback('clients', 'export');
+    return this.hasAnyPermission([
+      PERMISSIONS.CLIENTS_EXPORT,
+      PERMISSIONS.CLIENTS_EXPORT_TEAM
+    ]);
+  }
+
+  canManageSuppliers(): Observable<boolean> {
+    return this.hasAnyPermission([
+      PERMISSIONS.SUPPLIERS_CREATE,
+      PERMISSIONS.SUPPLIERS_UPDATE_ALL,
+      PERMISSIONS.SUPPLIERS_UPDATE_TEAM,
+      PERMISSIONS.SUPPLIERS_DELETE_ALL,
+      PERMISSIONS.SUPPLIERS_DELETE_TEAM
+    ]);
+  }
+
+  canReadSuppliers(): Observable<boolean> {
+    return this.hasAnyPermission([
+      PERMISSIONS.SUPPLIERS_READ_ALL,
+      PERMISSIONS.SUPPLIERS_READ_TEAM,
+      PERMISSIONS.SUPPLIERS_VIEW_LEGACY
+    ]);
+  }
+
+  canExportSuppliers(): Observable<boolean> {
+    return this.hasAnyPermission([
+      PERMISSIONS.SUPPLIERS_EXPORT_ALL,
+      PERMISSIONS.SUPPLIERS_EXPORT_TEAM
+    ]);
   }
 
   canManageContacts(): Observable<boolean> {
-    return this.canAccessWithFallback('contacts', 'create').pipe(
-      map(canCreate => canCreate),
-      catchError(() => this.canAccessWithFallback('contacts', 'update')),
-      catchError(() => this.hasPermission(PERMISSIONS.CONTACTS_DELETE))
-    );
+    return this.hasAnyPermission([
+      PERMISSIONS.CONTACTS_CREATE,
+      PERMISSIONS.CONTACTS_UPDATE,
+      PERMISSIONS.CONTACTS_DELETE
+    ]);
+  }
+
+  canReadContacts(): Observable<boolean> {
+    return this.hasPermission(PERMISSIONS.CONTACTS_READ);
   }
 
   canManageDocuments(): Observable<boolean> {

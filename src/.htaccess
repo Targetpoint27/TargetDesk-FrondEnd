@@ -1,0 +1,102 @@
+# Angular Single Page Application Configuration
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Handle Angular Router
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Cache Management
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  # Cache JavaScript chunks with versioned names for 6 months (reduced for better cache invalidation)
+  ExpiresByType text/javascript "access plus 6 months"
+  ExpiresByType application/javascript "access plus 6 months"
+
+  # Cache CSS with versioned names for 6 months
+  ExpiresByType text/css "access plus 6 months"
+
+  # Cache images for 1 month
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/jpg "access plus 1 month"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType image/webp "access plus 1 month"
+  ExpiresByType image/ico "access plus 1 month"
+
+  # Cache fonts for 1 year
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType font/woff "access plus 1 year"
+  ExpiresByType application/font-woff2 "access plus 1 year"
+
+  # Never cache index.html to ensure users get latest version
+  ExpiresByType text/html "access plus 0 seconds"
+
+  # Cache manifests for a short time
+  ExpiresByType application/manifest+json "access plus 1 hour"
+  ExpiresByType text/cache-manifest "access plus 0 seconds"
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+  # Ensure proper MIME types
+  Header set X-Content-Type-Options "nosniff"
+
+  # Enable XSS protection
+  Header set X-XSS-Protection "1; mode=block"
+
+  # Prevent clickjacking
+  Header set X-Frame-Options "SAMEORIGIN"
+
+  # Cross-origin headers for better module loading
+  Header set Cross-Origin-Embedder-Policy "credentialless"
+  Header set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+  Header set Cross-Origin-Resource-Policy "cross-origin"
+
+  # Cache control for versioned assets (reduced cache time for better invalidation)
+  <FilesMatch "\.(js|css)$">
+    Header set Cache-Control "public, max-age=15552000, immutable"
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type"
+  </FilesMatch>
+
+  # Special handling for chunks (Safari/Firefox compatibility)
+  <FilesMatch "chunk-.*\.js$">
+    Header set Cache-Control "public, max-age=7776000, must-revalidate"
+    Header set Access-Control-Allow-Origin "*"
+    Header set Vary "Accept-Encoding, User-Agent"
+  </FilesMatch>
+
+  # No cache for index.html
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+    Header set Access-Control-Allow-Origin "*"
+  </FilesMatch>
+
+  # Special handling for Safari User-Agent
+  SetEnvIfNoCase User-Agent ".*Safari.*" safari_browser
+  Header set Cache-Control "no-cache, must-revalidate" env=safari_browser
+  Header set Pragma "no-cache" env=safari_browser
+</IfModule>
+
+# Compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/plain
+  AddOutputFilterByType DEFLATE text/html
+  AddOutputFilterByType DEFLATE text/xml
+  AddOutputFilterByType DEFLATE text/css
+  AddOutputFilterByType DEFLATE application/xml
+  AddOutputFilterByType DEFLATE application/xhtml+xml
+  AddOutputFilterByType DEFLATE application/rss+xml
+  AddOutputFilterByType DEFLATE application/javascript
+  AddOutputFilterByType DEFLATE application/x-javascript
+  AddOutputFilterByType DEFLATE text/javascript
+</IfModule>

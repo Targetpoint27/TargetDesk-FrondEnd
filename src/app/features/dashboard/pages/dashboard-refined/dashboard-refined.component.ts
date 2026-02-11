@@ -104,25 +104,6 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
       <!-- Main content -->
       <main class="max-w-8xl mx-auto px-4 py-4">
 
-        <!-- Global error -->
-        <div *ngIf="globalError()" class="mb-4">
-          <div class="bg-red-50/60 backdrop-blur-sm border border-red-200/60 rounded-2xl p-6">
-            <div class="flex items-start space-x-4">
-              <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <i class="bi bi-exclamation-triangle text-red-600"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-semibold text-red-800 mb-1">Erreur de chargement</h3>
-                <p class="text-red-700 text-sm mb-4">{{ globalError() }}</p>
-                <button
-                  (click)="refreshData()"
-                  class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-800 text-sm rounded-lg transition-colors">
-                  Réessayer
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- Commercial Dashboard -->
         <div *ngIf="isCommercialDashboard()" class="space-y-5">
@@ -187,7 +168,6 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
                   icon="bi-graph-up-arrow"
                   iconBg="linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)"
                   [loading]="isLoading()"
-                  [error]="globalError()"
                   [hasContent]="!!getClientsEvolution()"
                   (refresh)="refreshData()">
 
@@ -206,7 +186,6 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
                 icon="bi-pie-chart"
                 iconBg="linear-gradient(135deg, #ec4899 0%, #db2777 100%)"
                 [loading]="isLoading()"
-                [error]="globalError()"
                 [hasContent]="!!getCommercialStats()"
                 (refresh)="refreshData()">
 
@@ -232,7 +211,6 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
                 [badge]="getRecentInteractions()?.total_found?.toString()"
                 badgeClass="bg-cyan-100 text-cyan-700"
                 [loading]="isLoading()"
-                [error]="globalError()"
                 [hasContent]="!!getRecentInteractions()?.interactions?.length"
                 [isEmpty]="!getRecentInteractions()?.interactions?.length"
                 emptyIcon="bi-chat-dots"
@@ -253,7 +231,6 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
                 [badge]="getInactiveClients()?.total_found?.toString()"
                 badgeClass="bg-amber-100 text-amber-700"
                 [loading]="isLoading()"
-                [error]="globalError()"
                 [hasContent]="!!getInactiveClients()?.clients?.length"
                 [isEmpty]="!getInactiveClients()?.clients?.length"
                 emptyIcon="bi-check-circle"
@@ -333,7 +310,6 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
                 [badge]="getTodayTasksCount().toString()"
                 badgeClass="bg-blue-100 text-blue-700"
                 [loading]="isLoading()"
-                [error]="globalError()"
                 [hasContent]="!!getTodayTasks()"
                 (refresh)="refreshData()">
 
@@ -353,7 +329,6 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
                 [badge]="getUpcomingAppointments()?.total_found?.toString()"
                 badgeClass="bg-purple-100 text-purple-700"
                 [loading]="isLoading()"
-                [error]="globalError()"
                 [hasContent]="!!getUpcomingAppointments()?.appointments?.length"
                 [isEmpty]="!getUpcomingAppointments()?.appointments?.length"
                 emptyIcon="bi-calendar-plus"
@@ -378,7 +353,6 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
               icon="bi-graph-up"
               iconBg="linear-gradient(135deg, #10b981 0%, #059669 100%)"
               [loading]="isLoading()"
-              [error]="globalError()"
               [hasContent]="!!getPersonalPortfolio()"
               (refresh)="refreshData()">
 
@@ -421,7 +395,6 @@ export class DashboardRefinedComponent implements OnInit, OnDestroy {
   currentPeriod = computed(() => this._currentPeriod());
   autoRefreshEnabled = computed(() => this._autoRefreshEnabled());
   isLoading = computed(() => this.dashboardFacade.loading());
-  globalError = computed(() => this.dashboardFacade.error() || undefined);
 
   // Computed trends to avoid expression changed errors
   clientGrowthTrend = computed(() => {

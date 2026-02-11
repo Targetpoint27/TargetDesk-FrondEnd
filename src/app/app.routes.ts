@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { RoleGuard } from './core/guards/role.guard';
 import { PERMISSIONS } from './domain/models/permission.models';
+import { loadComponent } from './core/helpers/route-loader.helper';
 
 export const routes: Routes = [
   {
@@ -11,11 +12,17 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    loadComponent: () => import('./features/auth/login/login.component').then(c => c.LoginComponent)
+    loadComponent: loadComponent(
+      () => import('./features/auth/login/login.component').then(c => c.LoginComponent),
+      'LoginComponent'
+    )
   },
   {
     path: 'dashboard',
-    loadComponent: () => import('./features/dashboard/layout/layout').then(c => c.DashboardLayoutComponent),
+    loadComponent: loadComponent(
+      () => import('./features/dashboard/layout/layout').then(c => c.DashboardLayoutComponent),
+      'DashboardLayoutComponent'
+    ),
     canActivate: [AuthGuard],
     children: [
       {
@@ -25,7 +32,10 @@ export const routes: Routes = [
       },
       {
         path: 'home',
-        loadComponent: () => import('./features/dashboard/pages/dashboard-refined/dashboard-refined.component').then(c => c.DashboardRefinedComponent),
+        loadComponent: loadComponent(
+          () => import('./features/dashboard/pages/dashboard-refined/dashboard-refined.component').then(c => c.DashboardRefinedComponent),
+          'DashboardRefinedComponent'
+        ),
         canActivate: [RoleGuard],
         data: {
           permissions: [PERMISSIONS.DASHBOARD_PERSONAL, PERMISSIONS.SYSTEM_VIEW],
@@ -34,39 +44,58 @@ export const routes: Routes = [
       },
       {
         path: 'clients',
-        loadComponent: () => import('./features/dashboard/pages/clients/clients').then(c => c.Clients),
+        loadComponent: loadComponent(
+          () => import('./features/dashboard/pages/clients/clients').then(c => c.Clients),
+          'ClientsComponent'
+        ),
         canActivate: [RoleGuard],
         data: {
-          permissions: [PERMISSIONS.CLIENTS_READ]
+          permissions: [PERMISSIONS.CLIENTS_READ, PERMISSIONS.CLIENTS_READ_TEAM],
+          requireAllPermissions: false
         }
       },
       {
         path: 'clients/:id',
-        loadComponent: () => import('./features/dashboard/pages/client-detail/client-detail.component').then(c => c.ClientDetailComponent),
+        loadComponent: loadComponent(
+          () => import('./features/dashboard/pages/client-detail/client-detail.component').then(c => c.ClientDetailComponent),
+          'ClientDetailComponent'
+        ),
         canActivate: [RoleGuard],
         data: {
-          permissions: [PERMISSIONS.CLIENTS_READ]
+          permissions: [PERMISSIONS.CLIENTS_READ, PERMISSIONS.CLIENTS_READ_TEAM],
+          requireAllPermissions: false
         }
       },
       {
         path: 'suppliers',
-        loadComponent: () => import('./features/dashboard/pages/suppliers/suppliers').then(c => c.Suppliers),
+        loadComponent: loadComponent(
+          () => import('./features/dashboard/pages/suppliers/suppliers').then(c => c.Suppliers),
+          'SuppliersComponent'
+        ),
         canActivate: [RoleGuard],
         data: {
-          permissions: [PERMISSIONS.CLIENTS_READ]
+          permissions: [PERMISSIONS.SUPPLIERS_READ_ALL, PERMISSIONS.SUPPLIERS_READ_TEAM, PERMISSIONS.SUPPLIERS_VIEW_LEGACY],
+          requireAllPermissions: false
         }
       },
       {
         path: 'contacts',
-        loadComponent: () => import('./features/dashboard/pages/contacts/contacts').then(c => c.ContactsComponent),
+        loadComponent: loadComponent(
+          () => import('./features/dashboard/pages/contacts/contacts').then(c => c.ContactsComponent),
+          'ContactsComponent'
+        ),
         canActivate: [RoleGuard],
         data: {
-          permissions: [PERMISSIONS.CONTACTS_READ]
+          permissions: [PERMISSIONS.CONTACTS_READ],
+          requireAllPermissions: false
         }
       },
       {
         path: 'categories',
-        loadComponent: () => import('./features/dashboard/pages/categories/categories').then(c => c.CategoriesComponent),
+        loadComponent: loadComponent(
+          () => import('./features/dashboard/pages/categories/categories').then(c => c.CategoriesComponent),
+          'CategoriesComponent'
+        ),
         canActivate: [RoleGuard],
         data: {
           permissions: [PERMISSIONS.SYSTEM_VIEW]
@@ -74,17 +103,20 @@ export const routes: Routes = [
       },
       {
         path: 'profile',
-        loadComponent: () => import('./features/dashboard/pages/profile/profile').then(c => c.ProfileComponent)
+        loadComponent: loadComponent(
+          () => import('./features/dashboard/pages/profile/profile').then(c => c.ProfileComponent),
+          'ProfileComponent'
+        )
       },
     ]
   },
   {
     path: 'settings',
-    loadComponent: () => import('./features/settings/settings-layout.component').then(c => c.SettingsLayoutComponent),
-    canActivate: [AuthGuard, RoleGuard],
-    data: {
-      permissions: [PERMISSIONS.SYSTEM_VIEW]
-    },
+    loadComponent: loadComponent(
+      () => import('./features/settings/settings-layout.component').then(c => c.SettingsLayoutComponent),
+      'SettingsLayoutComponent'
+    ),
+    canActivate: [AuthGuard],
     children: [
       {
         path: '',
@@ -93,12 +125,18 @@ export const routes: Routes = [
       },
       {
         path: 'my-permissions',
-        loadComponent: () => import('./features/settings/pages/my-permissions.component').then(c => c.MyPermissionsComponent)
+        loadComponent: loadComponent(
+          () => import('./features/settings/pages/my-permissions.component').then(c => c.MyPermissionsComponent),
+          'MyPermissionsComponent'
+        )
       },
       // Routes Admin - Basées sur les endpoints disponibles
       {
         path: 'user-management',
-        loadComponent: () => import('./features/settings/user-management/user-management.component').then(c => c.UserManagementComponent),
+        loadComponent: loadComponent(
+          () => import('./features/settings/user-management/user-management.component').then(c => c.UserManagementComponent),
+          'UserManagementComponent'
+        ),
         canActivate: [RoleGuard],
         data: {
           permissions: [PERMISSIONS.USERS_READ]
@@ -106,7 +144,10 @@ export const routes: Routes = [
       },
       {
         path: 'roles-management',
-        loadComponent: () => import('./features/settings/pages/roles-management.component').then(c => c.RolesManagementComponent),
+        loadComponent: loadComponent(
+          () => import('./features/settings/pages/roles-management.component').then(c => c.RolesManagementComponent),
+          'RolesManagementComponent'
+        ),
         canActivate: [RoleGuard],
         data: {
           permissions: [PERMISSIONS.ROLES_READ]
@@ -114,7 +155,10 @@ export const routes: Routes = [
       },
       {
         path: 'permissions-management',
-        loadComponent: () => import('./features/settings/pages/permissions-management.component').then(c => c.PermissionsManagementComponent),
+        loadComponent: loadComponent(
+          () => import('./features/settings/pages/permissions-management.component').then(c => c.PermissionsManagementComponent),
+          'PermissionsManagementComponent'
+        ),
         canActivate: [RoleGuard],
         data: {
           permissions: [PERMISSIONS.PERMISSIONS_READ]
@@ -122,7 +166,10 @@ export const routes: Routes = [
       },
       {
         path: 'users-roles',
-        loadComponent: () => import('./features/settings/pages/users-roles.component').then(c => c.UsersRolesComponent),
+        loadComponent: loadComponent(
+          () => import('./features/settings/pages/users-roles.component').then(c => c.UsersRolesComponent),
+          'UsersRolesComponent'
+        ),
         canActivate: [RoleGuard],
         data: {
           permissions: [PERMISSIONS.ROLES_ASSIGN]
@@ -132,10 +179,16 @@ export const routes: Routes = [
   },
   {
     path: 'unauthorized',
-    loadComponent: () => import('./features/shared/pages/unauthorized.component').then(c => c.UnauthorizedComponent)
+    loadComponent: loadComponent(
+      () => import('./features/shared/pages/unauthorized.component').then(c => c.UnauthorizedComponent),
+      'UnauthorizedComponent'
+    )
   },
   {
     path: '**',
-    redirectTo: '/login'
+    loadComponent: loadComponent(
+      () => import('./shared/components/page-not-found/page-not-found').then(c => c.PageNotFound),
+      'PageNotFoundComponent'
+    )
   }
 ];

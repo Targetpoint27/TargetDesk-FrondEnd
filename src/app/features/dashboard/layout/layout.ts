@@ -71,7 +71,7 @@ export class DashboardLayoutComponent implements OnInit {
       label: 'Clients',
       icon: 'people',
       route: '/dashboard/clients',
-      requiredPermissions: [PERMISSIONS.CLIENTS_READ],
+      requiredPermissions: [PERMISSIONS.CLIENTS_READ, PERMISSIONS.CLIENTS_READ_TEAM],
       active: false,
       visible: false
     },
@@ -80,7 +80,7 @@ export class DashboardLayoutComponent implements OnInit {
       label: 'Fournisseurs',
       icon: 'business',
       route: '/dashboard/suppliers',
-      requiredPermissions: [PERMISSIONS.CLIENTS_READ],
+      requiredPermissions: [PERMISSIONS.SUPPLIERS_READ_ALL, PERMISSIONS.SUPPLIERS_READ_TEAM, PERMISSIONS.SUPPLIERS_VIEW_LEGACY],
       active: false,
       visible: false
     },
@@ -127,14 +127,8 @@ export class DashboardLayoutComponent implements OnInit {
       })
     );
 
-    // Initialize settings access permission
-    this.canAccessSettings$ = this.permissionService.hasAnyPermission([
-      PERMISSIONS.SYSTEM_VIEW,
-      PERMISSIONS.SYSTEM_MANAGE,
-      PERMISSIONS.USERS_READ,
-      PERMISSIONS.ROLES_READ,
-      PERMISSIONS.PERMISSIONS_READ
-    ]);
+    // Initialize settings access permission - every authenticated user can access settings to see their permissions
+    this.canAccessSettings$ = this.authFacade.isAuthenticated$;
 
     // Initialize notification count
     this.notificationCount$ = this.notificationService.notificationCount$;

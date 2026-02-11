@@ -1,5 +1,7 @@
 export const environment = {
   production: true,
+  version: '2.1.1', // Incrémenter à chaque déploiement
+  buildTimestamp: 1770795749,
   apiUrl: 'https://targetdesk.fr/api/public/api/v1',
   apiBaseUrl: 'https://targetdesk.fr/api/public/api/v1',
   api: {
@@ -21,5 +23,10 @@ export const environment = {
     level: 'error' as const,
     enableConsole: false,
     enableRemote: true
+  },
+  chunks: {
+    enableAutoReload: true, // Auto-reload si chunks non trouvés
+    maxRetries: 2,
+    retryDelay: 1000
   }
 };

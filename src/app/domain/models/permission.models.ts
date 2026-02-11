@@ -137,11 +137,28 @@ export const PERMISSIONS = {
   PERMISSIONS_VIEW: 'permissions.read',
   PERMISSIONS_ASSIGN: 'roles.assign',
 
-  // Additional permissions for frontend features
-  SUPPLIERS_VIEW: 'clients.read', // Suppliers are managed like clients in some contexts
-  SUPPLIERS_CREATE: 'clients.create',
-  SUPPLIERS_EDIT: 'clients.update',
-  SUPPLIERS_DELETE: 'clients.delete',
+  // 🏢 Suppliers Module (separate from clients)
+  SUPPLIERS_CREATE: 'suppliers.create',
+  SUPPLIERS_READ_ALL: 'suppliers.read.all',
+  SUPPLIERS_READ_TEAM: 'suppliers.read.team',
+  SUPPLIERS_READ_OWN: 'suppliers.read.own',
+  SUPPLIERS_UPDATE_ALL: 'suppliers.update.all',
+  SUPPLIERS_UPDATE_TEAM: 'suppliers.update.team',
+  SUPPLIERS_UPDATE_OWN: 'suppliers.update.own',
+  SUPPLIERS_DELETE_ALL: 'suppliers.delete.all',
+  SUPPLIERS_DELETE_TEAM: 'suppliers.delete.team',
+  SUPPLIERS_DELETE_OWN: 'suppliers.delete.own',
+  SUPPLIERS_EXPORT_ALL: 'suppliers.export.all',
+  SUPPLIERS_EXPORT_TEAM: 'suppliers.export.team',
+  SUPPLIERS_EXPORT_OWN: 'suppliers.export.own',
+  SUPPLIERS_IMPORT: 'suppliers.import',
+
+  // Legacy aliases for backward compatibility
+  SUPPLIERS_VIEW_LEGACY: 'suppliers.view', // Legacy permission from backend
+  SUPPLIERS_VIEW: 'suppliers.read.all', // Alias for suppliers read
+  SUPPLIERS_EDIT: 'suppliers.update.all', // Alias for suppliers update
+  SUPPLIERS_DELETE: 'suppliers.delete.all', // Alias for suppliers delete
+
   CATEGORIES_VIEW: 'system.view',
   CATEGORIES_CREATE: 'system.manage',
   CATEGORIES_EDIT: 'system.manage',
@@ -272,6 +289,24 @@ export const PERMISSION_GROUPS = {
   TEAM: [
     PERMISSIONS.TEAM_VIEW_ENABLE,
     PERMISSIONS.TEAM_VIEW_LOGS,
+  ],
+
+  // Supplier management permissions
+  SUPPLIERS: [
+    PERMISSIONS.SUPPLIERS_CREATE,
+    PERMISSIONS.SUPPLIERS_READ_ALL,
+    PERMISSIONS.SUPPLIERS_READ_TEAM,
+    PERMISSIONS.SUPPLIERS_READ_OWN,
+    PERMISSIONS.SUPPLIERS_UPDATE_ALL,
+    PERMISSIONS.SUPPLIERS_UPDATE_TEAM,
+    PERMISSIONS.SUPPLIERS_UPDATE_OWN,
+    PERMISSIONS.SUPPLIERS_DELETE_ALL,
+    PERMISSIONS.SUPPLIERS_DELETE_TEAM,
+    PERMISSIONS.SUPPLIERS_DELETE_OWN,
+    PERMISSIONS.SUPPLIERS_EXPORT_ALL,
+    PERMISSIONS.SUPPLIERS_EXPORT_TEAM,
+    PERMISSIONS.SUPPLIERS_EXPORT_OWN,
+    PERMISSIONS.SUPPLIERS_IMPORT,
   ],
 
   // Permission management
