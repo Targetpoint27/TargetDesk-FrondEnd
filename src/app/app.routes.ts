@@ -204,6 +204,21 @@ export const routes: Routes = [
     ]
   },
   {
+  path: 'dashboard/complaints',
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/dashboard/pages/complaints/complaints-list/complaints-list.component').then(m => m.ComplaintsListComponent),
+        title: 'Gestion des Réclamations'
+      },
+      // {
+      //   path: ':id',
+      //   loadComponent: () => import('./features/dashboard/pages/complaints/complaint-details/complaint-details.component').then(m => m.ComplaintDetailsComponent),
+      //   title: 'Détails de la Réclamation'
+      // }
+    ]
+  },
+  {
     path: 'unauthorized',
     loadComponent: () => import('./features/shared/pages/unauthorized.component').then(c => c.UnauthorizedComponent)
   },

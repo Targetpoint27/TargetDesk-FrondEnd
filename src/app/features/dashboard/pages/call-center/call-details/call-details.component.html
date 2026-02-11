@@ -267,6 +267,15 @@
                 </div>
                 <h2 class="text-lg font-bold text-gray-900">Détails de l'Appel</h2>
               </div>
+
+              <div class="flex gap-3">
+                <button 
+                  (click)="isComplaintModalOpen = true"
+                  class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2.5 mt-2 rounded-xl transition-all border border-red-100 flex items-center gap-2 text-sm font-semibold">
+                  <i class="bi bi-exclamation-triangle"></i>
+                  Marquer réclamation
+                </button>
+              </div>
             </div>
             
             <div class="p-6 space-y-6">
@@ -526,40 +535,48 @@
             </div>
           </div>
 
-        </div>
+       </div>
       </div>
 
+            <!-- Edit Modal -->
+      <app-edit-call-modal
+        *ngIf="isEditModalOpen && (call$ | async) as call"
+        [call]="call"
+        [departments]="departments"
+        (onSave)="handleSaveCall($event)"
+        (onClose)="closeEditModal()">
+      </app-edit-call-modal>
+
+      <!-- Close Call Modal -->
+      <app-close-call-modal
+        *ngIf="isCloseModalOpen && (call$ | async) as call"
+        [call]="call"
+        (onClose)="closeCloseModal()"
+        (onSubmit)="handleCloseCall($event)">
+      </app-close-call-modal>
+
+      <!-- Backdrop to close status dropdown when clicking outside -->
+      <div 
+        *ngIf="showStatusDropdown"
+        (click)="closeStatusDropdown()"
+        class="fixed inset-0 z-[60]">
+      </div>
+      <!-- Schedule Modal -->
+      <app-schedule-callback-modal
+        *ngIf="isScheduleModalOpen && (call$ | async) as call"
+        [call]="call"
+        (onClose)="closeScheduleModal()"
+        (onSubmit)="handleScheduleCallback($event)">
+      </app-schedule-callback-modal>
+
+      <!-- Create Complaint Modal -->
+      <app-create-complaint-modal
+        *ngIf="isComplaintModalOpen"
+        [callId]="call.id"
+        [clientId]="call.client_id"
+        (close)="isComplaintModalOpen = false"
+        (submit)="onComplaintSubmit($event)">
+      </app-create-complaint-modal>
     </ng-container>
   </div>
 </div>
-
-<!-- Edit Modal -->
-<app-edit-call-modal
-  *ngIf="isEditModalOpen && (call$ | async) as call"
-  [call]="call"
-  [departments]="departments"
-  (onSave)="handleSaveCall($event)"
-  (onClose)="closeEditModal()">
-</app-edit-call-modal>
-
-<!-- Close Call Modal -->
-<app-close-call-modal
-  *ngIf="isCloseModalOpen && (call$ | async) as call"
-  [call]="call"
-  (onClose)="closeCloseModal()"
-  (onSubmit)="handleCloseCall($event)">
-</app-close-call-modal>
-
-<!-- Backdrop to close status dropdown when clicking outside -->
-<div 
-  *ngIf="showStatusDropdown"
-  (click)="closeStatusDropdown()"
-  class="fixed inset-0 z-[60]">
-</div>
-<!-- Schedule Modal -->
-<app-schedule-callback-modal
-  *ngIf="isScheduleModalOpen && (call$ | async) as call"
-  [call]="call"
-  (onClose)="closeScheduleModal()"
-  (onSubmit)="handleScheduleCallback($event)">
-</app-schedule-callback-modal>

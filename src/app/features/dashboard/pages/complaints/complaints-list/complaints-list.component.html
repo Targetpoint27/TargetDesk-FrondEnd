@@ -1,0 +1,72 @@
+<div class="p-6 space-y-6 bg-gray-50/50 min-h-screen">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Réclamations</p>
+      <h3 class="text-3xl font-bold text-gray-900">{{ (metrics$ | async)?.total || 0 }}</h3>
+    </div>
+    
+    <div class="bg-red-50 p-6 rounded-2xl shadow-sm border border-red-100">
+      <p class="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Hors Délai (SLA)</p>
+      <h3 class="text-3xl font-bold text-red-600">{{ (metrics$ | async)?.overdue_count || 0 }}</h3>
+    </div>
+
+    <div class="bg-blue-600 p-6 rounded-2xl shadow-lg border border-blue-700">
+      <p class="text-[10px] font-black text-blue-100 uppercase tracking-widest mb-1">En cours d'analyse</p>
+      <h3 class="text-3xl font-bold text-white">--</h3>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
+      <h2 class="text-lg font-bold text-gray-900">Registre des Litiges</h2>
+      <div class="flex gap-2">
+         </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          <tr>
+            <th class="px-6 py-4">Numéro REC</th>
+            <th class="px-6 py-4">Client</th>
+            <th class="px-6 py-4">Catégorie</th>
+            <th class="px-6 py-4">Gravité</th>
+            <th class="px-6 py-4">Statut</th>
+            <th class="px-6 py-4 text-right">Échéance SLA</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let rec of complaints$ | async" 
+              [routerLink]="['/dashboard/complaints', rec.id]"
+              class="hover:bg-blue-50/50 transition-colors cursor-pointer group">
+            <td class="px-6 py-4">
+              <span class="font-bold text-blue-600 group-hover:underline">{{ rec.complaint_number }}</span>
+            </td>
+            <td class="px-6 py-4 font-semibold text-gray-700">{{ rec.client_name }}</td>
+            <td class="px-6 py-4 text-sm text-gray-600">{{ rec.category_label }}</td>
+            <td class="px-6 py-4">
+              <span [ngClass]="{
+                'bg-red-100 text-red-700': rec.severity === 'critique',
+                'bg-orange-100 text-orange-700': rec.severity === 'eleve',
+                'bg-blue-100 text-blue-700': rec.severity === 'moyen'
+              }" class="px-3 py-1 rounded-lg text-[10px] font-black uppercase">
+                {{ rec.severity }}
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <span class="flex items-center gap-2 text-sm font-medium text-gray-600">
+                <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+                {{ rec.status_label }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <span [class.text-red-600]="rec.is_overdue" class="font-mono font-bold text-sm">
+                {{ rec.sla_text }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

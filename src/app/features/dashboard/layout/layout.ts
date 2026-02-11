@@ -9,6 +9,7 @@ import { PermissionService } from '../../../core/auth/permission.service';
 import { PERMISSIONS } from '../../../domain/models/permission.models';
 import { NotificationService } from '../../../core/services/notification.service';
 import { NotificationModalComponent } from '../../../shared/components/notification-modal/notification-modal.component';
+import { ToastWrapperComponent } from '../../../shared/components/toast/toast-wrapper.component';
 
 export interface MenuItem {
   id: string;
@@ -23,7 +24,7 @@ export interface MenuItem {
 @Component({
   selector: 'app-dashboard-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, NotificationModalComponent],
+  imports: [CommonModule, RouterModule, NotificationModalComponent, ToastWrapperComponent],
   templateUrl: './layout.html',
   styleUrl: './layout.scss',
 })
@@ -110,7 +111,16 @@ export class DashboardLayoutComponent implements OnInit {
       requiredPermissions: [PERMISSIONS.CALL_CENTER_ACCESS, PERMISSIONS.DASHBOARD_PERSONAL],
       active: false,
       visible: false
-    }
+    },
+    {
+      id: 'complaints',
+      label: 'Réclamations',
+      icon: 'complaints',
+      route: '/dashboard/complaints',
+      requiredPermissions: [PERMISSIONS.CALL_CENTER_ACCESS],
+      active: false,
+      visible: false
+    },
   ];
 
   constructor(

@@ -1,0 +1,20 @@
+.overdue-row {
+  border-left: 4px solid var(--color-error); // Highlighting late tickets
+  background-color: #fef2f2; // Very light red
+}
+
+.sla-badge {
+  @apply font-mono font-bold px-2 py-1 rounded text-xs;
+  &.urgent {
+    @apply text-red-600 bg-red-50 animate-pulse; // Pulse for late SLA
+  }
+  &.normal {
+    @apply text-blue-600 bg-blue-50;
+  }
+}
+
+// Consistent with your layout glassmorphism
+.glass-table-container {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.8);
+}

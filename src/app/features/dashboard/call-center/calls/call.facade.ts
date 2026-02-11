@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap, catchError, of } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, of, finalize } from 'rxjs';
+import { ToastService } from '../../../../core/services/toast.service';
 
 import { 
   Call, 
@@ -28,6 +29,8 @@ import {
   RecordCallbackResultUseCase
 } from '../../../../domain/use-cases/call';
 
+import { ComplaintHttpService } from '../../../../infrastructure/http/complaint-http.service';
+import { StoreComplaintRequest } from '../../../../domain/models/complaint.model';
 import { MessageService } from '../../../../shared/services/message.service';
 import { AddCallNoteUseCase, AddCallNoteRequest } from '../../../../domain/use-cases/call/add-call-note.use-case';
 import { SearchCallsUseCase } from '../../../../domain/use-cases/call/search-calls.use-case';
@@ -76,6 +79,8 @@ export class CallFacade {
     private messageService: MessageService,
     private searchCallsUseCase: SearchCallsUseCase,
     private filterCallsUseCase: FilterCallsUseCase,
+    private complaintService: ComplaintHttpService,
+    private toastService: ToastService
   ) {}
 
   // ===== CALLBACK OPERATIONS (SESSION 9) =====
@@ -333,6 +338,21 @@ export class CallFacade {
 
   filterCalls(filters: any): Observable<any> {
     return this.filterCallsUseCase.execute(filters);
+  }
+
+  private setLoading(value: boolean): void {
+    this.isLoadingSubject.next(value);
+  }
+
+  convertToComplaint(request: StoreComplaintRequest): Observable<any> {
+    this.setLoading(true);
+    return this.complaintService.create(request).pipe(
+      tap(() => {
+        this.toastService.success('Réclamation enregistrée avec succès. SLA calculé.');
+        this.loadCallDetails(request.call_id).subscribe();
+      }),
+      finalize(() => this.setLoading(false))
+    );
   }
 
   // ===== UTILITY =====

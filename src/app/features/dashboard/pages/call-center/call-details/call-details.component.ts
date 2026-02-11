@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Observable, Subject, takeUntil } from 'rxjs';
 import { ScheduleCallbackModalComponent } from '../../../../../shared/components/callback-modals/schedule-callback-modal.component';
 import { ScheduleCallbackRequest } from '../../../../../domain/models/call.model';
+import { CreateComplaintModalComponent } from '../../../../../shared/components/complaint-modals/create-complaint-modal.component';
 
 
 import { Call, CallStatus } from '../../../../../domain/models/call.model';
@@ -19,11 +20,12 @@ import { CloseCallRequest } from '../../../../../domain/models/call.model';
 @Component({
   selector: 'app-call-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, EditCallModalComponent, CloseCallModalComponent, ReactiveFormsModule, ScheduleCallbackModalComponent],
+  imports: [CommonModule, RouterModule, EditCallModalComponent, CloseCallModalComponent, ReactiveFormsModule, ScheduleCallbackModalComponent, CreateComplaintModalComponent],
   templateUrl: './call-details.component.html',
   styleUrl: './call-details.component.scss'
 })
 export class CallDetailsComponent implements OnInit, OnDestroy {
+  isComplaintModalOpen = false;
   isScheduleModalOpen = false;
   private destroy$ = new Subject<void>();
   
@@ -250,6 +252,15 @@ export class CallDetailsComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error scheduling callback:', error);
+      }
+    });
+  }
+
+  onComplaintSubmit(request: any) {
+    this.callFacade.convertToComplaint(request).subscribe({
+      next: () => {
+        this.isComplaintModalOpen = false;
+        // Optionally navigate or refresh UI
       }
     });
   }
