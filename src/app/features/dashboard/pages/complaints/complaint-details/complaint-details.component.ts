@@ -17,13 +17,18 @@ export class ComplaintDetailsComponent implements OnInit {
   complaint$!: Observable<Complaint | null>;
   isLoading$!: Observable<boolean>;
   complaintForm!: FormGroup;
+  resolutionForm!: FormGroup;
+  closureForm!: FormGroup;
 
   constructor(
     private route: ActivatedRoute,
     private complaintFacade: ComplaintFacade,
     private fb: FormBuilder
   ) {
-    this.initForm();
+    this.initForm();           
+    this.initResolutionForm(); 
+    this.initClosureForm();    
+    
     this.complaint$ = this.complaintFacade.selectedComplaint$;
     this.isLoading$ = this.complaintFacade.isLoading$;
   }
@@ -33,6 +38,21 @@ export class ComplaintDetailsComponent implements OnInit {
       root_cause: ['', Validators.required],
       actions_taken: ['', Validators.required],
       proposed_solution: ['', Validators.required]
+    });
+  }
+
+  private initResolutionForm() {
+    this.resolutionForm = this.fb.group({
+      resolution_summary: ['', [Validators.required, Validators.minLength(10)]], // Match backend min:10
+      client_satisfaction: ['', [Validators.required]], // Added this
+      compensation_details: ['']
+    });
+  }
+
+  private initClosureForm() {
+    this.closureForm = this.fb.group({
+      client_satisfaction: ['', [Validators.required]],
+      closing_comment: ['', [Validators.required]]
     });
   }
 
@@ -57,6 +77,20 @@ export class ComplaintDetailsComponent implements OnInit {
     if (this.complaintForm.valid) {
       const id = this.route.snapshot.paramMap.get('id');
       this.complaintFacade.updateInvestigation(+(id!), this.complaintForm.value);
+    }
+  }
+
+  onResolve() {
+    if (this.resolutionForm.valid) {
+      const id = this.route.snapshot.paramMap.get('id');
+      this.complaintFacade.resolveComplaint(+(id!), this.resolutionForm.value);
+    }
+  }
+
+  onClose() {
+    if (this.closureForm.valid) {
+      const id = this.route.snapshot.paramMap.get('id');
+      this.complaintFacade.closeComplaint(+(id!), this.closureForm.value);
     }
   }
 }

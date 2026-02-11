@@ -111,3 +111,16 @@
     background-color: var(--color-primary-dark);
   }
 }
+
+/* Resolution specific styles */
+.border-t-emerald-500 {
+  border-top-color: var(--color-success) !important;
+}
+
+.bg-emerald-600 {
+  background-color: var(--color-success) !important;
+  
+  &:hover {
+    background-color: #059669; /* Slightly darker success */
+  }
+}

@@ -37,6 +37,7 @@
     </div>
 
     <div class="lg:col-span-2 space-y-6">
+      
       <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
         <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
           <i class="bi bi-search text-blue-600"></i> Analyse du Litige
@@ -50,7 +51,7 @@
                 <textarea 
                 formControlName="root_cause" 
                 rows="3" 
-                class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
+                class="w-full text-black p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
                 placeholder="Pourquoi ce problème est-il survenu ?">
                 </textarea>
             </div>
@@ -62,7 +63,7 @@
                 <textarea 
                 formControlName="actions_taken" 
                 rows="3" 
-                class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
+                class="w-full p-4 bg-gray-50 text-black border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
                 placeholder="Qu'avez-vous fait pour investiguer ?">
                 </textarea>
             </div>
@@ -74,7 +75,7 @@
                 <textarea 
                 formControlName="proposed_solution" 
                 rows="3" 
-                class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
+                class="w-full p-4 bg-gray-50 text-black border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
                 placeholder="Comment comptez-vous résoudre cela ?">
                 </textarea>
             </div>
@@ -90,6 +91,99 @@
             </div>
         </form>
       </div>
+
+      <div class="mt-6" *ngIf="rec.status === 'en_analyse'">
+        <div class="bg-white rounded-2xl shadow-xl border-t-4 border-t-emerald-500 border border-gray-100 p-8">
+          <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <i class="bi bi-check2-circle text-emerald-600"></i> Résolution du Litige
+          </h2>
+          
+          <form [formGroup]="resolutionForm" (ngSubmit)="onResolve()" class="space-y-6">
+            <div class="form-group">
+              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Résumé de la Solution</label>
+              <textarea 
+                formControlName="resolution_summary" 
+                rows="3" 
+                class="w-full text-black p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                placeholder="Expliquez la solution finale apportée au client..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Détails du Dédommagement (Optionnel)</label>
+              <textarea 
+                formControlName="compensation_details" 
+                rows="2" 
+                class="w-full p-4 bg-gray-50 text-black border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                placeholder="Ex: Geste commercial, remboursement, etc."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Niveau de Satisfaction</label>
+              <select formControlName="client_satisfaction" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-black">
+                <option value="">Sélectionner un avis...</option>
+                <option value="satisfait">Satisfait</option>
+                <option value="partiellement_satisfait">Partiellement Satisfait</option>
+                <option value="non_satisfait">Non Satisfait</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Résumé de la Solution</label>
+              <textarea formControlName="resolution_summary" rows="3" class="w-full text-black p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex justify-end">
+              <button 
+                type="submit" 
+                [disabled]="resolutionForm.invalid || (isLoading$ | async)"
+                class="px-8 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all flex items-center gap-2">
+                <i class="bi bi-check-lg"></i>
+                Confirmer la Résolution
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="mt-6" *ngIf="rec.status === 'resolue'">
+        <div class="bg-white rounded-2xl shadow-xl border-t-4 border-t-blue-600 border border-gray-100 p-8">
+          <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <i class="bi bi-door-closed text-blue-600"></i> Clôture & Satisfaction Client
+          </h2>
+          
+          <form [formGroup]="closureForm" (ngSubmit)="onClose()" class="space-y-6">
+            <div class="form-group">
+              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Niveau de Satisfaction</label>
+              <select formControlName="client_satisfaction" class="w-full text-black p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Sélectionner un avis...</option>
+                <option value="satisfait">Satisfait</option>
+                <option value="partiellement_satisfait">Partiellement Satisfait</option>
+                <option value="non_satisfait">Non Satisfait</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Commentaire de Clôture</label>
+              <textarea 
+                formControlName="closing_comment" 
+                rows="3" 
+                class="w-full p-4 bg-gray-50 text-black border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Note finale sur l'échange avec le client..."></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex justify-end">
+              <button 
+                type="submit" 
+                [disabled]="closureForm.invalid || (isLoading$ | async)"
+                class="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-all flex items-center gap-2">
+                <i class="bi bi-archive"></i>
+                Clôturer Définitivement
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
