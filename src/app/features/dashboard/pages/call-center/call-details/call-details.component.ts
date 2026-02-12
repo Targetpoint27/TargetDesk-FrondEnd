@@ -16,11 +16,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 
 import { CloseCallModalComponent } from '../close-call-modal/close-call-modal.component';
 import { CloseCallRequest } from '../../../../../domain/models/call.model';
+import { LinkClientModalComponent } from '../../../../../shared/components/link-client-modal/link-client-modal.component';
 
 @Component({
   selector: 'app-call-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, EditCallModalComponent, CloseCallModalComponent, ReactiveFormsModule, ScheduleCallbackModalComponent, CreateComplaintModalComponent],
+  imports: [CommonModule, RouterModule, EditCallModalComponent, CloseCallModalComponent, ReactiveFormsModule, ScheduleCallbackModalComponent, LinkClientModalComponent, CreateComplaintModalComponent],
   templateUrl: './call-details.component.html',
   styleUrl: './call-details.component.scss'
 })
@@ -35,6 +36,7 @@ export class CallDetailsComponent implements OnInit, OnDestroy {
   // Modal state
   isEditModalOpen = false;
   departments: any[] = [];
+  isLinkModalOpen = false;
 
   // Note form
   showNoteForm = false;
@@ -58,7 +60,7 @@ export class CallDetailsComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private callFacade: CallFacade,
+    public callFacade: CallFacade,
     private fb: FormBuilder
   ) {
     this.call$ = this.callFacade.currentCall$;
@@ -107,6 +109,18 @@ export class CallDetailsComponent implements OnInit, OnDestroy {
       'a_rappeler': 'bg-red-100 text-red-800'
     };
     return classes[status] || 'bg-gray-100 text-gray-800';
+  }
+
+  openLinkModal(): void {
+    this.isLinkModalOpen = true;
+  }
+
+  handleLinkConfirm(clientId: number): void {
+    const callId = Number(this.route.snapshot.params['id']);
+    // Use the facade method we added in Phase 1
+    this.callFacade.linkCallToClient(callId, clientId);
+    this.isLinkModalOpen = false;
+    this.callFacade.loadClientHistory(clientId);
   }
 
   getUrgencyClass(urgency: string): string {

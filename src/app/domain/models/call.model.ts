@@ -205,9 +205,11 @@ export interface User {
 export interface Client {
   id: number;
   name: string;
+  client_id?: string;
   email?: string;
   phone?: string;
   sector?: string;
+  type?: 'particulier' | 'entreprise';
 }
 
 // Call Note
@@ -220,4 +222,14 @@ export interface CallNote {
   created_at: string;
   updated_at: string;
   creator?: User;
+}
+
+export interface LinkClientRequest {
+  client_id: number;
+}
+
+export interface ClientResponse {
+  success: boolean;
+  message: string;
+  data: Client;
 }

@@ -1,0 +1,71 @@
+<div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100">
+    <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+      <h2 class="text-xl font-bold text-gray-900">Associer un Client</h2>
+      <button (click)="close.emit()" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="p-6">
+      <div class="relative mb-6">
+        <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input 
+          [formControl]="searchControl"
+          type="text" 
+          placeholder="Rechercher par nom, email, téléphone..."
+          class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-black"
+        >
+      </div>
+
+      <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+        
+        <div *ngIf="isLoading" class="text-center py-8 text-gray-500">
+          <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-2"></div>
+          <p class="text-sm">Recherche en cours...</p>
+        </div>
+
+        <div *ngFor="let result of results" 
+             (click)="onSelectClient(result.id)"
+             class="p-4 border border-gray-100 rounded-xl hover:border-blue-500 hover:bg-blue-50/30 cursor-pointer transition-all group">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold uppercase shrink-0">
+              {{ result.name.substring(0, 1) }}
+            </div>
+            
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-gray-900 group-hover:text-blue-700 truncate">
+                {{ result.name }}
+              </h3>
+              
+              <div class="flex flex-col gap-0.5 mt-1">
+                <span class="text-xs text-gray-500 truncate flex items-center gap-1">
+                  <i class="bi bi-envelope text-[10px]"></i> {{ result.email }}
+                </span>
+                <span class="text-xs text-gray-500 flex items-center gap-1">
+                  <i class="bi bi-telephone text-[10px]"></i> {{ result.phone }}
+                </span>
+              </div>
+              
+              <div class="mt-2 flex items-center gap-2">
+                <span class="px-2 py-0.5 bg-gray-100 rounded text-[10px] uppercase font-black tracking-wider text-gray-500">
+                  {{ result.type }}
+                </span>
+                <span *ngIf="result.client_id" class="text-[10px] text-gray-400 font-mono">
+                  {{ result.client_id }}
+                </span>
+              </div>
+            </div>
+            
+            <i class="bi bi-link-45deg text-gray-300 group-hover:text-blue-600 text-2xl"></i>
+          </div>
+        </div>
+
+        <div *ngIf="!isLoading && results.length === 0 && searchControl.value" class="text-center py-8">
+          <i class="bi bi-person-x text-4xl text-gray-200 mb-2 block"></i>
+          <p class="text-gray-400">Aucun client trouvé pour "{{ searchControl.value }}".</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

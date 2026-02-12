@@ -35,6 +35,7 @@ import { MessageService } from '../../../../shared/services/message.service';
 import { AddCallNoteUseCase, AddCallNoteRequest } from '../../../../domain/use-cases/call/add-call-note.use-case';
 import { SearchCallsUseCase } from '../../../../domain/use-cases/call/search-calls.use-case';
 import { FilterCallsUseCase } from '../../../../domain/use-cases/call/filter-calls.use-case';
+import { CallRepository } from '../../../../domain/repositories/call.repository';
 
 @Injectable({
   providedIn: 'root'
@@ -50,6 +51,8 @@ export class CallFacade {
   private isCreatingSubject = new BehaviorSubject<boolean>(false);
   private isUpdatingSubject = new BehaviorSubject<boolean>(false);
   private errorSubject = new BehaviorSubject<string | null>(null);
+  private clientHistorySubject = new BehaviorSubject<Call[]>([]);
+
 
   // Observables for UI components
   myQueue$ = this.myQueueSubject.asObservable();
@@ -61,6 +64,7 @@ export class CallFacade {
   isCreating$ = this.isCreatingSubject.asObservable();
   isUpdating$ = this.isUpdatingSubject.asObservable();
   error$ = this.errorSubject.asObservable();
+  clientHistory$ = this.clientHistorySubject.asObservable();
 
   constructor(
     private getMyQueueUseCase: GetMyQueueUseCase,
@@ -70,6 +74,7 @@ export class CallFacade {
     private updateCallUseCase: UpdateCallUseCase,
     private changeCallStatusUseCase: ChangeCallStatusUseCase,
     private closeCallUseCase: CloseCallUseCase,
+    private callRepository: CallRepository,
     private getCallbacksUseCase: GetCallbacksUseCase,
     private addCallNoteUseCase: AddCallNoteUseCase,
     private assignToMeUseCase: AssignToMeUseCase,
@@ -353,6 +358,31 @@ export class CallFacade {
       }),
       finalize(() => this.setLoading(false))
     );
+  }
+
+  linkCallToClient(callId: number, clientId: number): void {
+    this.isLoadingSubject.next(true);
+    
+    // Use the directly injected repository instead of the hack
+    this.callRepository.linkClient(callId, clientId).subscribe({
+      next: (updatedCall: Call) => {
+        this.currentCallSubject.next(updatedCall); 
+        this.toastService.success('Client associé avec succès');
+        this.isLoadingSubject.next(false);
+      },
+      error: (err: any) => {
+        this.toastService.error('Erreur lors de la liaison du client');
+        this.isLoadingSubject.next(false);
+      }
+    });
+  }
+
+  loadClientHistory(clientId: number): void {
+    // Use existing filter logic to get calls for this client_id
+    this.filterCalls({ client_id: clientId }).subscribe(response => {
+      const history = response.data?.calls?.slice(0, 5) || [];
+      this.clientHistorySubject.next(history);
+    });
   }
 
   // ===== UTILITY =====
