@@ -15,6 +15,7 @@ import { CategoryBadgesListComponent } from '../../../../shared/components/categ
 import { CategorySelectorComponent } from '../../../../shared/components/category-selector/category-selector.component';
 import { ImportExportModalComponent } from '../../../../shared/components/import-export-modal/import-export-modal.component';
 import { QuickSearchComponent } from '../../../../shared/components/quick-search/quick-search.component';
+import { ClientKycFormComponent } from '../../../../shared/components/client-kyc-form/client-kyc-form.component';
 
 import { ClientFacade } from '../../clients/client.facade';
 import { AuthFacade } from '../../../auth/auth.facade';
@@ -47,7 +48,7 @@ interface ClientsState {
 
 @Component({
   selector: 'app-clients',
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, ConfirmationModalComponent, ClientDetailsModalComponent, ContactFormModalComponent, CategoryBadgesListComponent, CategorySelectorComponent, ImportExportModalComponent, QuickSearchComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, ConfirmationModalComponent, ClientDetailsModalComponent, ContactFormModalComponent, CategoryBadgesListComponent, CategorySelectorComponent, ImportExportModalComponent, QuickSearchComponent, ClientKycFormComponent],
   templateUrl: './clients.html',
   styleUrl: './clients.scss',
 })
@@ -81,6 +82,11 @@ export class Clients implements OnInit, OnDestroy {
   showCreateForm = false;
   showEditForm = false;
   showFilters = false;
+
+  // KYC Form State
+  showKycForm = false;
+  kycFormMode: 'create' | 'edit' = 'create';
+  kycInitialData: any = null;
 
   // Stable loading states
   isCreatingClient = false;
@@ -353,6 +359,39 @@ export class Clients implements OnInit, OnDestroy {
 
   onEditClient(client: ClientEntity): void {
     this.editingClient = client;
+    this.kycFormMode = 'edit';
+
+    // Préparer les données initiales pour le formulaire KYC
+    this.kycInitialData = {
+      name: client.name,
+      type: client.type,
+      email: client.email,
+      phone: client.phone || '',
+      address: client.address || '',
+      siret: client.siret || '',
+      sector: client.sector || '',
+      website: client.website || '',
+      notes: client.notes || '',
+      // Ajouter les champs KYC avec valeurs par défaut ou existantes
+      brand_workshop: (client as any).brand_workshop || '',
+      legal_form: (client as any).legal_form || '',
+      legal_representative_first_name: (client as any).legal_representative_first_name || '',
+      legal_representative_last_name: (client as any).legal_representative_last_name || '',
+      beneficial_owner_first_name: (client as any).beneficial_owner_first_name || '',
+      beneficial_owner_last_name: (client as any).beneficial_owner_last_name || '',
+      bank: (client as any).bank || '',
+      bank_account_type: (client as any).bank_account_type || '',
+      payment_method: (client as any).payment_method || '',
+      payment_in_foreign_currency: (client as any).payment_in_foreign_currency || false,
+      has_bank_identity_statement: (client as any).has_bank_identity_statement || false
+    };
+
+    this.showKycForm = true;
+  }
+
+  // Ancienne méthode conservée pour compatibilité
+  onEditClientLegacy(client: ClientEntity): void {
+    this.editingClient = client;
     this.showCreateForm = true;
     this.showEditForm = true;
 
@@ -421,6 +460,13 @@ export class Clients implements OnInit, OnDestroy {
 
   // UI Actions
   openCreateForm(): void {
+    this.kycFormMode = 'create';
+    this.kycInitialData = null;
+    this.showKycForm = true;
+  }
+
+  // Ancienne méthode conservée pour compatibilité
+  openLegacyCreateForm(): void {
     this.showCreateForm = true;
     this.selectedCategoryIds = [];
     this.resetCreateForm();
@@ -1037,6 +1083,125 @@ export class Clients implements OnInit, OnDestroy {
       'Import terminé'
     );
     this.loadClients();
+  }
+
+  // KYC Form Methods
+  onKycFormSubmit(kycData: any): void {
+    if (this.kycFormMode === 'create') {
+      this.onCreateClientFromKyc(kycData);
+    } else {
+      this.onUpdateClientFromKyc(kycData);
+    }
+  }
+
+  onKycFormCancel(): void {
+    this.showKycForm = false;
+    this.kycInitialData = null;
+    this.editingClient = null;
+  }
+
+  private onCreateClientFromKyc(kycData: any): void {
+    const currentUser = this.authFacade.getCurrentUser();
+    if (!currentUser) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    const clientData: CreateClientRequest = {
+      name: kycData.name.trim(),
+      type: kycData.type,
+      email: kycData.email.trim(),
+      phone: kycData.phone?.trim() || undefined,
+      address: kycData.address?.trim() || undefined,
+      siret: kycData.siret?.trim() || undefined,
+      sector: kycData.sector?.trim() || undefined,
+      website: kycData.website?.trim() || undefined,
+      notes: kycData.notes?.trim() || undefined,
+
+      // Nouveaux champs KYC
+      brand_workshop: kycData.brand_workshop?.trim() || undefined,
+      legal_form: kycData.legal_form || undefined,
+      legal_representative_first_name: kycData.legal_representative_first_name?.trim() || undefined,
+      legal_representative_last_name: kycData.legal_representative_last_name?.trim() || undefined,
+      beneficial_owner_first_name: kycData.beneficial_owner_first_name?.trim() || undefined,
+      beneficial_owner_last_name: kycData.beneficial_owner_last_name?.trim() || undefined,
+      bank: kycData.bank?.trim() || undefined,
+      bank_account_type: kycData.bank_account_type || undefined,
+      payment_moment: kycData.payment_method || undefined,
+      payment_in_foreign_currency: kycData.payment_in_foreign_currency || undefined,
+      has_bank_identity_statement: kycData.has_bank_identity_statement || undefined,
+
+      category_ids: [] // Pour l'instant, pas de catégories via KYC
+    };
+
+    this.clientFacade.createClient(clientData, currentUser.id).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: () => {
+        this.notificationService.showSuccess(
+          'Le client KYC a été créé avec succès',
+          'Client créé'
+        );
+        this.onKycFormCancel();
+      },
+      error: (error) => {
+        // L'erreur est déjà gérée par le ClientFacade
+        console.error('Erreur lors de la création du client KYC:', error);
+      }
+    });
+  }
+
+  private onUpdateClientFromKyc(kycData: any): void {
+    if (!this.editingClient) return;
+
+    const currentUser = this.authFacade.getCurrentUser();
+    if (!currentUser) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    const updateData: UpdateClientRequest = {
+      name: kycData.name.trim(),
+      type: kycData.type,
+      email: kycData.email.trim(),
+      phone: kycData.phone?.trim() || undefined,
+      address: kycData.address?.trim() || undefined,
+      siret: kycData.siret?.trim() || undefined,
+      sector: kycData.sector?.trim() || undefined,
+      website: kycData.website?.trim() || undefined,
+      notes: kycData.notes?.trim() || undefined,
+
+      // Nouveaux champs KYC
+      brand_workshop: kycData.brand_workshop?.trim() || undefined,
+      legal_form: kycData.legal_form || undefined,
+      legal_representative_first_name: kycData.legal_representative_first_name?.trim() || undefined,
+      legal_representative_last_name: kycData.legal_representative_last_name?.trim() || undefined,
+      beneficial_owner_first_name: kycData.beneficial_owner_first_name?.trim() || undefined,
+      beneficial_owner_last_name: kycData.beneficial_owner_last_name?.trim() || undefined,
+      bank: kycData.bank?.trim() || undefined,
+      bank_account_type: kycData.bank_account_type || undefined,
+      payment_moment: kycData.payment_method || undefined,
+      payment_in_foreign_currency: kycData.payment_in_foreign_currency || undefined,
+      has_bank_identity_statement: kycData.has_bank_identity_statement || undefined,
+
+      category_ids: [] // Pour l'instant, pas de catégories via KYC
+    };
+
+    this.clientFacade.updateClient(this.editingClient.id, updateData, currentUser.id).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: () => {
+        this.notificationService.showSuccess(
+          'Le client KYC a été mis à jour avec succès',
+          'Client mis à jour'
+        );
+        this.onKycFormCancel();
+      },
+      error: (error) => {
+        // L'erreur est déjà gérée par le ClientFacade
+        console.error('Erreur lors de la mise à jour du client KYC:', error);
+      }
+    });
   }
 
   // Overlay Panel Methods - removed onFormPanelBackgroundClick as it's now handled by form-backdrop

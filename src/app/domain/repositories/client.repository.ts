@@ -32,6 +32,19 @@ export interface CreateClientRequest {
   website?: string;
   notes?: string;
   category_ids?: number[];
+
+  // Nouveaux champs KYC
+  brand_workshop?: string;
+  legal_form?: string;
+  legal_representative_first_name?: string;
+  legal_representative_last_name?: string;
+  beneficial_owner_first_name?: string;
+  beneficial_owner_last_name?: string;
+  bank?: string;
+  bank_account_type?: string;
+  payment_moment?: string;
+  payment_in_foreign_currency?: boolean;
+  has_bank_identity_statement?: boolean;
 }
 
 export interface UpdateClientRequest {
@@ -45,6 +58,19 @@ export interface UpdateClientRequest {
   website?: string;
   notes?: string;
   category_ids?: number[];
+
+  // Nouveaux champs KYC
+  brand_workshop?: string;
+  legal_form?: string;
+  legal_representative_first_name?: string;
+  legal_representative_last_name?: string;
+  beneficial_owner_first_name?: string;
+  beneficial_owner_last_name?: string;
+  bank?: string;
+  bank_account_type?: string;
+  payment_moment?: string;
+  payment_in_foreign_currency?: boolean;
+  has_bank_identity_statement?: boolean;
 }
 
 /**
