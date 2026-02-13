@@ -272,3 +272,17 @@ a {
 .mt-2 { margin-top: var(--spacing-2); }
 .mt-3 { margin-top: var(--spacing-3); }
 .mt-4 { margin-top: var(--spacing-4); }
+
+// Modal overrides — force light-theme inside all modal panels
+.modal-panel {
+  color: #111827;
+
+  input, textarea, select {
+    color: #111827;
+    background: #fafbfc;
+  }
+
+  p, span, label, h1, h2, h3, h4, h5, h6 {
+    color: inherit;
+  }
+}

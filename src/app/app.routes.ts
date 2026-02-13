@@ -119,7 +119,12 @@ export const routes: Routes = [
             path: 'callbacks',
             loadComponent: () => import('./features/dashboard/pages/call-center/callbacks/callbacks-list.component')
               .then(c => c.CallbacksListComponent)
-          }
+          },
+          {
+            path: 'daily-report',
+            loadComponent: () => import('./features/dashboard/pages/call-center/daily-report/daily-report.component')
+              .then(c => c.DailyReportComponent)
+          },
         ]
       },
       // Complaints Sub-Module

@@ -1,0 +1,60 @@
+// Standard padding and layout
+:host {
+  display: block;
+  background-color: transparent;
+}
+
+// KPI Cards styling to match the TargetDesk look
+.grid {
+  .bg-white {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid rgba(226, 232, 240, 0.8); // slate-200 equivalent
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    }
+  }
+}
+
+// Chart Containers
+canvas {
+  max-height: 300px; // Keep charts from growing too large
+  width: 100% !important;
+}
+
+// Table styling enhancements
+.table {
+  th {
+    letter-spacing: 0.05em;
+    background-color: #f8fafc; // slate-50
+  }
+
+  td {
+    vertical-align: middle;
+  }
+}
+
+// Custom button colors to match your existing UI
+.btn-success {
+  background-color: #10b981; // emerald-500
+  border-color: #10b981;
+  &:hover {
+    background-color: #059669;
+  }
+}
+
+.btn-danger {
+  background-color: #ef4444; // rose-500
+  border-color: #ef4444;
+  &:hover {
+    background-color: #dc2626;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .grid-cols-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)); // 2 columns on mobile
+  }
+}

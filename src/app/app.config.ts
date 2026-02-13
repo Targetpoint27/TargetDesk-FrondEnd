@@ -2,6 +2,7 @@ import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter, withHashLocation } from '@angular/router';
 import { LocationStrategy, HashLocationStrategy } from '@angular/common';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 // Routes
 import { routes } from './app.routes';
@@ -82,11 +83,15 @@ import {
   ScheduleCallbackUseCase,
   RecordCallbackResultUseCase
 } from './domain/use-cases/call';
+import { ReportRepository } from './domain/repositories/report.repository';
+import { ReportApiRepository } from './infrastructure/repositories/report-api.repository';
+import { GetDailyReportUseCase } from './domain/use-cases/report/get-daily-report.use-case';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     // Router - using hash location strategy to avoid base href issues
     provideRouter(routes, withHashLocation()),
+    provideCharts(withDefaultRegisterables()),
 
     // HTTP Client
     provideHttpClient(
@@ -145,6 +150,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: TimelineRepository,
       useClass: ApiTimelineRepository
+    },
+    {
+      provide: ReportRepository,
+      useClass: ReportApiRepository
     },
     // TODO: Add UserRepository implementation when needed
     // {
@@ -209,6 +218,7 @@ export const appConfig: ApplicationConfig = {
     AssignToMeUseCase,
     StoreMissedCallUseCase,  
     ScheduleCallbackUseCase,
-    RecordCallbackResultUseCase
+    RecordCallbackResultUseCase,
+    GetDailyReportUseCase,
   ]
 };
