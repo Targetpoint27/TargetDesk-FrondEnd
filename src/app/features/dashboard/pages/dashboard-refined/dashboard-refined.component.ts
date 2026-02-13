@@ -14,7 +14,6 @@ import { InactiveClientsListComponent } from '../../../../shared/components/list
 // Import des composants graphiques existants
 import { ClientsEvolutionChartComponent } from '../../../../shared/components/charts/clients-evolution-chart.component';
 import { StatsDoughnutChartComponent } from '../../../../shared/components/charts/stats-doughnut-chart.component';
-import { TodayTasksWidgetComponent } from '../../../../shared/components/widgets/today-tasks-widget.component';
 import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/components/widgets/upcoming-appointments-widget.component';
 
 @Component({
@@ -28,7 +27,6 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
     InactiveClientsListComponent,
     ClientsEvolutionChartComponent,
     StatsDoughnutChartComponent,
-    TodayTasksWidgetComponent,
     UpcomingAppointmentsWidgetComponent
   ],
   template: `
@@ -310,12 +308,12 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
               </app-metric-card>
 
               <app-metric-card
-                icon="bi-clock-history"
-                iconBg="linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
-                [value]="getPersonalMetrics()?.my_overdue_tasks || 0"
-                label="Tâches en retard"
-                [badge]="getOverdueTasksBadge()"
-                [badgeClass]="getOverdueTasksClass()">
+                icon="bi-chat-dots"
+                iconBg="linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)"
+                [value]="getPersonalMetrics()?.my_interactions_this_period || 0"
+                label="Interactions"
+                badge="Ce mois"
+                badgeClass="bg-cyan-100 text-cyan-700">
               </app-metric-card>
             </div>
           </section>
@@ -324,24 +322,26 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
           <section>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-              <!-- Tâches du jour dans soft widget -->
+              <!-- Mes interactions dans soft widget -->
               <app-soft-widget
-                title="Agenda du Jour"
-                subtitle="Tâches et rendez-vous"
-                icon="bi-calendar-check"
+                title="Mes Interactions"
+                subtitle="Activité récente personnelle"
+                icon="bi-chat-dots"
                 iconBg="linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)"
-                [badge]="getTodayTasksCount().toString()"
+                [badge]="getPersonalMetrics()?.my_interactions_this_period?.toString()"
                 badgeClass="bg-blue-100 text-blue-700"
                 [loading]="isLoading()"
                 [error]="globalError()"
-                [hasContent]="!!getTodayTasks()"
+                [hasContent]="!!getPersonalMetrics()?.my_interactions_this_period"
                 (refresh)="refreshData()">
 
-                <app-today-tasks-widget
-                  [data]="getTodayTasks()"
-                  [loading]="false"
-                  [error]="null">
-                </app-today-tasks-widget>
+                <div class="text-center py-8">
+                  <i class="bi bi-chat-dots text-4xl text-blue-400 mb-4"></i>
+                  <div class="text-2xl font-bold text-slate-900 mb-2">
+                    {{ getPersonalMetrics()?.my_interactions_this_period || 0 }}
+                  </div>
+                  <p class="text-slate-600">interactions ce mois</p>
+                </div>
               </app-soft-widget>
 
               <!-- RDV à venir dans soft widget -->
@@ -485,9 +485,6 @@ export class DashboardRefinedComponent implements OnInit, OnDestroy {
     return this.dashboardFacade.commercialData().inactiveClients;
   }
 
-  getTodayTasks() {
-    return this.dashboardFacade.personalData().todayTasks;
-  }
 
   getUpcomingAppointments() {
     return this.dashboardFacade.personalData().upcomingAppointments;
@@ -520,20 +517,6 @@ export class DashboardRefinedComponent implements OnInit, OnDestroy {
   }
 
 
-  getTodayTasksCount(): number {
-    const tasks = this.getTodayTasks();
-    return (tasks?.summary?.total_appointments_today || 0) + (tasks?.summary?.total_follow_ups_due || 0);
-  }
-
-  getOverdueTasksBadge(): string {
-    const count = this.getPersonalMetrics()?.my_overdue_tasks || 0;
-    return count > 0 ? 'Urgent' : 'À jour';
-  }
-
-  getOverdueTasksClass(): string {
-    const count = this.getPersonalMetrics()?.my_overdue_tasks || 0;
-    return count > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-  }
 
   // ===== ACTIONS =====
 

@@ -10,13 +10,6 @@ import { UserEntity } from '../../../domain/entities/user.entity';
 // ========================================
 
 export enum NotificationType {
-  TASK_ASSIGNED = 'task_assigned',
-  TASK_STATUS_CHANGED = 'task_status_changed',
-  TASK_COMMENT_ADDED = 'task_comment_added',
-  TASK_COMMENT_MENTION = 'task_comment_mention',
-  TASK_DEADLINE_APPROACHING = 'task_deadline_approaching',
-  TASK_DIFFICULTY_REPORTED = 'task_difficulty_reported',
-  TASK_FILE_ADDED = 'task_file_added',
   PROJECT_CREATED = 'project_created',
   PROJECT_STATUS_CHANGED = 'project_status_changed'
 }
@@ -62,14 +55,8 @@ export interface Notification {
 }
 
 export interface NotificationData {
-  task_id?: number;
-  task_title?: string;
   project_id?: number;
   project_title?: string;
-  assigned_by?: string;
-  comment_id?: number;
-  file_id?: number;
-  difficulty_id?: number;
   action_url?: string;
   additional_info?: { [key: string]: any };
 }
@@ -81,13 +68,6 @@ export interface NotificationData {
 export interface NotificationPreferences {
   id: number;
   user_id: number;
-  task_assigned: NotificationChannelSettings;
-  task_status_changed: NotificationChannelSettings;
-  task_comment_added: NotificationChannelSettings;
-  task_comment_mention: NotificationChannelSettings;
-  task_deadline_approaching: NotificationChannelSettings;
-  task_difficulty_reported: NotificationChannelSettings;
-  task_file_added: NotificationChannelSettings;
   project_created: NotificationChannelSettings;
   project_status_changed: NotificationChannelSettings;
   created_at: string;
@@ -123,13 +103,6 @@ export interface MarkNotificationsReadRequest {
 }
 
 export interface UpdateNotificationPreferencesRequest {
-  task_assigned?: NotificationChannelSettings;
-  task_status_changed?: NotificationChannelSettings;
-  task_comment_added?: NotificationChannelSettings;
-  task_comment_mention?: NotificationChannelSettings;
-  task_deadline_approaching?: NotificationChannelSettings;
-  task_difficulty_reported?: NotificationChannelSettings;
-  task_file_added?: NotificationChannelSettings;
   project_created?: NotificationChannelSettings;
   project_status_changed?: NotificationChannelSettings;
 }
@@ -168,13 +141,6 @@ export interface NotificationStats {
 // ========================================
 
 export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
-  [NotificationType.TASK_ASSIGNED]: 'Tâche assignée',
-  [NotificationType.TASK_STATUS_CHANGED]: 'Statut de tâche modifié',
-  [NotificationType.TASK_COMMENT_ADDED]: 'Nouveau commentaire',
-  [NotificationType.TASK_COMMENT_MENTION]: 'Mention dans commentaire',
-  [NotificationType.TASK_DEADLINE_APPROACHING]: 'Échéance proche',
-  [NotificationType.TASK_DIFFICULTY_REPORTED]: 'Difficulté signalée',
-  [NotificationType.TASK_FILE_ADDED]: 'Fichier ajouté',
   [NotificationType.PROJECT_CREATED]: 'Projet créé',
   [NotificationType.PROJECT_STATUS_CHANGED]: 'Statut de projet modifié'
 };
@@ -194,25 +160,11 @@ export const NOTIFICATION_PRIORITY_COLORS: Record<NotificationPriority, string> 
 };
 
 export const NOTIFICATION_TYPE_ICONS: Record<NotificationType, string> = {
-  [NotificationType.TASK_ASSIGNED]: 'assignment_ind',
-  [NotificationType.TASK_STATUS_CHANGED]: 'update',
-  [NotificationType.TASK_COMMENT_ADDED]: 'chat_bubble',
-  [NotificationType.TASK_COMMENT_MENTION]: 'alternate_email',
-  [NotificationType.TASK_DEADLINE_APPROACHING]: 'schedule',
-  [NotificationType.TASK_DIFFICULTY_REPORTED]: 'error',
-  [NotificationType.TASK_FILE_ADDED]: 'attach_file',
   [NotificationType.PROJECT_CREATED]: 'create_new_folder',
   [NotificationType.PROJECT_STATUS_CHANGED]: 'folder'
 };
 
 export const NOTIFICATION_TYPE_COLORS: Record<NotificationType, string> = {
-  [NotificationType.TASK_ASSIGNED]: '#3b82f6',
-  [NotificationType.TASK_STATUS_CHANGED]: '#10b981',
-  [NotificationType.TASK_COMMENT_ADDED]: '#8b5cf6',
-  [NotificationType.TASK_COMMENT_MENTION]: '#f59e0b',
-  [NotificationType.TASK_DEADLINE_APPROACHING]: '#ef4444',
-  [NotificationType.TASK_DIFFICULTY_REPORTED]: '#dc2626',
-  [NotificationType.TASK_FILE_ADDED]: '#06b6d4',
   [NotificationType.PROJECT_CREATED]: '#10b981',
   [NotificationType.PROJECT_STATUS_CHANGED]: '#3b82f6'
 };
@@ -264,10 +216,6 @@ export function buildNotificationActionUrl(data: NotificationData): string {
     return data.action_url;
   }
 
-  if (data.task_id) {
-    return `/dashboard/tasks/${data.task_id}`;
-  }
-
   if (data.project_id) {
     return `/dashboard/projects/detail/${data.project_id}`;
   }
@@ -313,13 +261,6 @@ export function getDefaultNotificationPreferences(userId: number): Partial<Notif
 
   return {
     user_id: userId,
-    task_assigned: { ...defaultSettings, email: true, push: true },
-    task_status_changed: defaultSettings,
-    task_comment_added: defaultSettings,
-    task_comment_mention: { ...defaultSettings, email: true, push: true },
-    task_deadline_approaching: { ...defaultSettings, email: true, push: true },
-    task_difficulty_reported: { ...defaultSettings, email: true },
-    task_file_added: defaultSettings,
     project_created: { ...defaultSettings, email: true },
     project_status_changed: defaultSettings
   };

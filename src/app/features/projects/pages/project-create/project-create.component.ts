@@ -104,13 +104,61 @@ export class ProjectCreateComponent implements OnInit, OnDestroy {
     this.loadingDependencies.set(true);
     this.error.set('');
 
-    // Charger en parallèle les utilisateurs (managers) et les clients via l'API
+    // Charger en parallèle les utilisateurs et les clients via l'API
     Promise.all([
-      this.apiService.get<{data: UserEntity[]}>('users?role=project_manager').toPromise(),
-      this.apiService.get<{data: ClientEntity[]}>('clients?active=true').toPromise()
+      this.apiService.get('users').toPromise(),
+      this.apiService.get('clients').toPromise()
     ]).then(([managersResponse, clientsResponse]) => {
-      this.availableManagers.set(managersResponse?.data || []);
-      this.availableClients.set(clientsResponse?.data || []);
+      // Traiter les utilisateurs - Structure: { success: true, data: { data: [...] } }
+      let managers: UserEntity[] = [];
+      if (managersResponse && typeof managersResponse === 'object' && 'success' in managersResponse && managersResponse.success) {
+        const responseData = (managersResponse as any).data;
+        if (responseData && 'data' in responseData && Array.isArray(responseData.data)) {
+          // Créer des UserEntity à partir des données brutes
+          managers = responseData.data.map((userData: any) => {
+            return UserEntity.create({
+              id: userData.id?.toString() || '',
+              name: userData.name || `${userData.first_name || ''} ${userData.last_name || ''}`.trim(),
+              email: userData.email || '',
+              emailVerified: userData.email_verified_at !== null,
+              createdAt: new Date(userData.created_at || Date.now()),
+              updatedAt: new Date(userData.updated_at || Date.now())
+            });
+          });
+        }
+      }
+
+      // Traiter les clients - Structure: { success: true, data: { clients: [...] } }
+      let clients: ClientEntity[] = [];
+      if (clientsResponse && typeof clientsResponse === 'object' && 'success' in clientsResponse && clientsResponse.success) {
+        const responseData = (clientsResponse as any).data;
+        if (responseData && 'clients' in responseData && Array.isArray(responseData.clients)) {
+          // Créer des ClientEntity à partir des données brutes
+          clients = responseData.clients.map((clientData: any) => {
+            return ClientEntity.create({
+              id: clientData.id,
+              clientId: clientData.client_id,
+              name: clientData.name,
+              type: clientData.type,
+              email: clientData.email,
+              phone: clientData.phone,
+              address: clientData.address,
+              siret: clientData.siret,
+              sector: clientData.sector,
+              website: clientData.website,
+              notes: clientData.notes,
+              isActive: clientData.is_active,
+              createdBy: clientData.created_by,
+              createdAt: new Date(clientData.created_at),
+              updatedAt: new Date(clientData.updated_at),
+              creator: clientData.creator
+            });
+          });
+        }
+      }
+
+      this.availableManagers.set(managers);
+      this.availableClients.set(clients);
       this.loadingDependencies.set(false);
     }).catch(error => {
       console.error('Erreur lors du chargement des dépendances:', error);
@@ -125,14 +173,14 @@ export class ProjectCreateComponent implements OnInit, OnDestroy {
     this.submitting.set(true);
     this.error.set('');
 
-    // Appel direct à l'API - la validation sera faite côté serveur
-    this.projectsApiService.createProject(projectData)
+    // Créer le projet via l'API
+    this.apiService.post('projects', projectData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
-          if (response.data) {
-            // Succès - rediriger vers la page de détails du projet créé
-            this.router.navigate(['/dashboard/projects', response.data.id]);
+        next: (response: any) => {
+          if (response && response.data) {
+            // Succès - rediriger vers la liste des projets
+            this.router.navigate(['/dashboard/projects/dashboard']);
           } else {
             this.error.set('Erreur lors de la création du projet');
             this.submitting.set(false);

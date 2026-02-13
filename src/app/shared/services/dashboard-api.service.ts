@@ -89,7 +89,6 @@ export interface PersonalOverviewResponse {
     my_active_clients: number;
     my_prospects: number;
     my_appointments_upcoming: number;
-    my_overdue_tasks: number;
     my_interactions_this_period: number;
   };
   period_info: {
@@ -117,33 +116,6 @@ export interface PersonalPortfolioResponse {
   };
 }
 
-export interface TodaysTasksResponse {
-  appointments_today: Array<{
-    id: number;
-    client_id: number;
-    client_name: string;
-    subject: string;
-    scheduled_at: string;
-    status: string;
-    priority: string;
-    location: string;
-  }>;
-  follow_ups_due: Array<{
-    id: number;
-    client_id: number;
-    client_name: string;
-    subject: string;
-    follow_up_date: string;
-    days_overdue: number;
-    priority: string;
-  }>;
-  summary: {
-    total_appointments_today: number;
-    total_follow_ups_due: number;
-    urgent_tasks: number;
-    completion_rate: number;
-  };
-}
 
 export interface UpcomingAppointmentsResponse {
   appointments: Array<{
@@ -279,14 +251,6 @@ export class DashboardApiService {
     }).pipe(map(response => response.data));
   }
 
-  /**
-   * Récupère les tâches et RDV du jour
-   */
-  getTodaysTasks(): Observable<TodaysTasksResponse> {
-    return this.http.get<ApiResponse<TodaysTasksResponse>>(`${this.baseUrl}/personal/tasks/today`, {
-      headers: this.getAuthHeaders()
-    }).pipe(map(response => response.data));
-  }
 
   /**
    * Récupère les RDV à venir
@@ -337,7 +301,6 @@ export class DashboardApiService {
   getFullPersonalDashboard(period: string = 'month'): Observable<{
     overview: PersonalOverviewResponse;
     portfolio: PersonalPortfolioResponse;
-    tasks: TodaysTasksResponse;
     appointments: UpcomingAppointmentsResponse;
     interactions: RecentInteractionsResponse;
   }> {

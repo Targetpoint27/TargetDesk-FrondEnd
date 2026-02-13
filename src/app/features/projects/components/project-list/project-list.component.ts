@@ -51,12 +51,7 @@ export type ViewMode = 'grid' | 'list' | 'table';
                 [class.text-gray-600]="currentViewMode() !== 'grid'"
                 title="Vue grille"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="7" height="7"/>
-                  <rect x="14" y="3" width="7" height="7"/>
-                  <rect x="3" y="14" width="7" height="7"/>
-                  <rect x="14" y="14" width="7" height="7"/>
-                </svg>
+                <i class="bi bi-grid-3x3-gap"></i>
               </button>
               <button
                 (click)="changeViewMode('list')"
@@ -67,14 +62,7 @@ export type ViewMode = 'grid' | 'list' | 'table';
                 [class.text-gray-600]="currentViewMode() !== 'list'"
                 title="Vue liste"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <line x1="8" y1="6" x2="21" y2="6"/>
-                  <line x1="8" y1="12" x2="21" y2="12"/>
-                  <line x1="8" y1="18" x2="21" y2="18"/>
-                  <line x1="3" y1="6" x2="3.01" y2="6"/>
-                  <line x1="3" y1="12" x2="3.01" y2="12"/>
-                  <line x1="3" y1="18" x2="3.01" y2="18"/>
-                </svg>
+                <i class="bi bi-list-ul"></i>
               </button>
               <button
                 (click)="changeViewMode('table')"
@@ -85,9 +73,7 @@ export type ViewMode = 'grid' | 'list' | 'table';
                 [class.text-gray-600]="currentViewMode() !== 'table'"
                 title="Vue tableau"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 6h18M3 12h18M3 18h18"/>
-                </svg>
+                <i class="bi bi-table"></i>
               </button>
             </div>
 
@@ -118,7 +104,7 @@ export type ViewMode = 'grid' | 'list' | 'table';
               [(ngModel)]="currentFilters.search"
               (input)="handleFilterChange()"
               placeholder="Rechercher un projet..."
-              class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
           </div>
 
@@ -127,7 +113,7 @@ export type ViewMode = 'grid' | 'list' | 'table';
             <select
               [(ngModel)]="currentFilters.status"
               (change)="handleFilterChange()"
-              class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Tous les statuts</option>
               @for (status of statusOptions; track status.value) {
@@ -141,7 +127,7 @@ export type ViewMode = 'grid' | 'list' | 'table';
             <select
               [(ngModel)]="currentFilters.department"
               (change)="handleFilterChange()"
-              class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Tous les départements</option>
               @for (dept of departmentOptions; track dept) {
@@ -257,7 +243,7 @@ export type ViewMode = 'grid' | 'list' | 'table';
                       <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
                         <span>{{ project.department }}</span>
                         @if (project.project_manager) {
-                          <span>Chef: {{ project.project_manager.name || project.project_manager.getDisplayName?.() || 'N/A' }}</span>
+                          <span>Chef: {{ project.project_manager.name || project.project_manager.getDisplayName() || 'N/A' }}</span>
                         }
                         <span>{{ project.progress_percentage }}% complété</span>
                       </div>
@@ -337,7 +323,7 @@ export type ViewMode = 'grid' | 'list' | 'table';
                               </span>
                             </div>
                             <div class="text-sm text-gray-900">
-                              {{ project.project_manager.name || project.project_manager.getDisplayName?.() || 'N/A' }}
+                              {{ project.project_manager.name || project.project_manager.getDisplayName() || 'N/A' }}
                             </div>
                           </div>
                         }

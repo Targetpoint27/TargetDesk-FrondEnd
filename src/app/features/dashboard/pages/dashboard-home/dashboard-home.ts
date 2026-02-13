@@ -18,9 +18,11 @@ import {
   InactiveClientsResponse,
   PersonalOverviewResponse,
   PersonalPortfolioResponse,
-  TodaysTasksResponse,
   UpcomingAppointmentsResponse
 } from '../../../../shared/services/dashboard-api.service';
+import { TasksApiService } from '../../../tasks/services/tasks-api.service';
+import { Task, TaskFilters } from '../../../../shared/interfaces/task.interface';
+import { map } from 'rxjs/operators';
 
 declare var Chart: any;
 
@@ -53,7 +55,8 @@ export class DashboardHome implements OnInit, OnDestroy, AfterViewInit {
   inactiveClients = signal<InactiveClientsResponse | null>(null);
   personalOverview = signal<PersonalOverviewResponse | null>(null);
   personalPortfolio = signal<PersonalPortfolioResponse | null>(null);
-  todaysTasks = signal<TodaysTasksResponse | null>(null);
+  myTasks = signal<Task[]>([]);
+  overdueTasksCount = signal<number>(0);
   upcomingAppointments = signal<UpcomingAppointmentsResponse | null>(null);
 
   // Computed properties pour réactivité
@@ -77,7 +80,8 @@ export class DashboardHome implements OnInit, OnDestroy, AfterViewInit {
     private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private dashboardApiService: DashboardApiService
+    private dashboardApiService: DashboardApiService,
+    private tasksApiService: TasksApiService
   ) {
     this.loadChartJs();
   }
@@ -202,13 +206,12 @@ export class DashboardHome implements OnInit, OnDestroy, AfterViewInit {
     Promise.all([
       this.dashboardApiService.getPersonalOverview(period).toPromise(),
       this.dashboardApiService.getPersonalPortfolio(period).toPromise(),
-      this.dashboardApiService.getTodaysTasks().toPromise(),
       this.dashboardApiService.getUpcomingAppointments(7, 10).toPromise(),
-      this.dashboardApiService.getMyRecentInteractions(10).toPromise()
-    ]).then(([overview, portfolio, tasks, appointments, interactions]) => {
+      this.dashboardApiService.getMyRecentInteractions(10).toPromise(),
+      this.loadMyTasksData().toPromise()
+    ]).then(([overview, portfolio, appointments, interactions, tasksData]) => {
       this.personalOverview.set(overview || null);
       this.personalPortfolio.set(portfolio || null);
-      this.todaysTasks.set(tasks || null);
       this.upcomingAppointments.set(appointments || null);
       this.recentInteractions.set(interactions || null);
 
@@ -224,6 +227,30 @@ export class DashboardHome implements OnInit, OnDestroy, AfterViewInit {
       this.apiError.set('Erreur lors du chargement des données');
       this.apiLoading.set(false);
     });
+  }
+
+  private loadMyTasksData() {
+    const filters: TaskFilters = {
+      my_tasks: true,
+      per_page: 5,
+      include: ['project', 'assignees']
+    };
+
+    return this.tasksApiService.getMyTasks(filters).pipe(
+      map(response => {
+        const tasks = response.data || [];
+        this.myTasks.set(tasks);
+
+        // Compter les tâches en retard
+        const now = new Date();
+        const overdueTasks = tasks.filter((task: Task) =>
+          task.due_date && new Date(task.due_date) < now && task.status !== 'termine'
+        );
+        this.overdueTasksCount.set(overdueTasks.length);
+
+        return response;
+      })
+    );
   }
 
   private retryChartsInitialization(): void {
@@ -302,6 +329,18 @@ export class DashboardHome implements OnInit, OnDestroy, AfterViewInit {
 
   navigateToAppointments(): void {
     this.router.navigate(['/appointments']);
+  }
+
+  navigateToMyTasks(): void {
+    this.router.navigate(['/dashboard/tasks/my-tasks']);
+  }
+
+  navigateToTaskDetail(taskId: number): void {
+    this.router.navigate(['/dashboard/tasks/detail', taskId]);
+  }
+
+  navigateToOverdueTasks(): void {
+    this.router.navigate(['/dashboard/tasks/overdue']);
   }
 
   // ===== GESTION DES WIDGETS =====
@@ -393,8 +432,6 @@ export class DashboardHome implements OnInit, OnDestroy, AfterViewInit {
         return 'truck';
       case 'appointments':
         return 'calendar';
-      case 'overdue_tasks':
-        return 'clock';
       default:
         return 'bar-chart';
     }
@@ -431,9 +468,6 @@ export class DashboardHome implements OnInit, OnDestroy, AfterViewInit {
     return this.inactiveClients();
   }
 
-  getTodaysTasksData(): any | null {
-    return this.todaysTasks();
-  }
 
   getUpcomingAppointmentsData(): any | null {
     return this.upcomingAppointments();
@@ -441,6 +475,36 @@ export class DashboardHome implements OnInit, OnDestroy, AfterViewInit {
 
   getPersonalPortfolioData(): any | null {
     return this.personalPortfolio();
+  }
+
+  // Méthodes pour les tâches
+  getMyTasksData(): Task[] {
+    return this.myTasks();
+  }
+
+  getOverdueTasksCount(): number {
+    return this.overdueTasksCount();
+  }
+
+  getTaskStatusColor(status: string): string {
+    switch (status) {
+      case 'a_faire': return 'bg-gray-100 text-gray-800';
+      case 'en_cours': return 'bg-blue-100 text-blue-800';
+      case 'bloque': return 'bg-red-100 text-red-800';
+      case 'test': return 'bg-yellow-100 text-yellow-800';
+      case 'termine': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  }
+
+  getTaskPriorityColor(priority: string): string {
+    switch (priority) {
+      case 'critique': return 'bg-red-500';
+      case 'haute': return 'bg-orange-500';
+      case 'normale': return 'bg-blue-500';
+      case 'basse': return 'bg-green-500';
+      default: return 'bg-gray-500';
+    }
   }
 
   isManager(): boolean {

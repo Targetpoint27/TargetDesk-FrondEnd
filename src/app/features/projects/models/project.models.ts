@@ -43,19 +43,6 @@ export enum TeamRole {
   AUTRE = 'autre'
 }
 
-export enum TaskStatus {
-  EN_COURS = 'en_cours',
-  EN_ATTENTE = 'en_attente',
-  EN_DANGER = 'en_danger',
-  TERMINE = 'termine',
-  ANNULE = 'annule'
-}
-
-export enum TaskPriority {
-  HAUTE = 'haute',
-  MOYENNE = 'moyenne',
-  BASSE = 'basse'
-}
 
 // ========================================
 // INTERFACES PRINCIPALES
@@ -122,23 +109,6 @@ export interface ProjectTeamMember {
   user: UserEntity;
 }
 
-export interface Task {
-  id: number;
-  title: string;
-  description?: string;
-  status: TaskStatus;
-  priority?: TaskPriority;
-  assigned_to_user?: UserEntity;
-  assigned_to_user_id?: number;
-  project_id: number;
-  due_date?: string;
-  completed_at?: string;
-  estimated_hours?: number;
-  actual_hours?: number;
-  progress_percentage: number;
-  created_at: string;
-  updated_at: string;
-}
 
 export interface ProjectHistory {
   id: number;
@@ -271,15 +241,6 @@ export interface ProjectTimeline {
 
 export interface ProjectStats {
   project_id: number;
-  total_tasks: number;
-  completed_tasks: number;
-  pending_tasks: number;
-  in_progress_tasks: number;
-  blocked_tasks: number;
-  tasks_completion_rate: number;
-  total_estimated_hours: number;
-  total_actual_hours: number;
-  time_variance: number;
   team_members_count: number;
   active_team_members_count: number;
   budget_usage_percentage: number;
@@ -287,100 +248,6 @@ export interface ProjectStats {
   risk_level: 'low' | 'medium' | 'high';
   created_at: string;
   updated_at: string;
-}
-
-export interface ProjectTimeSummary {
-  project_id: number;
-  total_hours_logged: number;
-  total_estimated_hours: number;
-  variance_hours: number;
-  variance_percentage: number;
-  average_hours_per_day: number;
-  peak_hours_day: string;
-  peak_hours_amount: number;
-  time_by_user: {
-    user: UserEntity;
-    total_hours: number;
-    percentage_contribution: number;
-  }[];
-  time_by_task_type: {
-    type: string;
-    total_hours: number;
-    percentage_contribution: number;
-  }[];
-  daily_breakdown: {
-    date: string;
-    total_hours: number;
-    unique_users: number;
-  }[];
-  efficiency_metrics: {
-    planned_vs_actual_ratio: number;
-    productivity_score: number;
-    quality_indicator: number;
-  };
-}
-
-export interface ProjectTimeEntry {
-  id: number;
-  project_id: number;
-  task_id: number;
-  user_id: number;
-  date: string;
-  start_time?: string;
-  end_time?: string;
-  hours: number;
-  description: string;
-  billable: boolean;
-  task?: Task;
-  user?: UserEntity;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ProjectTimeAnalytics {
-  project_id: number;
-  analysis_period: {
-    start_date: string;
-    end_date: string;
-  };
-  time_distribution: {
-    development: number;
-    design: number;
-    testing: number;
-    management: number;
-    other: number;
-  };
-  productivity_trends: {
-    date: string;
-    hours_logged: number;
-    productivity_score: number;
-    efficiency_rating: number;
-  }[];
-  team_performance: {
-    user: UserEntity;
-    total_hours: number;
-    average_daily_hours: number;
-    productivity_score: number;
-    quality_metrics: {
-      tasks_completed: number;
-      bugs_introduced: number;
-      code_review_score: number;
-    };
-  }[];
-  bottlenecks: {
-    task_type: string;
-    avg_completion_time: number;
-    complexity_factor: number;
-    resource_demand: number;
-  }[];
-  forecasting: {
-    estimated_completion_date: string;
-    confidence_level: number;
-    resource_requirements: {
-      role: string;
-      estimated_hours: number;
-    }[];
-  };
 }
 
 // ========================================

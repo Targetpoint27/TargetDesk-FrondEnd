@@ -82,7 +82,7 @@ export class MyProjectsComponent implements OnInit, OnDestroy {
   private loadProjects(): void {
     this.loading.set(true);
 
-    this.projectsApiService.getProjects(this.currentFilters, this.currentPage, this.perPage)
+    this.projectsApiService.getProjects(this.currentFilters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

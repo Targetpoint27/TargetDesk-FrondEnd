@@ -439,14 +439,14 @@
                   Urgent
                 </span>
               </div>
-              <div class="space-y-1">
+              <div class="space-y-1 cursor-pointer" (click)="navigateToOverdueTasks()">
                 <h3 class="text-3xl font-bold text-gray-900">
-                  {{ getPersonalMetrics()?.my_overdue_tasks || 0 }}
+                  {{ getOverdueTasksCount() }}
                 </h3>
                 <p class="text-sm text-gray-600 font-medium">Tâches en retard</p>
                 <div class="flex items-center space-x-1 text-xs text-red-600">
                   <i class="bi bi-exclamation-triangle"></i>
-                  <span>Attention requise</span>
+                  <span>{{ getOverdueTasksCount() > 0 ? 'Attention requise' : 'Aucune' }}</span>
                 </div>
               </div>
             </div>
@@ -481,8 +481,8 @@
               <span>À faire aujourd'hui</span>
             </h3>
             <div class="flex items-center space-x-2">
-              <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">5 tâches</span>
-              <button class="text-sm text-blue-600 hover:text-blue-800 font-medium">Tout voir</button>
+              <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">{{ getMyTasksData().length }} tâches</span>
+              <button class="text-sm text-blue-600 hover:text-blue-800 font-medium" (click)="navigateToMyTasks()">Tout voir</button>
             </div>
           </div>
 
@@ -509,21 +509,41 @@
               </div>
             </div>
 
-            <!-- Actions à effectuer -->
+            <!-- Mes tâches -->
             <div>
               <h4 class="text-sm font-semibold text-gray-700 mb-4 flex items-center space-x-2">
                 <i class="bi bi-check-circle text-green-500"></i>
-                <span>Actions</span>
+                <span>Mes tâches</span>
               </h4>
               <div class="space-y-3">
-                @for (action of [1,2]; track action) {
-                  <div class="flex items-center space-x-3 p-3 bg-amber-50 rounded-xl">
-                    <input type="checkbox" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
-                    <div class="flex-1">
-                      <h5 class="text-sm font-medium text-gray-900">Relancer prospect ACME Corp</h5>
-                      <p class="text-xs text-gray-600">Follow-up suite à la démo</p>
+                @if (getMyTasksData().length > 0) {
+                  @for (task of getMyTasksData(); track task.id) {
+                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all cursor-pointer"
+                         (click)="navigateToTaskDetail(task.id)">
+                      <div class="w-3 h-3 rounded-full" [class]="getTaskPriorityColor(task.priority)"></div>
+                      <div class="flex-1">
+                        <h5 class="text-sm font-medium text-gray-900">{{ task.title }}</h5>
+                        <p class="text-xs text-gray-600">{{ task.project.name }}</p>
+                      </div>
+                      <div class="flex items-center space-x-2">
+                        <span class="text-xs px-2 py-1 rounded-full font-medium" [class]="getTaskStatusColor(task.status)">
+                          {{ task.status === 'a_faire' ? 'À faire' :
+                             task.status === 'en_cours' ? 'En cours' :
+                             task.status === 'bloque' ? 'Bloquée' :
+                             task.status === 'test' ? 'Test' : 'Terminée' }}
+                        </span>
+                        @if (task.due_date) {
+                          <span class="text-xs text-gray-500">{{ formatDate(task.due_date) }}</span>
+                        }
+                      </div>
                     </div>
-                    <span class="text-xs text-amber-600 font-medium">High</span>
+                  }
+                } @else {
+                  <div class="flex items-center justify-center p-6 text-gray-500 text-sm">
+                    <div class="text-center">
+                      <i class="bi bi-check-circle text-2xl mb-2"></i>
+                      <p>Aucune tâche assignée</p>
+                    </div>
                   </div>
                 }
               </div>

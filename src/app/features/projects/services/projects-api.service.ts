@@ -1,487 +1,191 @@
 // ========================================
 // SERVICE API POUR LA GESTION DE PROJETS
-// Basé sur GESTION_PROJETS_API_DOCUMENTATION.md
-// Base URL: /api/v1/projects
+// Version complète avec intégration backend
 // ========================================
 
 import { Injectable, inject } from '@angular/core';
-import { Observable, throwError, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { HttpParams } from '@angular/common/http';
 
 import { ApiService } from '../../../core/api/api.service';
-import {
-  Project,
-  CreateProjectRequest,
-  UpdateProjectRequest,
-  AddTeamMemberRequest,
-  UpdateProgressRequest,
-  UpdateStatusRequest,
-  ProjectFilters,
-  ApiResponse,
-  PaginatedProjectResponse,
-  ProjectStatistics,
-  ProjectProgress,
-  ProjectTeamMember,
-  ProjectHistory,
-  Task,
-  ProjectTimeline,
-  ProjectStats,
-  ProjectTimeSummary,
-  ProjectTimeEntry,
-  ProjectTimeAnalytics
-} from '../models/project.models';
+
+interface ProjectFilters {
+  page?: number;
+  per_page?: number;
+  status?: string;
+  client_id?: number;
+  manager_id?: number;
+  search?: string;
+  sort_by?: string;
+  sort_direction?: string;
+  with_stats?: boolean;
+  department?: string;
+  active_only?: boolean;
+  my_projects?: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProjectsApiService {
   private apiService = inject(ApiService);
-  private readonly apiUrl = 'projects';
+  private readonly baseEndpoint = 'projects';
 
-  // ========================================
-  // GESTION DES PROJETS (CRUD)
-  // ========================================
+  // === GESTION DES PROJETS (7 endpoints) ===
 
-  /**
-   * GET /api/v1/projects - Liste des projets avec filtres et pagination
-   */
-  getProjects(filters?: ProjectFilters, page = 1, perPage = 15): Observable<PaginatedProjectResponse> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('per_page', perPage.toString());
-
-    if (filters) {
-      if (filters.my_projects) params = params.set('my_projects', 'true');
-      if (filters.status) params = params.set('status', filters.status);
-      if (filters.active_only) params = params.set('active_only', 'true');
-      if (filters.department) params = params.set('department', filters.department);
-      if (filters.search) params = params.set('search', filters.search);
-    }
-
-    return this.apiService.get<PaginatedProjectResponse>(this.apiUrl, { params })
-      .pipe(
-        map(response => this.handleSuccess(response)),
-        catchError(error => this.handleError(error))
-      );
+  // 1. GET /api/v1/projects - Lister tous les projets
+  getProjects(filters?: ProjectFilters): Observable<any> {
+    const params = this.buildQueryParams(filters);
+    return this.apiService.get(`${this.baseEndpoint}${params}`);
   }
 
-  /**
-   * GET /api/v1/projects/{id} - Détails d'un projet
-   */
-  getProject(id: number): Observable<Project> {
-    return this.apiService.get<ApiResponse<Project>>(`${this.apiUrl}/${id}`)
-      .pipe(
-        map(response => this.handleSuccess(response).data!),
-        catchError(error => this.handleError(error))
-      );
+  // 2. POST /api/v1/projects - Créer un nouveau projet
+  createProject(projectData: any): Observable<any> {
+    return this.apiService.post(this.baseEndpoint, projectData);
   }
 
-
-  /**
-   * POST /api/v1/projects - Création d'un projet
-   */
-  createProject(projectData: CreateProjectRequest): Observable<ApiResponse<Project>> {
-    return this.apiService.post<ApiResponse<Project>>(this.apiUrl, projectData)
-      .pipe(
-        map(response => this.handleSuccess(response)),
-        catchError(error => this.handleError(error))
-      );
+  // 3. GET /api/v1/projects/{project} - Voir les détails d'un projet
+  getProject(id: number, include?: string[]): Observable<any> {
+    const params = include ? `?include=${include.join(',')}` : '';
+    return this.apiService.get(`${this.baseEndpoint}/${id}${params}`);
   }
 
-  /**
-   * PUT /api/v1/projects/{id} - Modification d'un projet
-   */
-  updateProject(id: number, updates: UpdateProjectRequest): Observable<ApiResponse<Project>> {
-    return this.apiService.put<ApiResponse<Project>>(`${this.apiUrl}/${id}`, updates)
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 4. PUT /api/v1/projects/{project} - Mettre à jour un projet
+  updateProject(id: number, projectData: any): Observable<any> {
+    return this.apiService.put(`${this.baseEndpoint}/${id}`, projectData);
   }
 
-  /**
-   * DELETE /api/v1/projects/{id} - Suppression d'un projet
-   */
-  deleteProject(id: number): Observable<ApiResponse<any>> {
-    return this.apiService.delete<ApiResponse<any>>(`${this.apiUrl}/${id}`)
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 5. DELETE /api/v1/projects/{project} - Supprimer un projet
+  deleteProject(id: number): Observable<any> {
+    return this.apiService.delete(`${this.baseEndpoint}/${id}`);
   }
 
-  // ========================================
-  // GESTION D'ÉQUIPE
-  // ========================================
-
-  /**
-   * GET /api/v1/projects/{id}/team - Équipe du projet
-   */
-  getProjectTeam(projectId: number): Observable<ApiResponse<ProjectTeamMember[]>> {
-    return this.apiService.get<ApiResponse<ProjectTeamMember[]>>(`${this.apiUrl}/${projectId}/team`)
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 6. POST /api/v1/projects/{project}/change-status - Changer le statut d'un projet
+  changeProjectStatus(id: number, status: string): Observable<any> {
+    return this.apiService.post(`${this.baseEndpoint}/${id}/change-status`, { status });
   }
 
-  /**
-   * POST /api/v1/projects/{id}/team - Ajouter un membre à l'équipe
-   */
-  addTeamMember(projectId: number, memberData: AddTeamMemberRequest): Observable<ApiResponse<ProjectTeamMember>> {
-    return this.apiService.post<ApiResponse<ProjectTeamMember>>(`${this.apiUrl}/${projectId}/team`, memberData)
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 7. POST /api/v1/projects/{project}/duplicate - Dupliquer un projet
+  duplicateProject(id: number): Observable<any> {
+    return this.apiService.post(`${this.baseEndpoint}/${id}/duplicate`, {});
   }
 
-  /**
-   * DELETE /api/v1/projects/{id}/team/{memberId} - Retirer un membre de l'équipe
-   */
-  removeTeamMember(projectId: number, memberId: number): Observable<ApiResponse<any>> {
-    return this.apiService.delete<ApiResponse<any>>(`${this.apiUrl}/${projectId}/team/${memberId}`)
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // === ÉQUIPE PROJET (4 endpoints) ===
+
+  // 8. GET /api/v1/projects/{project}/team - Lister l'équipe du projet
+  getProjectTeam(id: number): Observable<any> {
+    return this.apiService.get(`${this.baseEndpoint}/${id}/team`);
   }
 
-  /**
-   * PUT /api/v1/projects/{id}/team/{memberId} - Modifier un membre de l'équipe
-   */
-  updateTeamMember(projectId: number, memberId: number, updates: Partial<AddTeamMemberRequest>): Observable<ApiResponse<ProjectTeamMember>> {
-    return this.apiService.put<ApiResponse<ProjectTeamMember>>(`${this.apiUrl}/${projectId}/team/${memberId}`, updates)
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 9. POST /api/v1/projects/{project}/team - Ajouter un membre à l'équipe
+  addTeamMember(projectId: number, userData: any): Observable<any> {
+    return this.apiService.post(`${this.baseEndpoint}/${projectId}/team`, userData);
   }
 
-  // ========================================
-  // PROGRESSION ET STATUT
-  // ========================================
-
-  /**
-   * GET /api/v1/projects/{id}/progress - Afficher la progression
-   */
-  getProjectProgress(projectId: number): Observable<ApiResponse<ProjectProgress>> {
-    return this.apiService.get<ApiResponse<ProjectProgress>>(`${this.apiUrl}/${projectId}/progress`)
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 10. DELETE /api/v1/projects/{project}/team/{teamMember} - Retirer un membre de l'équipe
+  removeTeamMember(projectId: number, teamMemberId: number): Observable<any> {
+    return this.apiService.delete(`${this.baseEndpoint}/${projectId}/team/${teamMemberId}`);
   }
 
-  /**
-   * PUT /api/v1/projects/{id}/progress - Mettre à jour la progression
-   */
-  updateProjectProgress(projectId: number, progressData: UpdateProgressRequest): Observable<ApiResponse<ProjectProgress>> {
-    return this.apiService.put<ApiResponse<ProjectProgress>>(`${this.apiUrl}/${projectId}/progress`, progressData)
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 11. PUT /api/v1/projects/{project}/team/{teamMember}/role - Modifier le rôle d'un membre
+  updateTeamMemberRole(projectId: number, teamMemberId: number, roleData: any): Observable<any> {
+    return this.apiService.put(`${this.baseEndpoint}/${projectId}/team/${teamMemberId}/role`, roleData);
   }
 
-  /**
-   * PUT /api/v1/projects/{id}/status - Changer le statut
-   */
-  updateProjectStatus(projectId: number, statusData: UpdateStatusRequest): Observable<ApiResponse<Project>> {
-    return this.apiService.put<ApiResponse<Project>>(`${this.apiUrl}/${projectId}/status`, statusData)
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // === HISTORIQUE PROJET (2 endpoints) ===
+
+  // 12. GET /api/v1/projects/{project}/history - Voir l'historique des modifications
+  getProjectHistory(id: number, limit?: number): Observable<any> {
+    const params = limit ? `?limit=${limit}` : '';
+    return this.apiService.get(`${this.baseEndpoint}/${id}/history${params}`);
   }
 
-  // ========================================
-  // STATISTIQUES ET RAPPORTS
-  // ========================================
-
-  /**
-   * GET /api/v1/projects/statistics - Statistiques globales
-   */
-  getProjectStatistics(): Observable<ApiResponse<ProjectStatistics>> {
-    return this.apiService.get<ApiResponse<ProjectStatistics>>(`${this.apiUrl}/statistics`)
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 13. GET /api/v1/projects/{project}/activity-log - Journal d'activité du projet
+  getProjectActivityLog(id: number): Observable<any> {
+    return this.apiService.get(`${this.baseEndpoint}/${id}/activity-log`);
   }
 
-  /**
-   * GET /api/v1/projects/department/{department} - Projets par département
-   */
-  getProjectsByDepartment(department: string, status?: string): Observable<ApiResponse<Project[]>> {
-    let params = new HttpParams();
-    if (status) params = params.set('status', status);
+  // === STATISTIQUES ET RAPPORTS PROJETS (7 endpoints) ===
 
-    return this.apiService.get<ApiResponse<Project[]>>(`${this.apiUrl}/department/${department}`, { params })
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 14. GET /api/v1/projects/statistics - Statistiques globales des projets
+  getProjectStatistics(): Observable<any> {
+    return this.apiService.get(`${this.baseEndpoint}/statistics`);
   }
 
-  /**
-   * GET /api/v1/projects/manager/{managerId} - Projets d'un gestionnaire
-   */
-  getProjectsByManager(managerId: number, status?: string): Observable<ApiResponse<Project[]>> {
-    let params = new HttpParams();
-    if (status) params = params.set('status', status);
-
-    return this.apiService.get<ApiResponse<Project[]>>(`${this.apiUrl}/manager/${managerId}`, { params })
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 15. GET /api/v1/projects/department/{department} - Projets par département
+  getProjectsByDepartment(department: string): Observable<any> {
+    return this.apiService.get(`${this.baseEndpoint}/department/${department}`);
   }
 
-  // ========================================
-  // FONCTIONNALITÉS AVANCÉES
-  // ========================================
-
-  /**
-   * POST /api/v1/projects/{id}/duplicate - Dupliquer un projet
-   */
-  duplicateProject(projectId: number): Observable<ApiResponse<Project>> {
-    return this.apiService.post<ApiResponse<Project>>(`${this.apiUrl}/${projectId}/duplicate`, {})
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 16. GET /api/v1/projects/manager/{manager} - Projets par manager
+  getProjectsByManager(managerId: number): Observable<any> {
+    return this.apiService.get(`${this.baseEndpoint}/manager/${managerId}`);
   }
 
-  /**
-   * GET /api/v1/projects/{id}/history - Historique du projet
-   */
-  getProjectHistory(projectId: number, limit = 10): Observable<ApiResponse<ProjectHistory[]>> {
-    let params = new HttpParams().set('limit', limit.toString());
-
-    return this.apiService.get<ApiResponse<ProjectHistory[]>>(`${this.apiUrl}/${projectId}/history`, { params })
-      .pipe(
-        map(response => this.handleSuccess(response )),
-        catchError(error => this.handleError(error))
-      );
+  // 17. GET /api/v1/projects/{project}/time-summary - Résumé temps du projet
+  getProjectTimeSummary(id: number): Observable<any> {
+    return this.apiService.get(`${this.baseEndpoint}/${id}/time-summary`);
   }
 
-  /**
-   * GET /api/v1/projects/{id}/tasks - Tâches d'un projet
-   * TODO: Implement this when Task models are properly defined
-   */
-  getProjectTasks(projectId: number, filters?: { status?: string; limit?: number }): Observable<any[]> {
-    // Temporary implementation - returns empty array
-    console.log('getProjectTasks called for project:', projectId, 'with filters:', filters);
-    return of([]);
+  // 18. GET /api/v1/projects/{project}/time-entries - Entrées de temps du projet
+  getProjectTimeEntries(id: number, filters?: any): Observable<any> {
+    const params = this.buildQueryParams(filters);
+    return this.apiService.get(`${this.baseEndpoint}/${id}/time-entries${params}`);
   }
 
-  // ========================================
-  // NOUVEAUX ENDPOINTS INTÉGRÉS SELON LA DOCUMENTATION API
-  // ========================================
-
-  /**
-   * GET /api/v1/projects/{id}/timeline - Timeline du projet
-   */
-  getProjectTimeline(projectId: number): Observable<ApiResponse<ProjectTimeline[]>> {
-    return this.apiService.get<ApiResponse<ProjectTimeline[]>>(`${this.apiUrl}/${projectId}/timeline`)
-      .pipe(
-        map(response => this.handleSuccess(response)),
-        catchError(error => this.handleError(error))
-      );
+  // 19. GET /api/v1/projects/{project}/time-analytics - Analyse temporelle du projet
+  getProjectTimeAnalytics(id: number): Observable<any> {
+    return this.apiService.get(`${this.baseEndpoint}/${id}/time-analytics`);
   }
 
-  /**
-   * GET /api/v1/projects/{id}/stats - Statistiques détaillées du projet
-   */
-  getProjectStats(projectId: number): Observable<ApiResponse<ProjectStats>> {
-    return this.apiService.get<ApiResponse<ProjectStats>>(`${this.apiUrl}/${projectId}/stats`)
-      .pipe(
-        map(response => this.handleSuccess(response)),
-        catchError(error => this.handleError(error))
-      );
+  // 20. GET /api/v1/projects/{project}/progress - Progression du projet
+  getProjectProgress(id: number): Observable<any> {
+    return this.apiService.get(`${this.baseEndpoint}/${id}/progress`);
   }
 
-  /**
-   * GET /api/v1/projects/{id}/time-summary - Résumé du temps projet
-   */
-  getProjectTimeSummary(projectId: number, params?: {
-    start_date?: string;
-    end_date?: string;
-    user_id?: number
-  }): Observable<ApiResponse<ProjectTimeSummary>> {
-    let queryParams = new HttpParams();
-    if (params) {
-      if (params.start_date) queryParams = queryParams.set('start_date', params.start_date);
-      if (params.end_date) queryParams = queryParams.set('end_date', params.end_date);
-      if (params.user_id) queryParams = queryParams.set('user_id', params.user_id.toString());
-    }
+  // Méthodes utilitaires
+  private buildQueryParams(filters?: any): string {
+    if (!filters) return '';
 
-    return this.apiService.get<ApiResponse<ProjectTimeSummary>>(`${this.apiUrl}/${projectId}/time-summary`, { params: queryParams })
-      .pipe(
-        map(response => this.handleSuccess(response)),
-        catchError(error => this.handleError(error))
-      );
-  }
-
-  /**
-   * GET /api/v1/projects/{id}/time-entries - Entrées de temps du projet
-   */
-  getProjectTimeEntries(projectId: number, filters?: {
-    user_id?: number;
-    task_type?: string;
-    date_from?: string;
-    date_to?: string;
-    page?: number;
-    per_page?: number;
-  }): Observable<ApiResponse<ProjectTimeEntry[]>> {
-    let params = new HttpParams();
-    if (filters) {
-      if (filters.user_id) params = params.set('user_id', filters.user_id.toString());
-      if (filters.task_type) params = params.set('task_type', filters.task_type);
-      if (filters.date_from) params = params.set('date_from', filters.date_from);
-      if (filters.date_to) params = params.set('date_to', filters.date_to);
-      if (filters.page) params = params.set('page', filters.page.toString());
-      if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
-    }
-
-    return this.apiService.get<ApiResponse<ProjectTimeEntry[]>>(`${this.apiUrl}/${projectId}/time-entries`, { params })
-      .pipe(
-        map(response => this.handleSuccess(response)),
-        catchError(error => this.handleError(error))
-      );
-  }
-
-  /**
-   * GET /api/v1/projects/{id}/time-analytics - Analytics de temps du projet
-   */
-  getProjectTimeAnalytics(projectId: number, params?: {
-    start_date?: string;
-    end_date?: string;
-    granularity?: 'day' | 'week' | 'month';
-    include_forecasting?: boolean;
-  }): Observable<ApiResponse<ProjectTimeAnalytics>> {
-    let queryParams = new HttpParams();
-    if (params) {
-      if (params.start_date) queryParams = queryParams.set('start_date', params.start_date);
-      if (params.end_date) queryParams = queryParams.set('end_date', params.end_date);
-      if (params.granularity) queryParams = queryParams.set('granularity', params.granularity);
-      if (params.include_forecasting) queryParams = queryParams.set('include_forecasting', 'true');
-    }
-
-    return this.apiService.get<ApiResponse<ProjectTimeAnalytics>>(`${this.apiUrl}/${projectId}/time-analytics`, { params: queryParams })
-      .pipe(
-        map(response => this.handleSuccess(response)),
-        catchError(error => this.handleError(error))
-      );
-  }
-
-  // ========================================
-  // MÉTHODES UTILITAIRES PRIVÉES
-  // ========================================
-
-  private handleSuccess<T>(response: T): T {
-    return response;
-  }
-
-  private handleError(error: any): Observable<never> {
-    let errorMessage = 'Une erreur est survenue';
-
-    if (error?.error?.message) {
-      errorMessage = error.error.message;
-    } else if (error?.message) {
-      errorMessage = error.message;
-    } else if (typeof error === 'string') {
-      errorMessage = error;
-    }
-
-    console.error('Erreur API Projects:', error);
-    return throwError(() => new Error(errorMessage));
-  }
-
-  // ========================================
-  // MÉTHODES DE VALIDATION CÔTÉ CLIENT
-  // ========================================
-
-  /**
-   * Valide les données d'un projet avant soumission
-   */
-  validateProjectData(data: CreateProjectRequest | UpdateProjectRequest): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    // Validation pour création
-    if ('name' in data && data.name) {
-      if (!data.name || data.name.trim().length === 0) {
-        errors.push('Le nom du projet est obligatoire');
+    const params = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      const value = filters[key];
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, value.toString());
       }
-      if (data.name.length > 255) {
-        errors.push('Le nom du projet ne peut pas dépasser 255 caractères');
-      }
-    }
+    });
 
-    // Validation des dates
-    if ('start_date' in data && 'planned_end_date' in data) {
-      if (data.start_date && data.planned_end_date) {
-        const startDate = new Date(data.start_date);
-        const endDate = new Date(data.planned_end_date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+    const paramString = params.toString();
+    return paramString ? `?${paramString}` : '';
+  }
 
-        if (startDate < today) {
-          errors.push('La date de début ne peut pas être antérieure à aujourd\'hui');
+  // === MÉTHODES DE COMPATIBILITÉ POUR L'EXISTANT ===
+
+  // Alias pour changeProjectStatus (méthode existante)
+  updateProjectStatus(id: number, status: string, comment?: string): Observable<any> {
+    return this.changeProjectStatus(id, status);
+  }
+
+  // Alias pour getProjectsByManager avec id numérique
+  getProjectMetrics(filters?: any): Observable<any> {
+    return this.getProjectStatistics();
+  }
+
+  // Méthodes manquantes pour compatibilité
+  getProjectTimeline(id: number): Observable<any> {
+    return this.getProjectActivityLog(id);
+  }
+
+  getProjectStats(id: number): Observable<any> {
+    return this.getProject(id).pipe(
+      map((response: any) => ({
+        data: {
+          progress_percentage: response.data?.progress || 0,
+          completed_tasks: response.data?.completed_tasks || 0,
+          total_tasks: response.data?.total_tasks || 0,
+          team_members_count: response.data?.team_members?.length || 0
         }
-
-        if (endDate <= startDate) {
-          errors.push('La date de fin doit être postérieure à la date de début');
-        }
-      }
-    }
-
-    // Validation budget
-    if (data.estimated_budget !== undefined && data.estimated_budget !== null) {
-      if (data.estimated_budget < 0) {
-        errors.push('Le budget estimé ne peut pas être négatif');
-      }
-    }
-
-    // Validation client externe
-    if (data.client_type === 'externe') {
-      if (!data.external_client_info) {
-        errors.push('Les informations du client externe sont obligatoires');
-      } else if (!data.external_client_info.name) {
-        errors.push('Le nom du client externe est obligatoire');
-      }
-    }
-
-    // Validation client interne
-    if (data.client_type === 'interne') {
-      if (!data.client_id) {
-        errors.push('Vous devez sélectionner un client interne');
-      }
-    }
-
-    return { isValid: errors.length === 0, errors };
-  }
-
-  /**
-   * Valide les données d'un membre d'équipe
-   */
-  validateTeamMemberData(data: AddTeamMemberRequest): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (!data.user_id) {
-      errors.push('Vous devez sélectionner un utilisateur');
-    }
-
-    if (!data.role) {
-      errors.push('Vous devez sélectionner un rôle');
-    }
-
-    if (data.hourly_rate !== undefined && data.hourly_rate !== null && data.hourly_rate < 0) {
-      errors.push('Le tarif horaire ne peut pas être négatif');
-    }
-
-    return { isValid: errors.length === 0, errors };
+      }))
+    );
   }
 }

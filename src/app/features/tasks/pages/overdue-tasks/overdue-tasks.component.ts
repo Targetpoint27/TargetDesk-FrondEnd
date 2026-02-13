@@ -1,0 +1,1 @@
+import { Component } from "@angular/core"; import { CommonModule } from "@angular/common"; @Component({ selector: "app-overdue-tasks", standalone: true, imports: [CommonModule], template: `<div class="p-8"><h1 class="text-2xl font-bold mb-4">Tâches en retard</h1><p class="text-gray-600">Cette page sera développée prochainement.</p></div>` }) export class OverdueTasksComponent {}

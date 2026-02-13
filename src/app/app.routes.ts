@@ -94,15 +94,6 @@ export const routes: Routes = [
           title: 'Gestion des Tâches'
         }
       },
-      {
-        path: 'time-tracking',
-        loadChildren: () => import('./features/time-tracking/time-tracking.routes').then(r => r.timeTrackingRoutes),
-        canActivate: [RoleGuard],
-        data: {
-          permissions: [PERMISSIONS.SYSTEM_VIEW],
-          title: 'Suivi du Temps'
-        }
-      },
     ]
   },
   {

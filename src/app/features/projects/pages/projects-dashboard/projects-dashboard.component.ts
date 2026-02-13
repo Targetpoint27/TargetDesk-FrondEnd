@@ -6,7 +6,7 @@
 import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, takeUntil, forkJoin, finalize } from 'rxjs';
 
 import {
   Project,
@@ -254,7 +254,7 @@ interface KPICard {
                         <span class="font-mono">{{ project.code }}</span>
                         <span>{{ project.department }}</span>
                         @if (project.project_manager) {
-                          <span>{{ project.project_manager.name || project.project_manager.getDisplayName?.() || 'N/A' }}</span>
+                          <span>{{ project.project_manager.name || project.project_manager.getDisplayName() || 'N/A' }}</span>
                         }
                       </div>
                     </div>
@@ -455,8 +455,8 @@ export class ProjectsDashboardComponent implements OnInit, OnDestroy {
     // Charger en parallèle les statistiques et les projets récents
     forkJoin({
       statistics: this.projectsApiService.getProjectStatistics(),
-      recentProjects: this.projectsApiService.getProjects({ active_only: true }, 1, 10),
-      departmentProjects: this.projectsApiService.getProjects({ department: 'Développement', status: 'en_cours' }, 1, 5)
+      recentProjects: this.projectsApiService.getProjects({ active_only: true }),
+      departmentProjects: this.projectsApiService.getProjects({ department: 'Développement', status: 'en_cours' })
     }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
@@ -465,6 +465,10 @@ export class ProjectsDashboardComponent implements OnInit, OnDestroy {
         this.recentProjects.set(data.recentProjects.data || []);
         this.departmentProjects.set(data.departmentProjects.data || []);
         this.loading.set(false);
+
+        // UTILISATION DES NOUVEAUX ENDPOINTS
+        this.loadDevelProjectsDepartment();
+        this.loadManagerOneProjects();
       },
       error: (error) => {
         this.error.set(error.message || 'Erreur lors du chargement du tableau de bord');
@@ -562,5 +566,85 @@ export class ProjectsDashboardComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/projects/list'], {
       queryParams: { status: 'en_danger' }
     });
+  }
+
+  // ==========================================
+  // IMPLÉMENTATION DES ENDPOINTS MANQUANTS
+  // ==========================================
+
+  /**
+   * 1. getProjectsByDepartment() - Projets par département
+   */
+  projectsByDepartment = signal<any[]>([]);
+  departmentProjectsLoading = signal(false);
+
+  loadProjectsByDepartment(department: string): void {
+    this.departmentProjectsLoading.set(true);
+    this.projectsApiService.getProjectsByDepartment(department).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.departmentProjectsLoading.set(false))
+    ).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.projectsByDepartment.set(response.data || []);
+          console.log(`Projets du département ${department} chargés:`, response.data);
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des projets par département:', error);
+      }
+    });
+  }
+
+  /**
+   * 2. getProjectsByManager() - Projets par manager
+   */
+  projectsByManager = signal<any[]>([]);
+  managerProjectsLoading = signal(false);
+
+  loadProjectsByManager(managerId: number): void {
+    this.managerProjectsLoading.set(true);
+    this.projectsApiService.getProjectsByManager(managerId).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.managerProjectsLoading.set(false))
+    ).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.projectsByManager.set(response.data || []);
+          console.log(`Projets du manager ${managerId} chargés:`, response.data);
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des projets par manager:', error);
+      }
+    });
+  }
+
+  /**
+   * Charger les projets du département Développement
+   */
+  loadDevelProjectsDepartment(): void {
+    this.loadProjectsByDepartment('Développement');
+  }
+
+  /**
+   * Charger les projets du département Marketing
+   */
+  loadMarketingProjectsDepartment(): void {
+    this.loadProjectsByDepartment('Marketing');
+  }
+
+  /**
+   * Charger les projets d'un manager spécifique (exemple: ID 1)
+   */
+  loadManagerOneProjects(): void {
+    this.loadProjectsByManager(1);
+  }
+
+  /**
+   * Charger les projets d'un autre manager (exemple: ID 2)
+   */
+  loadManagerTwoProjects(): void {
+    this.loadProjectsByManager(2);
   }
 }

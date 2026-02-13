@@ -14,7 +14,6 @@ import {
   RecentInteractionsData,
   InactiveClientsData,
   PersonalPortfolio,
-  TodayTasksData,
   UpcomingAppointmentsData,
   DashboardConfig,
   WidgetConfig
@@ -42,13 +41,11 @@ export class DashboardFacade {
   private _personalData = signal<{
     overview: PersonalMetrics | null;
     portfolio: PersonalPortfolio | null;
-    todayTasks: TodayTasksData | null;
     upcomingAppointments: UpcomingAppointmentsData | null;
     interactions: RecentInteractionsData | null;
   }>({
     overview: null,
     portfolio: null,
-    todayTasks: null,
     upcomingAppointments: null,
     interactions: null
   });
@@ -172,13 +169,6 @@ export class DashboardFacade {
           endpoint: 'personal/overview'
         },
         {
-          id: 'today-tasks',
-          title: 'À faire aujourd\'hui',
-          type: 'task',
-          size: 'large',
-          endpoint: 'personal/tasks/today'
-        },
-        {
           id: 'portfolio-evolution',
           title: 'Évolution de mon portefeuille',
           type: 'chart',
@@ -261,15 +251,13 @@ export class DashboardFacade {
     return combineLatest([
       this.dashboardService.getPersonalOverview(params),
       this.dashboardService.getPersonalPortfolio(params),
-      this.dashboardService.getTodaysTasks(),
       this.dashboardService.getUpcomingAppointments(7, 10),
       this.dashboardService.getPersonalRecentInteractions(10)
     ]).pipe(
-      tap(([overview, portfolio, todayTasks, appointments, interactions]) => {
+      tap(([overview, portfolio, appointments, interactions]) => {
         this._personalData.set({
           overview: overview.data.metrics,
           portfolio: portfolio.data,
-          todayTasks: todayTasks.data,
           upcomingAppointments: appointments.data,
           interactions: interactions.data
         });

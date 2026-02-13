@@ -123,7 +123,6 @@ export interface PersonalMetrics {
   my_active_clients: number;
   my_prospects: number;
   my_appointments_upcoming: number;
-  my_overdue_tasks: number;
   my_interactions_this_period: number;
 }
 
@@ -163,45 +162,6 @@ export interface PersonalPortfolioResponse {
   data: PersonalPortfolio;
 }
 
-// Tâches du jour
-export interface TodayAppointment {
-  id: number;
-  client_id: number;
-  client_name: string;
-  subject: string;
-  scheduled_at: string;
-  status: string;
-  priority: string;
-  location?: string;
-}
-
-export interface TodayFollowUp {
-  id: number;
-  client_id: number;
-  client_name: string;
-  subject: string;
-  follow_up_date: string;
-  days_overdue: number;
-  priority: string;
-}
-
-export interface TodayTasksSummary {
-  total_appointments_today: number;
-  total_follow_ups_due: number;
-  urgent_tasks: number;
-  completion_rate: number;
-}
-
-export interface TodayTasksData {
-  appointments_today: TodayAppointment[];
-  follow_ups_due: TodayFollowUp[];
-  summary: TodayTasksSummary;
-}
-
-export interface TodayTasksResponse {
-  success: boolean;
-  data: TodayTasksData;
-}
 
 // RDV à venir
 export interface UpcomingAppointment {
@@ -228,7 +188,7 @@ export interface UpcomingAppointmentsResponse {
 
 // ===== WIDGETS & CONFIGURATION =====
 
-export type WidgetType = 'metric' | 'chart' | 'list' | 'task';
+export type WidgetType = 'metric' | 'chart' | 'list';
 export type WidgetSize = 'small' | 'medium' | 'large';
 
 export interface WidgetConfig {
@@ -277,7 +237,6 @@ export interface DashboardState {
   personal: {
     overview: PersonalMetrics | null;
     portfolio: PersonalPortfolio | null;
-    todayTasks: TodayTasksData | null;
     upcomingAppointments: UpcomingAppointmentsData | null;
     interactions: RecentInteractionsData | null;
     loading: boolean;

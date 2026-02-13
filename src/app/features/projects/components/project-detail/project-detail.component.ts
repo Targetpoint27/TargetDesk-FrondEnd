@@ -10,27 +10,12 @@ import {
   ProjectStatus,
   ProjectTeamMember,
   PROJECT_STATUS_LABELS,
-  ProjectTimeline,
-  ProjectStats,
-  ProjectTimeSummary,
-  ProjectTimeAnalytics
+  ProjectStats
 } from '../../models/project.models';
 import { UserEntity } from '../../../../domain/entities/user.entity';
 import { ClientEntity } from '../../../../domain/entities/client.entity';
+import { UserService } from '../../../settings/user-management/user.service';
 
-// Interface pour les tâches (utilise les vraies données de l'API)
-interface Task {
-  id: number;
-  title: string;
-  description?: string;
-  status: 'en_cours' | 'en_attente' | 'en_danger' | 'termine' | 'annule';
-  priority?: 'haute' | 'moyenne' | 'basse';
-  assigned_to_user?: UserEntity;
-  due_date?: string;
-  progress_percentage?: number;
-  estimated_hours?: number;
-  actual_hours?: number;
-}
 
 @Component({
   selector: 'app-project-detail',
@@ -241,272 +226,331 @@ interface Task {
           </div>
 
           <!-- Contenu des onglets -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div class="w-full">
 
-            <!-- Contenu principal (2/3) -->
-            <div class="lg:col-span-2 space-y-8">
+            <!-- Contenu principal -->
+            <div class="space-y-8">
 
               @if (activeTab() === 'overview') {
-                <!-- Vue d'ensemble -->
-                <div class="space-y-6">
+                <!-- Vue d'ensemble complète en grille -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
 
-                  <!-- Description et objectifs -->
+                  <!-- Informations générales -->
                   <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Description du projet</h3>
-                    @if (proj.description) {
-                      <p class="text-gray-600 leading-relaxed">{{ proj.description }}</p>
-                    } @else {
-                      <p class="text-gray-400 italic">Aucune description disponible.</p>
-                    }
-
-                    @if (proj.objectives) {
-                      <div class="mt-6">
-                        <h4 class="text-md font-semibold text-gray-900 mb-3">Objectifs</h4>
-                        <p class="text-gray-600 leading-relaxed">{{ proj.objectives }}</p>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations générales</h3>
+                    <dl class="space-y-4">
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500">Code projet</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-mono">{{ proj.code }}</dd>
                       </div>
-                    }
+
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500">Nom du projet</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-medium">{{ proj.name }}</dd>
+                      </div>
+
+                      @if (proj.description) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Description</dt>
+                          <dd class="mt-1 text-sm text-gray-900">{{ proj.description }}</dd>
+                        </div>
+                      }
+
+                      @if (proj.objectives) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Objectifs</dt>
+                          <dd class="mt-1 text-sm text-gray-900">{{ proj.objectives }}</dd>
+                        </div>
+                      }
+
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500">Statut</dt>
+                        <dd class="mt-1">
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                [ngClass]="getStatusClasses(proj.status)">
+                            <div class="w-1.5 h-1.5 rounded-full mr-1.5" [ngClass]="getStatusDotClasses(proj.status)"></div>
+                            {{ getStatusLabel(proj.status) }}
+                          </span>
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500">Progression</dt>
+                        <dd class="mt-1">
+                          <div class="flex items-center">
+                            <div class="flex-1 bg-gray-200 rounded-full h-2 mr-3">
+                              <div class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                   [style.width.%]="proj.progress_percentage"></div>
+                            </div>
+                            <span class="text-sm font-medium text-gray-700">{{ proj.progress_percentage }}%</span>
+                          </div>
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500">Département</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ proj.department }}</dd>
+                      </div>
+
+                      @if (proj.risk_indicator) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Niveau de risque</dt>
+                          <dd class="mt-1">
+                            <span
+                              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                              [class.bg-green-100]="proj.risk_indicator === 'low'"
+                              [class.text-green-800]="proj.risk_indicator === 'low'"
+                              [class.bg-yellow-100]="proj.risk_indicator === 'medium'"
+                              [class.text-yellow-800]="proj.risk_indicator === 'medium'"
+                              [class.bg-red-100]="proj.risk_indicator === 'high'"
+                              [class.text-red-800]="proj.risk_indicator === 'high'"
+                            >
+                              {{ getRiskLabel(proj.risk_indicator) }}
+                            </span>
+                          </dd>
+                        </div>
+                      }
+                    </dl>
                   </div>
 
-                  <!-- Timeline et jalons -->
+                  <!-- Gestion et responsabilités -->
                   <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Timeline du projet</h3>
-                    <div class="space-y-4">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                          <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                          <span class="text-sm font-medium text-gray-900">Début du projet</span>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Gestion et responsabilités</h3>
+                    <dl class="space-y-4">
+                      @if (proj.project_manager) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Chef de projet</dt>
+                          <dd class="mt-1">
+                            <div class="flex items-center space-x-2">
+                              <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                <span class="text-xs font-medium text-white">
+                                  {{ proj.project_manager.name ? proj.project_manager.name.substring(0, 2).toUpperCase() : 'NA' }}
+                                </span>
+                              </div>
+                              <div>
+                                <p class="text-sm text-gray-900">{{ proj.project_manager.name || 'Non assigné' }}</p>
+                                <p class="text-xs text-gray-500">{{ proj.project_manager.email }}</p>
+                              </div>
+                            </div>
+                          </dd>
                         </div>
-                        <span class="text-sm text-gray-600">{{ formatDate(proj.start_date) }}</span>
+                      }
+
+                      @if (proj.created_by) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Créé par</dt>
+                          <dd class="mt-1 text-sm text-gray-900">ID: {{ proj.created_by }}</dd>
+                        </div>
+                      }
+
+                      @if (proj.updated_by) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Dernière modification par</dt>
+                          <dd class="mt-1 text-sm text-gray-900">ID: {{ proj.updated_by }}</dd>
+                        </div>
+                      }
+
+                      @if (proj.created_at) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Créé le</dt>
+                          <dd class="mt-1 text-sm text-gray-900">{{ formatDate(proj.created_at) }}</dd>
+                        </div>
+                      }
+
+                      @if (proj.updated_at) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Dernière modification</dt>
+                          <dd class="mt-1 text-sm text-gray-500">{{ formatDate(proj.updated_at) }}</dd>
+                        </div>
+                      }
+                    </dl>
+                  </div>
+
+                  <!-- Informations client -->
+                  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations client</h3>
+                    <dl class="space-y-4">
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500">Type de client</dt>
+                        <dd class="mt-1">
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                [class.bg-blue-100]="proj.client_type === 'interne'"
+                                [class.text-blue-800]="proj.client_type === 'interne'"
+                                [class.bg-green-100]="proj.client_type === 'externe'"
+                                [class.text-green-800]="proj.client_type === 'externe'">
+                            {{ proj.client_type === 'interne' ? 'Client interne' : 'Client externe' }}
+                          </span>
+                        </dd>
                       </div>
 
+                      @if (proj.client) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Client</dt>
+                          <dd class="mt-1 text-sm text-gray-900">{{ proj.client.name || 'Non spécifié' }}</dd>
+                        </div>
+                      }
+
+                      @if (proj.external_client_info) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Client externe</dt>
+                          <dd class="mt-1 space-y-1">
+                            @if (proj.external_client_info.name) {
+                              <p class="text-sm text-gray-900 font-medium">{{ proj.external_client_info.name }}</p>
+                            }
+                            @if (proj.external_client_info.company) {
+                              <p class="text-sm text-gray-600">🏢 {{ proj.external_client_info.company }}</p>
+                            }
+                            @if (proj.external_client_info.email) {
+                              <p class="text-sm text-gray-600">📧 {{ proj.external_client_info.email }}</p>
+                            }
+                          </dd>
+                        </div>
+                      }
+                    </dl>
+                  </div>
+
+                  <!-- Budget -->
+                  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Budget</h3>
+                    <dl class="space-y-4">
+                      @if (proj.estimated_budget) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Budget estimé</dt>
+                          <dd class="mt-1">
+                            <span class="text-lg font-semibold text-gray-900">{{ proj.estimated_budget | currency:'EUR':'symbol':'1.2-2' }}</span>
+                          </dd>
+                        </div>
+                      }
+
+                      @if (proj.actual_budget) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Budget réel</dt>
+                          <dd class="mt-1">
+                            <span class="text-lg font-semibold"
+                                  [class.text-red-600]="isBudgetOverrun(proj.actual_budget, proj.estimated_budget)"
+                                  [class.text-green-600]="!isBudgetOverrun(proj.actual_budget, proj.estimated_budget)">
+                              {{ proj.actual_budget | currency:'EUR':'symbol':'1.2-2' }}
+                            </span>
+                          </dd>
+                        </div>
+                      }
+
+                      @if (proj.estimated_budget && proj.actual_budget) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Budget restant</dt>
+                          <dd class="mt-1">
+                            <span class="text-sm font-medium"
+                                  [class.text-red-600]="+(proj.actual_budget || 0) > +(proj.estimated_budget || 0)"
+                                  [class.text-green-600]="+(proj.actual_budget || 0) <= +(proj.estimated_budget || 0)">
+                              {{ (+(proj.estimated_budget || 0) - +(proj.actual_budget || 0)) | currency:'EUR':'symbol':'1.2-2' }}
+                            </span>
+                          </dd>
+                        </div>
+                      }
+                    </dl>
+                  </div>
+
+                  <!-- Timeline -->
+                  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Timeline</h3>
+                    <dl class="space-y-4">
+                      @if (proj.start_date) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Date de début</dt>
+                          <dd class="mt-1 text-sm text-gray-900">{{ formatDate(proj.start_date) }}</dd>
+                        </div>
+                      }
+
                       @if (proj.planned_end_date) {
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center">
-                            <div class="w-3 h-3" [class.bg-green-500]="proj.status === 'termine'" [class.bg-yellow-500]="proj.status !== 'termine'"></div>
-                            <span class="text-sm font-medium text-gray-900 ml-3">Fin prévue</span>
-                          </div>
-                          <span class="text-sm text-gray-600">{{ formatDate(proj.planned_end_date) }}</span>
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Fin prévue</dt>
+                          <dd class="mt-1 text-sm text-gray-900">{{ formatDate(proj.planned_end_date) }}</dd>
                         </div>
                       }
 
                       @if (proj.actual_end_date) {
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center">
-                            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                            <span class="text-sm font-medium text-gray-900">Fin réelle</span>
-                          </div>
-                          <span class="text-sm text-gray-600">{{ formatDate(proj.actual_end_date) }}</span>
-                        </div>
-                      }
-                    </div>
-
-                    <!-- Indicateur de temps restant -->
-                    @if (proj.status !== 'termine' && proj.planned_end_date) {
-                      <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                        <div class="flex items-center justify-between">
-                          <span class="text-sm font-medium text-gray-900">Temps restant</span>
-                          <span class="text-sm" [class.text-red-600]="getDaysRemaining(proj.planned_end_date) < 0" [class.text-green-600]="getDaysRemaining(proj.planned_end_date) > 30" [class.text-orange-600]="getDaysRemaining(proj.planned_end_date) >= 0 && getDaysRemaining(proj.planned_end_date) <= 30">
-                            {{ getDaysRemaining(proj.planned_end_date) }} jours
-                          </span>
-                        </div>
-                      </div>
-                    }
-                  </div>
-
-                  <!-- Progression -->
-                  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                      <h3 class="text-lg font-semibold text-gray-900">Progression</h3>
-                      <span class="text-2xl font-bold" [class.text-green-600]="proj.progress_percentage >= 75" [class.text-blue-600]="proj.progress_percentage >= 50 && proj.progress_percentage < 75" [class.text-orange-600]="proj.progress_percentage >= 25 && proj.progress_percentage < 50" [class.text-red-600]="proj.progress_percentage < 25">
-                        {{ proj.progress_percentage }}%
-                      </span>
-                    </div>
-
-                    <div class="w-full bg-gray-200 rounded-full h-4 mb-4">
-                      <div
-                        class="h-4 rounded-full transition-all duration-500 ease-in-out"
-                        [class.bg-green-500]="proj.progress_percentage >= 75"
-                        [class.bg-blue-500]="proj.progress_percentage >= 50 && proj.progress_percentage < 75"
-                        [class.bg-orange-500]="proj.progress_percentage >= 25 && proj.progress_percentage < 50"
-                        [class.bg-red-500]="proj.progress_percentage < 25"
-                        [style.width.%]="proj.progress_percentage"
-                      ></div>
-                    </div>
-
-                    <!-- Métriques de performance -->
-                    <div class="grid grid-cols-2 gap-4">
-                      @if (proj.estimated_budget || proj.actual_budget) {
-                        <div class="bg-gray-50 rounded-lg p-4">
-                          <h4 class="text-sm font-medium text-gray-600 mb-2">Budget</h4>
-                          @if (proj.estimated_budget) {
-                            <div class="text-sm text-gray-600">Prévu: {{ formatCurrency(proj.estimated_budget) }}</div>
-                          }
-                          @if (proj.actual_budget) {
-                            <div class="text-sm font-semibold" [class.text-red-600]="isBudgetOverrun(proj.actual_budget, proj.estimated_budget)" [class.text-green-600]="!isBudgetOverrun(proj.actual_budget, proj.estimated_budget)">
-                              Réel: {{ formatCurrency(proj.actual_budget) }}
-                            </div>
-                          }
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Fin réelle</dt>
+                          <dd class="mt-1 text-sm text-gray-900">{{ formatDate(proj.actual_end_date) }}</dd>
                         </div>
                       }
 
-                      <div class="bg-gray-50 rounded-lg p-4">
-                        <h4 class="text-sm font-medium text-gray-600 mb-2">Équipe</h4>
-                        <div class="text-sm text-gray-600">
-                          {{ proj.team_members?.length || 0 }} membre(s)
+                      @if (proj.status !== 'termine' && proj.planned_end_date) {
+                        <div>
+                          <dt class="text-sm font-medium text-gray-500">Temps restant</dt>
+                          <dd class="mt-1">
+                            <span class="text-sm font-medium"
+                                  [class.text-red-600]="getDaysRemaining(proj.planned_end_date) < 0"
+                                  [class.text-green-600]="getDaysRemaining(proj.planned_end_date) > 30"
+                                  [class.text-orange-600]="getDaysRemaining(proj.planned_end_date) >= 0 && getDaysRemaining(proj.planned_end_date) <= 30">
+                              {{ getDaysRemaining(proj.planned_end_date) }} jours
+                            </span>
+                          </dd>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              } @else if (activeTab() === 'tasks') {
-                <!-- Gestion des tâches -->
-                <div class="space-y-6">
-
-                  <!-- Header des tâches -->
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Tâches du projet</h3>
-                    <button
-                      (click)="createTask()"
-                      class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-                    >
-                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0 0h6m-6 0H6"/>
-                      </svg>
-                      Nouvelle tâche
-                    </button>
+                      }
+                    </dl>
                   </div>
 
-                  <!-- Filtres des tâches -->
-                  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                    <div class="flex items-center space-x-4">
-                      <div class="flex-1">
-                        <input
-                          type="text"
-                          placeholder="Rechercher une tâche..."
-                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          [(ngModel)]="taskSearchQuery"
-                          (input)="filterTasks()"
-                        >
-                      </div>
-                      <select
-                        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        [(ngModel)]="taskStatusFilter"
-                        (change)="filterTasks()"
-                      >
-                        <option value="">Tous les statuts</option>
-                        <option value="en_cours">En cours</option>
-                        <option value="en_attente">En attente</option>
-                        <option value="termine">Terminé</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <!-- Liste des tâches -->
-                  <div class="space-y-3">
-                    @if (recentTasks().length > 0) {
-                      @for (task of recentTasks(); track task.id) {
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                          <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                              <div class="flex items-center">
-                                <h4 class="text-md font-semibold text-gray-900">{{ task.title }}</h4>
-                                @if (task.priority) {
-                                  <span
-                                    class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                    [class.bg-red-100]="task.priority === 'haute'"
-                                    [class.text-red-800]="task.priority === 'haute'"
-                                    [class.bg-yellow-100]="task.priority === 'moyenne'"
-                                    [class.text-yellow-800]="task.priority === 'moyenne'"
-                                    [class.bg-green-100]="task.priority === 'basse'"
-                                    [class.text-green-800]="task.priority === 'basse'"
-                                  >
-                                    {{ task.priority }}
-                                  </span>
-                                }
-                              </div>
-                              @if (task.description) {
-                                <p class="text-sm text-gray-600 mt-1">{{ task.description }}</p>
-                              }
-                              <div class="flex items-center mt-3 space-x-4">
-                                @if (task.assigned_to_user) {
-                                  <div class="flex items-center">
-                                    <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2">
-                                      <span class="text-xs font-medium text-white">
-                                        {{ task.assigned_to_user.name || task.assigned_to_user.getDisplayName?.() || 'N/A' }}
-                                      </span>
-                                    </div>
-                                    <span class="text-sm text-gray-600">{{ task.assigned_to_user.name || task.assigned_to_user.getDisplayName?.() || 'N/A' }}</span>
-                                  </div>
-                                }
-                                @if (task.due_date) {
-                                  <div class="flex items-center text-sm text-gray-600">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                    </svg>
-                                    {{ formatDate(task.due_date) }}
-                                  </div>
-                                }
-                              </div>
-                            </div>
-                            <div class="flex items-center space-x-2 ml-4">
-                              <span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                [class.bg-green-100]="task.status === 'termine'"
-                                [class.text-green-800]="task.status === 'termine'"
-                                [class.bg-blue-100]="task.status === 'en_cours'"
-                                [class.text-blue-800]="task.status === 'en_cours'"
-                                [class.bg-yellow-100]="task.status === 'en_attente'"
-                                [class.text-yellow-800]="task.status === 'en_attente'"
-                              >
-                                {{ getTaskStatusLabel(task.status) }}
+                  <!-- Équipe projet -->
+                  @if (proj.team_members && proj.team_members.length > 0) {
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <h3 class="text-lg font-semibold text-gray-900 mb-4">Équipe projet</h3>
+                      <div class="space-y-3">
+                        @for (member of proj.team_members.slice(0, 3); track member.id) {
+                          <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                              <span class="text-xs font-medium text-white">
+                                {{ (member.user?.name?.substring(0, 2)?.toUpperCase()) || 'NA' }}
                               </span>
-                              <button
-                                (click)="editTask(task)"
-                                class="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                              >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                              </button>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                              <p class="text-sm font-medium text-gray-900 truncate">{{ member.user.name }}</p>
+                              <p class="text-xs text-gray-500 capitalize">{{ member.role }}</p>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                                  [class.bg-green-100]="member.is_active"
+                                  [class.text-green-800]="member.is_active"
+                                  [class.bg-red-100]="!member.is_active"
+                                  [class.text-red-800]="!member.is_active">
+                              {{ member.is_active ? 'Actif' : 'Inactif' }}
+                            </span>
+                          </div>
+                        }
+                        @if (proj.team_members.length > 3) {
+                          <div class="text-xs text-gray-500 text-center pt-2">
+                            et {{ proj.team_members.length - 3 }} autre(s) membre(s)
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Historique des modifications -->
+                  @if (proj.histories && proj.histories.length > 0) {
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 xl:col-span-2">
+                      <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Historique des modifications</h3>
+                        <span class="text-sm text-gray-500">{{ proj.histories.length }} modifications</span>
+                      </div>
+                      <div class="space-y-3 max-h-64 overflow-y-auto">
+                        @for (history of proj.histories.slice(0, 5); track history.id) {
+                          <div class="flex items-start space-x-3 pb-3 border-b border-gray-100 last:border-b-0 last:pb-0">
+                            <div class="flex-shrink-0 mt-0.5 w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <div class="flex-1 min-w-0">
+                              <p class="text-sm text-gray-900">{{ history.action_type || 'Modification' }}</p>
+                              <p class="text-xs text-gray-500">{{ formatDate(history.created_at) }}</p>
                             </div>
                           </div>
-
-                          @if (task.progress_percentage !== undefined) {
-                            <div class="mt-4">
-                              <div class="flex justify-between text-sm mb-1">
-                                <span class="text-gray-600">Progression</span>
-                                <span class="text-gray-900 font-medium">{{ task.progress_percentage }}%</span>
-                              </div>
-                              <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                  class="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                                  [style.width.%]="task.progress_percentage"
-                                ></div>
-                              </div>
-                            </div>
-                          }
-                        </div>
-                      }
-                    } @else {
-                      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune tâche</h3>
-                        <p class="mt-1 text-sm text-gray-500">Commencez par créer une nouvelle tâche pour ce projet.</p>
-                        <button
-                          (click)="createTask()"
-                          class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-                        >
-                          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0 0h6m-6 0H6"/>
-                          </svg>
-                          Créer une tâche
-                        </button>
+                        }
+                        @if (proj.histories.length > 5) {
+                          <div class="text-xs text-gray-500 text-center pt-2">
+                            et {{ proj.histories.length - 5 }} autre(s) modification(s)
+                          </div>
+                        }
                       </div>
-                    }
-                  </div>
+                    </div>
+                  }
+
                 </div>
 
               } @else if (activeTab() === 'team') {
@@ -536,12 +580,12 @@ interface Task {
                             <div class="flex items-center">
                               <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
                                 <span class="text-sm font-medium text-white">
-                                  {{ member.user?.getInitials?.() || (member.user?.name?.substring(0, 2)?.toUpperCase()) || 'XX' }}
+                                  {{ (member.user?.name?.substring(0, 2)?.toUpperCase()) || 'XX' }}
                                 </span>
                               </div>
                               <div class="ml-4">
                                 <h4 class="text-sm font-semibold text-gray-900">
-                                  {{ member.user?.name || member.user?.getDisplayName?.() || 'Utilisateur inconnu' }}
+                                  {{ member.user.name || 'Utilisateur inconnu' }}
                                 </h4>
                                 <p class="text-sm text-gray-600">{{ member.role }}</p>
                               </div>
@@ -667,13 +711,14 @@ interface Task {
                       <textarea
                         rows="3"
                         placeholder="Écrivez votre commentaire..."
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
                         [(ngModel)]="newCommentText"
                       ></textarea>
                       <div class="flex justify-end">
                         <button
                           (click)="addComment()"
-                          [disabled]="!newCommentText?.trim()"
+                          [disabled]="!newCommentText.trim()"
                           class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                         >
                           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -752,72 +797,10 @@ interface Task {
                         <h3 class="text-lg font-semibold text-gray-900 mb-6">Statistiques du projet</h3>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                          <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
-                            <div class="flex items-center">
-                              <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                                </svg>
-                              </div>
-                              <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Total Tâches</p>
-                                <p class="text-2xl font-bold text-gray-900">{{ stats.total_tasks }}</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
-                            <div class="flex items-center">
-                              <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                              </div>
-                              <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Terminées</p>
-                                <p class="text-2xl font-bold text-gray-900">{{ stats.completed_tasks }}</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-4">
-                            <div class="flex items-center">
-                              <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                              </div>
-                              <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">En cours</p>
-                                <p class="text-2xl font-bold text-gray-900">{{ stats.in_progress_tasks }}</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div class="bg-gradient-to-r from-red-50 to-red-100 rounded-lg p-4">
-                            <div class="flex items-center">
-                              <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                                </svg>
-                              </div>
-                              <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Bloquées</p>
-                                <p class="text-2xl font-bold text-gray-900">{{ stats.blocked_tasks }}</p>
-                              </div>
-                            </div>
-                          </div>
                         </div>
 
                         <!-- Métriques avancées -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t border-gray-200">
-                          <div class="text-center">
-                            <p class="text-sm font-medium text-gray-600">Taux de completion</p>
-                            <p class="text-xl font-bold text-blue-600">{{ stats.tasks_completion_rate | number:'1.1-1' }}%</p>
-                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                              <div class="bg-blue-500 h-2 rounded-full" [style.width.%]="stats.tasks_completion_rate"></div>
-                            </div>
-                          </div>
 
                           <div class="text-center">
                             <p class="text-sm font-medium text-gray-600">Score de santé</p>
@@ -845,54 +828,6 @@ interface Task {
                       </div>
                     }
 
-                    <!-- Résumé temporel -->
-                    @if (projectTimeSummary(); as timeSummary) {
-                      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-6">Résumé temporel</h3>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                          <div class="bg-gray-50 rounded-lg p-4">
-                            <p class="text-sm font-medium text-gray-600">Heures estimées</p>
-                            <p class="text-xl font-bold text-gray-900">{{ timeSummary.total_estimated_hours }}h</p>
-                          </div>
-                          <div class="bg-gray-50 rounded-lg p-4">
-                            <p class="text-sm font-medium text-gray-600">Heures réelles</p>
-                            <p class="text-xl font-bold text-gray-900">{{ timeSummary.total_hours_logged }}h</p>
-                          </div>
-                          <div class="bg-gray-50 rounded-lg p-4">
-                            <p class="text-sm font-medium text-gray-600">Variance</p>
-                            <p class="text-xl font-bold"
-                               [class.text-red-600]="timeSummary.variance_percentage > 0"
-                               [class.text-green-600]="timeSummary.variance_percentage <= 0">
-                              {{ timeSummary.variance_percentage > 0 ? '+' : '' }}{{ timeSummary.variance_percentage | number:'1.1-1' }}%
-                            </p>
-                          </div>
-                          <div class="bg-gray-50 rounded-lg p-4">
-                            <p class="text-sm font-medium text-gray-600">Moyenne/jour</p>
-                            <p class="text-xl font-bold text-gray-900">{{ timeSummary.average_hours_per_day | number:'1.1-1' }}h</p>
-                          </div>
-                        </div>
-
-                        <!-- Métriques d'efficacité -->
-                        <div class="bg-blue-50 rounded-lg p-4">
-                          <h4 class="text-md font-semibold text-gray-900 mb-3">Métriques d'efficacité</h4>
-                          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="text-center">
-                              <p class="text-sm text-gray-600">Planifié vs Réel</p>
-                              <p class="text-lg font-bold text-blue-600">{{ timeSummary.efficiency_metrics.planned_vs_actual_ratio | number:'1.2-2' }}</p>
-                            </div>
-                            <div class="text-center">
-                              <p class="text-sm text-gray-600">Score productivité</p>
-                              <p class="text-lg font-bold text-blue-600">{{ timeSummary.efficiency_metrics.productivity_score | number:'1.0-0' }}%</p>
-                            </div>
-                            <div class="text-center">
-                              <p class="text-sm text-gray-600">Indicateur qualité</p>
-                              <p class="text-lg font-bold text-blue-600">{{ timeSummary.efficiency_metrics.quality_indicator | number:'1.0-0' }}%</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    }
 
                     <!-- Timeline du projet -->
                     @if (projectTimeline().length > 0) {
@@ -948,55 +883,8 @@ interface Task {
                       </div>
                     }
 
-                    <!-- Entrées de temps récentes -->
-                    @if (projectTimeEntries().length > 0) {
-                      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-6">Entrées de temps récentes</h3>
 
-                        <div class="space-y-3">
-                          @for (entry of projectTimeEntries(); track entry.id) {
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <div class="flex items-center">
-                                <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mr-3">
-                                  <span class="text-xs font-medium text-white">
-                                    {{ entry.user?.name?.substring(0, 2)?.toUpperCase() || 'XX' }}
-                                  </span>
-                                </div>
-                                <div>
-                                  <p class="text-sm font-medium text-gray-900">{{ entry.user?.name || 'Utilisateur inconnu' }}</p>
-                                  <p class="text-xs text-gray-600">
-                                    {{ entry.task?.title || 'Tâche générale' }} • {{ formatDate(entry.date) }}
-                                  </p>
-                                  @if (entry.description) {
-                                    <p class="text-xs text-gray-500 mt-1">{{ entry.description }}</p>
-                                  }
-                                </div>
-                              </div>
-                              <div class="text-right">
-                                <p class="text-sm font-bold text-indigo-600">{{ entry.hours }}h</p>
-                                @if (entry.billable) {
-                                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                    Facturable
-                                  </span>
-                                } @else {
-                                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                    Non facturable
-                                  </span>
-                                }
-                              </div>
-                            </div>
-                          }
-                        </div>
-
-                        <div class="mt-4 text-center">
-                          <button class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                            Voir toutes les entrées de temps
-                          </button>
-                        </div>
-                      </div>
-                    }
-
-                    @if (!projectStats() && !projectTimeSummary() && !projectTimeline().length && !projectTimeEntries().length) {
+                    @if (!projectStats() && !projectTimeline().length) {
                       <!-- État vide pour Analytics -->
                       <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1011,149 +899,426 @@ interface Task {
               }
             </div>
 
-            <!-- Sidebar (1/3) -->
-            <div class="space-y-6">
 
-              <!-- Informations du projet -->
-              <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations</h3>
-                <dl class="space-y-4">
-                  <div>
-                    <dt class="text-sm font-medium text-gray-500">Code projet</dt>
-                    <dd class="mt-1 text-sm text-gray-900 font-mono">{{ proj.code }}</dd>
-                  </div>
-                  @if (proj.client_info || proj.client) {
-                    <div>
-                      <dt class="text-sm font-medium text-gray-500">Client</dt>
-                      <dd class="mt-1 text-sm text-gray-900">
-                        @if (proj.client) {
-                          {{ proj.client.name || proj.client.getDisplayName?.() || 'N/A' }}
-                        } @else if (proj.client_info && proj.client_type === 'externe') {
-                          {{ proj.external_client_info?.name }}
-                        } @else {
-                          N/A
-                        }
-                      </dd>
-                    </div>
-                  }
-                  @if (proj.project_manager) {
-                    <div>
-                      <dt class="text-sm font-medium text-gray-500">Chef de projet</dt>
-                      <dd class="mt-1 text-sm text-gray-900">{{ proj.project_manager.name || proj.project_manager.getDisplayName?.() || 'Non assigné' }}</dd>
-                    </div>
-                  }
-                  <div>
-                    <dt class="text-sm font-medium text-gray-500">Département</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ proj.department }}</dd>
-                  </div>
-                  <div>
-                    <dt class="text-sm font-medium text-gray-500">Date de création</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ formatDate(proj.created_at) }}</dd>
-                  </div>
-                  @if (proj.start_date) {
-                    <div>
-                      <dt class="text-sm font-medium text-gray-500">Date de début</dt>
-                      <dd class="mt-1 text-sm text-gray-900">{{ formatDate(proj.start_date) }}</dd>
-                    </div>
-                  }
-                  @if (proj.planned_end_date) {
-                    <div>
-                      <dt class="text-sm font-medium text-gray-500">Date de fin prévue</dt>
-                      <dd class="mt-1 text-sm text-gray-900">{{ formatDate(proj.planned_end_date) }}</dd>
-                    </div>
-                  }
-                  @if (proj.actual_end_date) {
-                    <div>
-                      <dt class="text-sm font-medium text-gray-500">Date de fin réelle</dt>
-                      <dd class="mt-1 text-sm text-gray-900">{{ formatDate(proj.actual_end_date) }}</dd>
-                    </div>
-                  }
-                  @if (proj.risk_indicator) {
-                    <div>
-                      <dt class="text-sm font-medium text-gray-500">Niveau de risque</dt>
-                      <dd class="mt-1">
-                        <span
-                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                          [class.bg-green-100]="proj.risk_indicator === 'low'"
-                          [class.text-green-800]="proj.risk_indicator === 'low'"
-                          [class.bg-yellow-100]="proj.risk_indicator === 'medium'"
-                          [class.text-yellow-800]="proj.risk_indicator === 'medium'"
-                          [class.bg-red-100]="proj.risk_indicator === 'high'"
-                          [class.text-red-800]="proj.risk_indicator === 'high'"
-                        >
-                          {{ getRiskLabel(proj.risk_indicator) }}
-                        </span>
-                      </dd>
-                    </div>
-                  }
-                </dl>
-              </div>
 
-              <!-- Activité récente -->
-              <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Historique récent</h3>
-                <div class="space-y-4">
-                  @if (projectHistory().length > 0) {
-                    @for (history of projectHistory(); track history.id) {
-                      <div class="flex items-start space-x-3">
-                        <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                        <div class="flex-1 min-w-0">
-                          <p class="text-sm text-gray-700">
-                            <span class="font-medium">{{ history.changed_by_user?.name || 'Système' }}</span>
-                            {{ getHistoryActionDescription(history) }}
-                          </p>
-                          <p class="text-xs text-gray-500">{{ formatDate(history.created_at) }}</p>
-                          @if (history.comment) {
-                            <p class="text-xs text-gray-600 mt-1 italic">{{ history.comment }}</p>
-                          }
-                        </div>
-                      </div>
-                    }
-                  } @else {
-                    <p class="text-sm text-gray-500 text-center py-4">Aucun historique disponible</p>
-                  }
-                </div>
-              </div>
-
-              <!-- Actions rapides -->
-              <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions rapides</h3>
-                <div class="space-y-2">
-                  <button
-                    (click)="createTask()"
-                    class="w-full flex items-center justify-start px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0 0h6m-6 0H6"/>
-                    </svg>
-                    Créer une tâche
-                  </button>
-                  <button
-                    (click)="addTeamMember()"
-                    class="w-full flex items-center justify-start px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                    </svg>
-                    Ajouter un membre
-                  </button>
-                  <button
-                    (click)="updateProgress()"
-                    class="w-full flex items-center justify-start px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                    </svg>
-                    Mettre à jour la progression
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       }
-    </div>
-  `,
+
+      <!-- Modal d'édition -->
+      @if (showEditModal()) {
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="closeEditModal()">
+          <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 shadow-lg rounded-lg bg-white" (click)="$event.stopPropagation()">
+
+            <!-- Header du modal -->
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-xl font-bold text-gray-900">Modifier le projet</h3>
+              <button (click)="closeEditModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            @if (editForm(); as form) {
+              <div class="space-y-6 max-h-96 overflow-y-auto">
+
+                <!-- Section Informations de base -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                  <h4 class="font-semibold text-gray-900 mb-4">Informations de base</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Nom du projet -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Nom du projet *</label>
+                      <input
+                        type="text"
+                        [value]="form.name"
+                        (input)="updateEditField('name', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                        required
+                      />
+                    </div>
+
+                    <!-- Code du projet -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Code du projet *</label>
+                      <input
+                        type="text"
+                        [value]="form.code"
+                        (input)="updateEditField('code', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                        required
+                      />
+                    </div>
+
+                    <!-- Département -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Département</label>
+                      <input
+                        type="text"
+                        [value]="form.department"
+                        (input)="updateEditField('department', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                      />
+                    </div>
+
+                    <!-- Statut -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                      <select
+                        [value]="form.status"
+                        (change)="updateEditField('status', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                      >
+                        <option value="planifie">Planifié</option>
+                        <option value="en_cours">En cours</option>
+                        <option value="en_attente">En attente</option>
+                        <option value="en_danger">En danger</option>
+                        <option value="termine">Terminé</option>
+                        <option value="annule">Annulé</option>
+                      </select>
+                    </div>
+
+                  </div>
+
+                  <!-- Description -->
+                  <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea
+                      rows="3"
+                      [value]="form.description"
+                      (input)="updateEditField('description', $any($event.target).value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                      style="color: #000000 !important;"
+                    ></textarea>
+                  </div>
+
+                  <!-- Objectifs -->
+                  <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Objectifs</label>
+                    <textarea
+                      rows="3"
+                      [value]="form.objectives"
+                      (input)="updateEditField('objectives', $any($event.target).value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                      style="color: #000000 !important;"
+                    ></textarea>
+                  </div>
+                </div>
+
+                <!-- Section Timeline -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                  <h4 class="font-semibold text-gray-900 mb-4">Timeline</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
+                      <input
+                        type="date"
+                        [value]="form.start_date"
+                        (change)="updateEditField('start_date', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin prévue</label>
+                      <input
+                        type="date"
+                        [value]="form.planned_end_date"
+                        (change)="updateEditField('planned_end_date', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin réelle</label>
+                      <input
+                        type="date"
+                        [value]="form.actual_end_date"
+                        (change)="updateEditField('actual_end_date', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section Budget -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                  <h4 class="font-semibold text-gray-900 mb-4">Budget</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Budget estimé (€)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        [value]="form.estimated_budget"
+                        (input)="updateEditField('estimated_budget', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Budget réel (€)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        [value]="form.actual_budget"
+                        (input)="updateEditField('actual_budget', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section Progression et Risques -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                  <h4 class="font-semibold text-gray-900 mb-4">Progression et Risques</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Progression (%)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        [value]="form.progress_percentage"
+                        (input)="updateEditField('progress_percentage', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Indicateur de risque</label>
+                      <select
+                        [value]="form.risk_indicator"
+                        (change)="updateEditField('risk_indicator', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                      >
+                        <option value="low">Faible</option>
+                        <option value="medium">Moyen</option>
+                        <option value="high">Élevé</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Rentabilité (%)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        [value]="form.profitability_indicator"
+                        (input)="updateEditField('profitability_indicator', $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section Client -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                  <h4 class="font-semibold text-gray-900 mb-4">Informations client</h4>
+
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Type de client</label>
+                    <select
+                      [value]="form.client_type"
+                      (change)="updateEditField('client_type', $any($event.target).value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                      style="color: #000000 !important;"
+                    >
+                      <option value="interne">Client interne</option>
+                      <option value="externe">Client externe</option>
+                    </select>
+                  </div>
+
+                  @if (form.client_type === 'externe') {
+                    <div class="space-y-3">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom du client</label>
+                        <input
+                          type="text"
+                          [value]="form.external_client_info?.name || ''"
+                          (input)="updateClientName($any($event.target).value)"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                        />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
+                        <input
+                          type="text"
+                          [value]="form.external_client_info?.company || ''"
+                          (input)="updateClientCompany($any($event.target).value)"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                        />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input
+                          type="email"
+                          [value]="form.external_client_info?.email || ''"
+                          (input)="updateClientEmail($any($event.target).value)"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        style="color: #000000 !important;"
+                        />
+                      </div>
+                    </div>
+                  }
+                </div>
+
+              </div>
+
+              <!-- Boutons d'action -->
+              <div class="flex items-center justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  (click)="closeEditModal()"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  (click)="saveEditProject()"
+                  [disabled]="editLoading() || !form.name?.trim() || !form.code?.trim()"
+                  class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                >
+                  @if (editLoading()) {
+                    <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                  }
+                  {{ editLoading() ? 'Sauvegarde...' : 'Sauvegarder' }}
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Modal d'équipe -->
+      @if (showTeamModal()) {
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" (click)="closeTeamModal()">
+          <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-lg bg-white" (click)="$event.stopPropagation()">
+
+            <!-- Header du modal -->
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-xl font-bold text-gray-900">
+                {{ teamModalMode() === 'add' ? 'Ajouter un membre' : 'Modifier le membre' }}
+              </h3>
+              <button (click)="closeTeamModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            @if (teamForm(); as form) {
+              <!-- Corps du modal -->
+              <div class="space-y-6">
+
+                <!-- Sélection de l'utilisateur -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Utilisateur *</label>
+                  <select
+                    [value]="form.user_id"
+                    (change)="updateTeamField('user_id', $any($event.target).value)"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    style="color: #000000 !important;"
+                    required
+                  >
+                    <option value="">Sélectionner un utilisateur</option>
+                    @for (user of availableUsers(); track user.id) {
+                      <option [value]="user.id">{{ user.name }} ({{ user.email }})</option>
+                    }
+                  </select>
+                </div>
+
+                <!-- Rôle -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Rôle *</label>
+                  <select
+                    [value]="form.role"
+                    (change)="updateTeamField('role', $any($event.target).value)"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    style="color: #000000 !important;"
+                    required
+                  >
+                    <option value="">Sélectionner un rôle</option>
+                    @for (role of availableRoles(); track role.id) {
+                      <option [value]="role.name">{{ role.display_name || role.name }}</option>
+                    }
+                  </select>
+                </div>
+
+                <!-- Taux horaire -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Taux horaire (€/h)</label>
+                  <input
+                    type="number"
+                    [value]="form.hourly_rate"
+                    (input)="updateTeamField('hourly_rate', $any($event.target).value ? Number($any($event.target).value) : null)"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    style="color: #000000 !important;"
+                    placeholder="Optionnel"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <!-- Statut actif -->
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    [checked]="form.is_active"
+                    (change)="updateTeamField('is_active', $any($event.target).checked)"
+                    class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label for="is_active" class="text-sm text-gray-700">Membre actif</label>
+                </div>
+
+              </div>
+
+              <!-- Footer du modal -->
+              <div class="flex items-center justify-end space-x-4 mt-6 pt-6 border-t border-gray-200">
+                <button
+                  (click)="closeTeamModal()"
+                  type="button"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  (click)="saveTeamMember()"
+                  type="button"
+                  [disabled]="teamLoading() || !form.user_id || !form.role"
+                  class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  @if (teamLoading()) {
+                    <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                  }
+                  {{ teamLoading() ? 'Sauvegarde...' : (teamModalMode() === 'add' ? 'Ajouter' : 'Modifier') }}
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    `,
   styles: [`
     .dropdown-enter {
       opacity: 0;
@@ -1170,31 +1335,41 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private projectsApiService = inject(ProjectsApiService);
+  private userService = inject(UserService);
   private destroy$ = new Subject<void>();
 
   // Signals pour l'état du composant
   project = signal<Project | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
-  recentTasks = signal<Task[]>([]);
   showDropdown = signal(false);
   activeTab = signal<string>('overview');
   isFavorite = signal(false);
 
+  // Signals pour le modal d'édition
+  showEditModal = signal(false);
+  editForm = signal<any>(null);
+  editLoading = signal(false);
+
   // Signals pour les analytics
-  projectTimeline = signal<ProjectTimeline[]>([]);
+  projectTimeline = signal<any[]>([]);
   projectStats = signal<ProjectStats | null>(null);
-  projectTimeSummary = signal<ProjectTimeSummary | null>(null);
-  projectTimeAnalytics = signal<ProjectTimeAnalytics | null>(null);
-  projectTimeEntries = signal<any[]>([]);
   projectHistory = signal<any[]>([]);
   projectProgress = signal<any>(null);
   projectComments = signal<any[]>([]);
   analyticsLoading = signal(false);
 
+  // Signals pour la gestion d'équipe
+  team = signal<ProjectTeamMember[]>([]);
+  showTeamModal = signal(false);
+  teamModalMode = signal<'add' | 'edit'>('add');
+  teamForm = signal<any>(null);
+  teamLoading = signal(false);
+  availableUsers = signal<any[]>([]);
+  availableRoles = signal<any[]>([]);
+  editingMember = signal<any>(null);
+
   // Variables pour les filtres et recherche
-  taskSearchQuery = '';
-  taskStatusFilter = '';
   newCommentText = '';
 
   // Configuration des onglets
@@ -1204,12 +1379,6 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       label: 'Vue d\'ensemble',
       icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
       badge: null
-    },
-    {
-      id: 'tasks',
-      label: 'Tâches',
-      icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
-      badge: this.recentTasks().length
     },
     {
       id: 'team',
@@ -1274,7 +1443,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
 
-    this.projectsApiService.getProject(this.projectId).pipe(
+    this.projectsApiService.getProject(this.projectId, ['team', 'client', 'manager']).pipe(
       takeUntil(this.destroy$),
       finalize(() => this.loading.set(false)),
       catchError(error => {
@@ -1282,42 +1451,19 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
         console.error('Erreur lors du chargement du projet:', error);
         return of(null);
       })
-    ).subscribe(project => {
-      if (project) {
-        this.project.set(project);
-        this.loadProjectTasks();
-        this.loadProjectHistory();
-      }
-    });
-  }
-
-  private loadProjectTasks(): void {
-    // Charger les tâches via l'API uniquement
-    this.projectsApiService.getProjectTasks(this.projectId, { limit: 10 }).pipe(
-      takeUntil(this.destroy$),
-      catchError(error => {
-        console.error('Erreur lors du chargement des tâches:', error);
-        // Retourner un tableau vide en cas d'erreur
-        return of([]);
-      })
-    ).subscribe(tasks => {
-      this.recentTasks.set(Array.isArray(tasks) ? tasks : []);
-    });
-  }
-
-  private loadProjectHistory(): void {
-    this.projectsApiService.getProjectHistory(this.projectId, 5).pipe(
-      takeUntil(this.destroy$),
-      catchError(error => {
-        console.error('Erreur lors du chargement de l\'historique:', error);
-        return of(null);
-      })
     ).subscribe(response => {
       if (response?.data) {
-        this.projectHistory.set(response.data);
+        this.project.set(response.data);
+        // Initialiser aussi le signal team avec les membres de l'équipe
+        if (response.data.team_members) {
+          this.team.set(response.data.team_members);
+        }
+        console.log('Projet chargé:', response.data);
       }
     });
   }
+
+
 
   // Actions du header
   goBack(): void {
@@ -1343,9 +1489,34 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
 
   // Actions du dropdown
   editProject(): void {
-    // TODO: Ouvrir un modal d'édition ou une page d'édition avec formulaire
-    // Pour l'instant, cette action est en attente d'interface utilisateur
-    console.log('Fonctionnalité d\'édition de projet nécessite un formulaire d\'édition');
+    const currentProject = this.project();
+    if (!currentProject) return;
+
+    // Pré-remplir le formulaire avec les données actuelles du projet
+    this.editForm.set({
+      name: currentProject.name || '',
+      code: currentProject.code || '',
+      description: currentProject.description || '',
+      objectives: currentProject.objectives || '',
+      status: currentProject.status || 'planifie',
+      progress_percentage: currentProject.progress_percentage || 0,
+      estimated_budget: currentProject.estimated_budget || null,
+      actual_budget: currentProject.actual_budget || null,
+      start_date: currentProject.start_date ? new Date(currentProject.start_date).toISOString().split('T')[0] : '',
+      planned_end_date: currentProject.planned_end_date ? new Date(currentProject.planned_end_date).toISOString().split('T')[0] : '',
+      actual_end_date: currentProject.actual_end_date ? new Date(currentProject.actual_end_date).toISOString().split('T')[0] : '',
+      department: currentProject.department || '',
+      client_type: currentProject.client_type || 'interne',
+      risk_indicator: currentProject.risk_indicator || 'low',
+      profitability_indicator: (currentProject as any).profitability_indicator || null,
+      external_client_info: currentProject.external_client_info || {
+        name: '',
+        company: '',
+        email: ''
+      }
+    });
+
+    this.showEditModal.set(true);
     this.showDropdown.set(false);
   }
 
@@ -1396,6 +1567,84 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     this.showDropdown.set(false);
   }
 
+  // Méthodes pour le modal d'édition
+  closeEditModal(): void {
+    this.showEditModal.set(false);
+    this.editForm.set(null);
+  }
+
+  saveEditProject(): void {
+    const form = this.editForm();
+    if (!form || !this.project()) return;
+
+    this.editLoading.set(true);
+    this.projectsApiService.updateProject(this.projectId, form).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.editLoading.set(false))
+    ).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          // Mettre à jour le projet local avec les nouvelles données
+          this.project.set({ ...this.project()!, ...form });
+          this.closeEditModal();
+          console.log('Projet mis à jour avec succès');
+          // Optionnel: recharger le projet complet
+          this.loadProject();
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors de la mise à jour du projet:', error);
+        this.error.set('Erreur lors de la mise à jour du projet');
+      }
+    });
+  }
+
+  updateEditField(field: string, value: any): void {
+    const currentForm = this.editForm();
+    if (currentForm) {
+      this.editForm.set({ ...currentForm, [field]: value });
+    }
+  }
+
+  updateClientName(value: string): void {
+    const currentForm = this.editForm();
+    if (currentForm) {
+      this.editForm.set({
+        ...currentForm,
+        external_client_info: {
+          ...currentForm.external_client_info,
+          name: value
+        }
+      });
+    }
+  }
+
+  updateClientCompany(value: string): void {
+    const currentForm = this.editForm();
+    if (currentForm) {
+      this.editForm.set({
+        ...currentForm,
+        external_client_info: {
+          ...currentForm.external_client_info,
+          company: value
+        }
+      });
+    }
+  }
+
+  updateClientEmail(value: string): void {
+    const currentForm = this.editForm();
+    if (currentForm) {
+      this.editForm.set({
+        ...currentForm,
+        external_client_info: {
+          ...currentForm.external_client_info,
+          email: value
+        }
+      });
+    }
+  }
+
   // Gestion des onglets
   setActiveTab(tabId: string): void {
     this.activeTab.set(tabId);
@@ -1430,6 +1679,8 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
             team_members: response.data
           });
         }
+        // Mettre à jour le signal team aussi
+        this.team.set(response.data);
       }
     });
   }
@@ -1457,7 +1708,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       map(response => {
         // Filtrer seulement les commentaires de l'historique
         const history = response?.data || [];
-        return history.filter(h => h.action_type === 'comment' || h.comment);
+        return history.filter((h: any) => h.action_type === 'comment' || h.comment);
       }),
       catchError(error => {
         console.error('Erreur lors du chargement des commentaires:', error);
@@ -1468,33 +1719,34 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Actions des tâches
-  filterTasks(): void {
-    // TODO: Implémenter le filtrage des tâches
-    console.log('Filtrer les tâches', this.taskSearchQuery, this.taskStatusFilter);
-  }
-
-  createTask(): void {
-    // TODO: Ouvrir un modal de création de tâche
-    console.log('Créer une nouvelle tâche');
-  }
-
-  editTask(task: Task): void {
-    // TODO: Ouvrir un modal d'édition de tâche
-    console.log('Éditer la tâche', task);
-  }
 
   // Actions de l'équipe
   addTeamMember(): void {
-    // TODO: Ouvrir un modal d'ajout de membre avec sélection d'utilisateur
-    // Pour l'instant, cette action est en attente d'interface utilisateur
-    console.log('Fonctionnalité d\'ajout de membre nécessite un modal de sélection');
+    this.teamModalMode.set('add');
+    this.teamForm.set({
+      user_id: '',
+      role: 'membre',
+      hourly_rate: null,
+      is_active: true
+    });
+    this.editingMember.set(null);
+    this.loadAvailableUsers();
+    this.loadAvailableRoles();
+    this.showTeamModal.set(true);
   }
 
-  editTeamMember(member: ProjectTeamMember): void {
-    // TODO: Ouvrir un modal d'édition de membre avec formulaire
-    // Pour l'instant, cette action est en attente d'interface utilisateur
-    console.log('Fonctionnalité d\'édition de membre nécessite un modal de modification', member);
+  editTeamMember(member: any): void {
+    this.teamModalMode.set('edit');
+    this.teamForm.set({
+      user_id: member.user_id,
+      role: member.role,
+      hourly_rate: member.hourly_rate,
+      is_active: member.is_active
+    });
+    this.editingMember.set(member);
+    this.loadAvailableUsers();
+    this.loadAvailableRoles();
+    this.showTeamModal.set(true);
   }
 
   removeTeamMember(member: ProjectTeamMember): void {
@@ -1510,6 +1762,88 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
           this.loadProject(); // Recharger le projet
         }
       });
+    }
+  }
+
+  // Méthodes utilitaires pour l'équipe
+  loadAvailableUsers(): void {
+    this.userService.getAllUsers()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (users) => {
+          // Filtrer les utilisateurs qui ne sont pas déjà dans l'équipe du projet
+          const currentTeam = this.team();
+          const availableUsers = users.filter(user =>
+            !currentTeam.some(member => member.user_id === user.id)
+          );
+
+          // Adapter le format pour le template
+          const formattedUsers = availableUsers.map(user => ({
+            id: user.id,
+            name: `${user.first_name} ${user.last_name}`,
+            email: user.email,
+            status: user.status
+          }));
+
+          this.availableUsers.set(formattedUsers);
+        },
+        error: (error) => {
+          console.error('Erreur lors du chargement des utilisateurs:', error);
+          this.availableUsers.set([]);
+        }
+      });
+  }
+
+  loadAvailableRoles(): void {
+    this.userService.getRoles()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (roles) => {
+          this.availableRoles.set(roles);
+        },
+        error: (error) => {
+          console.error('Erreur lors du chargement des rôles:', error);
+          this.availableRoles.set([]);
+        }
+      });
+  }
+
+  closeTeamModal(): void {
+    this.showTeamModal.set(false);
+    this.teamForm.set(null);
+    this.editingMember.set(null);
+  }
+
+  saveTeamMember(): void {
+    const form = this.teamForm();
+    if (!form || !form.user_id) return;
+
+    this.teamLoading.set(true);
+
+    const operation = this.teamModalMode() === 'add'
+      ? this.projectsApiService.addTeamMember(this.projectId, form)
+      : this.projectsApiService.updateTeamMemberRole(this.projectId, this.editingMember().id, form);
+
+    operation.pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.teamLoading.set(false))
+    ).subscribe({
+      next: (response: any) => {
+        if (response) {
+          this.closeTeamModal();
+          this.loadProject(); // Recharger pour voir les changements
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors de la sauvegarde du membre:', error);
+      }
+    });
+  }
+
+  updateTeamField(field: string, value: any): void {
+    const currentForm = this.teamForm();
+    if (currentForm) {
+      this.teamForm.set({ ...currentForm, [field]: value });
     }
   }
 
@@ -1541,7 +1875,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       comment: comment
     };
 
-    this.projectsApiService.updateProjectStatus(this.projectId, statusData).pipe(
+    this.projectsApiService.updateProjectStatus(this.projectId, newStatus).pipe(
       takeUntil(this.destroy$),
       catchError(error => {
         console.error('Erreur lors de la mise à jour du statut:', error);
@@ -1563,9 +1897,6 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     // Charger toutes les données analytics en parallèle
     const timeline$ = this.projectsApiService.getProjectTimeline(this.projectId);
     const stats$ = this.projectsApiService.getProjectStats(this.projectId);
-    const timeSummary$ = this.projectsApiService.getProjectTimeSummary(this.projectId);
-    const timeAnalytics$ = this.projectsApiService.getProjectTimeAnalytics(this.projectId);
-    const timeEntries$ = this.projectsApiService.getProjectTimeEntries(this.projectId);
 
     // Timeline
     timeline$.pipe(
@@ -1574,7 +1905,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
         console.error('Erreur lors du chargement de la timeline:', error);
         return of(null);
       })
-    ).subscribe(response => {
+    ).subscribe((response: any) => {
       if (response?.data) {
         this.projectTimeline.set(response.data);
       }
@@ -1583,55 +1914,20 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     // Stats
     stats$.pipe(
       takeUntil(this.destroy$),
+      finalize(() => this.analyticsLoading.set(false)),
       catchError(error => {
         console.error('Erreur lors du chargement des stats:', error);
         return of(null);
       })
-    ).subscribe(response => {
+    ).subscribe((response: any) => {
       if (response?.data) {
         this.projectStats.set(response.data);
       }
     });
 
-    // Time Summary
-    timeSummary$.pipe(
-      takeUntil(this.destroy$),
-      catchError(error => {
-        console.error('Erreur lors du chargement du résumé temporel:', error);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response?.data) {
-        this.projectTimeSummary.set(response.data);
-      }
-    });
+    // UTILISATION DES NOUVEAUX ENDPOINTS TIME-TRACKING
+    this.loadAllTimeData();
 
-    // Time Analytics
-    timeAnalytics$.pipe(
-      takeUntil(this.destroy$),
-      catchError(error => {
-        console.error('Erreur lors du chargement des analytics temporels:', error);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response?.data) {
-        this.projectTimeAnalytics.set(response.data);
-      }
-    });
-
-    // Time Entries
-    timeEntries$.pipe(
-      takeUntil(this.destroy$),
-      finalize(() => this.analyticsLoading.set(false)),
-      catchError(error => {
-        console.error('Erreur lors du chargement des entrées de temps:', error);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response?.data) {
-        this.projectTimeEntries.set(response.data);
-      }
-    });
   }
 
   // Méthodes utilitaires
@@ -1683,16 +1979,6 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  getTaskStatusLabel(status: string): string {
-    switch (status) {
-      case 'en_cours': return 'En cours';
-      case 'en_attente': return 'En attente';
-      case 'en_danger': return 'En danger';
-      case 'termine': return 'Terminé';
-      case 'annule': return 'Annulé';
-      default: return status;
-    }
-  }
 
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -1747,4 +2033,283 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Formate les noms des champs modifiés pour l'affichage
+   */
+  formatFieldNames(fieldChanged: string): string {
+    if (!fieldChanged) return '';
+
+    const fieldMap: Record<string, string> = {
+      'name': 'Nom',
+      'description': 'Description',
+      'status': 'Statut',
+      'progress_percentage': 'Progression',
+      'estimated_budget': 'Budget estimé',
+      'actual_budget': 'Budget réel',
+      'start_date': 'Date de début',
+      'planned_end_date': 'Date de fin prévue',
+      'actual_end_date': 'Date de fin réelle',
+      'risk_indicator': 'Indicateur de risque',
+      'profitability_indicator': 'Indicateur de rentabilité',
+      'project_manager_id': 'Chef de projet',
+      'department': 'Département',
+      'updated_at': 'Dernière modification'
+    };
+
+    return fieldChanged.split(',')
+      .map(field => fieldMap[field.trim()] || field.trim())
+      .join(', ');
+  }
+
+  /**
+   * Formate les valeurs JSON de l'historique pour l'affichage
+   */
+  formatHistoryValue(value: string): string {
+    if (!value) return '';
+
+    try {
+      const parsed = JSON.parse(value);
+
+      // Si c'est un objet, on formate les propriétés importantes
+      if (typeof parsed === 'object' && parsed !== null) {
+        const formatted: string[] = [];
+
+        for (const [key, val] of Object.entries(parsed)) {
+          if (key === 'status') {
+            formatted.push(`Statut: ${this.getStatusLabel(val as any)}`);
+          } else if (key === 'progress_percentage') {
+            formatted.push(`Progression: ${val}%`);
+          } else if (key === 'estimated_budget') {
+            formatted.push(`Budget estimé: ${Number(val).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}`);
+          } else if (key === 'actual_budget') {
+            formatted.push(`Budget réel: ${Number(val).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}`);
+          } else if (key === 'risk_indicator') {
+            formatted.push(`Risque: ${this.getRiskLabel(val as string)}`);
+          } else if (key === 'profitability_indicator') {
+            formatted.push(`Rentabilité: ${val}%`);
+          } else if (key.includes('date') && val) {
+            formatted.push(`${key}: ${this.formatDate(val as string)}`);
+          } else if (val !== null && val !== undefined && val !== '') {
+            formatted.push(`${key}: ${val}`);
+          }
+        }
+
+        return formatted.length > 0 ? formatted.join(', ') : JSON.stringify(parsed);
+      }
+
+      return String(parsed);
+    } catch {
+      return value;
+    }
+  }
+
+  /**
+   * Récupère le nom de l'utilisateur à partir de l'ID
+   */
+  getUserNameFromHistory(userId: number | null): string {
+    if (!userId) return 'Système';
+
+    // Si c'est le chef de projet actuel
+    if (Number(this.project()?.project_manager?.id) === userId) {
+      return this.project()?.project_manager?.name || 'Utilisateur inconnu';
+    }
+
+    // Chercher dans l'équipe
+    const teamMember = this.project()?.team_members?.find(member => member.user_id === userId);
+    if (teamMember) {
+      return teamMember.user.name;
+    }
+
+    // Valeur par défaut
+    return `Utilisateur ${userId}`;
+  }
+
+  /**
+   * Calcule le pourcentage de largeur pour la barre de progression du budget
+   */
+  getBudgetProgressWidth(actualBudget: number, estimatedBudget: number): number {
+    if (!estimatedBudget || estimatedBudget === 0) return 0;
+    return Math.min((actualBudget / estimatedBudget) * 100, 100);
+  }
+
+  /**
+   * Expose Number constructor to template
+   */
+  Number = Number;
+
+  // ==========================================
+  // IMPLÉMENTATION DES ENDPOINTS MANQUANTS
+  // ==========================================
+
+  /**
+   * 1. updateProject() - Mettre à jour un projet
+   */
+  isEditingProject = signal(false);
+  projectForm = signal<any>(null);
+
+  startEditProject(): void {
+    const currentProject = this.project();
+    if (!currentProject) return;
+
+    this.projectForm.set({
+      name: currentProject.name,
+      description: currentProject.description,
+      status: currentProject.status,
+      priority: (currentProject as any).priority || 'normale',
+      start_date: currentProject.start_date,
+      end_date: (currentProject as any).end_date || null,
+      budget: (currentProject as any).budget || 0
+    });
+    this.isEditingProject.set(true);
+  }
+
+  cancelEditProject(): void {
+    this.isEditingProject.set(false);
+    this.projectForm.set(null);
+  }
+
+  saveProject(): void {
+    const form = this.projectForm();
+    if (!form || !this.project()) return;
+
+    this.loading.set(true);
+    this.projectsApiService.updateProject(this.projectId, form).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.loading.set(false))
+    ).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.project.set({ ...this.project()!, ...form });
+          this.isEditingProject.set(false);
+          this.projectForm.set(null);
+          console.log('Projet mis à jour avec succès');
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors de la mise à jour du projet:', error);
+        this.error.set('Erreur lors de la mise à jour du projet');
+      }
+    });
+  }
+
+  /**
+   * 2. updateTeamMemberRole() - Modifier le rôle d'un membre
+   */
+  editingMemberRole = signal<{ memberId: number; role: string } | null>(null);
+
+  startEditMemberRole(memberId: number, currentRole: string): void {
+    this.editingMemberRole.set({ memberId, role: currentRole });
+  }
+
+  saveTeamMemberRole(memberId: number, newRole: string): void {
+    if (!newRole.trim()) return;
+
+    this.loading.set(true);
+    this.projectsApiService.updateTeamMemberRole(this.projectId, memberId, { role: newRole }).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.loading.set(false))
+    ).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          // Mettre à jour le rôle dans l'état local
+          const currentProject = this.project();
+          if (currentProject?.team_members) {
+            const memberIndex = currentProject.team_members.findIndex(m => m.id === memberId);
+            if (memberIndex !== -1) {
+              (currentProject.team_members[memberIndex] as any).role = newRole;
+              this.project.set({ ...currentProject });
+            }
+          }
+          this.editingMemberRole.set(null);
+          console.log('Rôle du membre mis à jour avec succès');
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors de la mise à jour du rôle:', error);
+        this.error.set('Erreur lors de la mise à jour du rôle');
+      }
+    });
+  }
+
+  cancelEditMemberRole(): void {
+    this.editingMemberRole.set(null);
+  }
+
+  /**
+   * 3. getProjectTimeSummary() - Résumé temps du projet
+   */
+  projectTimeSummary = signal<any>(null);
+  timeSummaryLoading = signal(false);
+
+  loadProjectTimeSummary(): void {
+    this.timeSummaryLoading.set(true);
+    this.projectsApiService.getProjectTimeSummary(this.projectId).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.timeSummaryLoading.set(false))
+    ).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.projectTimeSummary.set(response.data);
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement du résumé temps:', error);
+      }
+    });
+  }
+
+  /**
+   * 4. getProjectTimeEntries() - Entrées de temps du projet
+   */
+  projectTimeEntries = signal<any[]>([]);
+  timeEntriesLoading = signal(false);
+
+  loadProjectTimeEntries(): void {
+    this.timeEntriesLoading.set(true);
+    this.projectsApiService.getProjectTimeEntries(this.projectId).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.timeEntriesLoading.set(false))
+    ).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.projectTimeEntries.set(response.data || []);
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des entrées temps:', error);
+      }
+    });
+  }
+
+  /**
+   * 5. getProjectTimeAnalytics() - Analytics temps du projet
+   */
+  projectTimeAnalytics = signal<any>(null);
+  timeAnalyticsLoading = signal(false);
+
+  loadProjectTimeAnalytics(): void {
+    this.timeAnalyticsLoading.set(true);
+    this.projectsApiService.getProjectTimeAnalytics(this.projectId).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.timeAnalyticsLoading.set(false))
+    ).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.projectTimeAnalytics.set(response.data);
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des analytics temps:', error);
+      }
+    });
+  }
+
+  /**
+   * Charger toutes les données temps
+   */
+  loadAllTimeData(): void {
+    this.loadProjectTimeSummary();
+    this.loadProjectTimeEntries();
+    this.loadProjectTimeAnalytics();
+  }
 }

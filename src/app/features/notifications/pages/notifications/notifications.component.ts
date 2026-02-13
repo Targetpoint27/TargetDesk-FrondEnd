@@ -68,10 +68,8 @@ import { LoggingService } from '../../../../core/logging/logging.service';
 
               <select formControlName="type" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
                 <option value="">Tous les types</option>
-                <option value="task_assigned">Tâche assignée</option>
-                <option value="task_due">Échéance tâche</option>
-                <option value="task_comment">Commentaire</option>
                 <option value="project_update">Mise à jour projet</option>
+                <option value="client_update">Mise à jour client</option>
                 <option value="system">Système</option>
               </select>
 
@@ -173,14 +171,15 @@ import { LoggingService } from '../../../../core/logging/logging.service';
                       <div class="flex-shrink-0">
                         <div class="p-2 rounded-lg" [ngClass]="getTypeIconClasses(notification.type)">
                           <ng-container [ngSwitch]="notification.type">
-                            <svg *ngSwitchCase="'task_assigned'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            <svg *ngSwitchCase="'project_update'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                             </svg>
-                            <svg *ngSwitchCase="'task_due'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <svg *ngSwitchCase="'client_update'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
-                            <svg *ngSwitchCase="'task_comment'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                            <svg *ngSwitchCase="'system'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
                             <svg *ngSwitchDefault class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4.828 7l6.586 6.586a2 2 0 002.828 0L20.828 7"/>
@@ -262,7 +261,7 @@ import { LoggingService } from '../../../../core/logging/logging.service';
                 </div>
 
                 <!-- Actions liées -->
-                <div *ngIf="notification.data?.action_url" class="mt-4 pt-4 border-t border-gray-100">
+                <div *ngIf="notification.data && notification.data.action_url" class="mt-4 pt-4 border-t border-gray-100">
                   <a
                     [href]="notification.data.action_url"
                     class="inline-flex items-center text-sm text-blue-600 hover:text-blue-500 font-medium"
@@ -336,12 +335,12 @@ import { LoggingService } from '../../../../core/logging/logging.service';
                   <label class="text-sm font-medium text-gray-700">Types de notifications</label>
                   <div class="mt-2 space-y-2">
                     <div class="flex items-center">
-                      <input type="checkbox" formControlName="task_notifications" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                      <label class="ml-2 text-sm text-gray-600">Notifications de tâches</label>
-                    </div>
-                    <div class="flex items-center">
                       <input type="checkbox" formControlName="project_notifications" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                       <label class="ml-2 text-sm text-gray-600">Notifications de projets</label>
+                    </div>
+                    <div class="flex items-center">
+                      <input type="checkbox" formControlName="client_notifications" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                      <label class="ml-2 text-sm text-gray-600">Notifications clients</label>
                     </div>
                     <div class="flex items-center">
                       <input type="checkbox" formControlName="system_notifications" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
@@ -437,8 +436,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     this.preferencesForm = this.fb.group({
       email_enabled: [true],
       in_app_enabled: [true],
-      task_notifications: [true],
       project_notifications: [true],
+      client_notifications: [true],
       system_notifications: [true]
     });
   }
@@ -532,9 +531,11 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (preferences) => {
-          this.preferencesForm.patchValue(preferences);
+          if (preferences) {
+            this.preferencesForm.patchValue(preferences);
+          }
         },
-        error: (error) => {
+        error: (error: any) => {
           this.loggingService.error('Failed to load preferences', error);
         }
       });
@@ -561,7 +562,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
             data: { notificationId: notification.id }
           });
         },
-        error: (error) => {
+        error: (error: any) => {
           this.loggingService.error('Failed to mark notification as read', error);
         }
       });
@@ -574,7 +575,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
     if (unreadIds.length === 0) return;
 
-    this.notificationsService.markAllAsRead(unreadIds)
+    this.notificationsService.markNotificationsAsRead({ notification_ids: unreadIds })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -589,7 +590,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
             data: { count: unreadIds.length }
           });
         },
-        error: (error) => {
+        error: (error: any) => {
           this.loggingService.error('Failed to mark all as read', error);
         }
       });
@@ -614,7 +615,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
             data: { notificationId: notification.id }
           });
         },
-        error: (error) => {
+        error: (error: any) => {
           this.loggingService.error('Failed to delete notification', error);
         }
       });
@@ -631,7 +632,23 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   savePreferences(): void {
     this.isSavingPreferences.set(true);
 
-    const preferences = this.preferencesForm.value as NotificationPreferences;
+    const formValue = this.preferencesForm.value;
+
+    // Transform form value to match NotificationPreferences structure
+    const preferences: Partial<NotificationPreferences> = {
+      project_created: {
+        in_app: formValue.project_notifications && formValue.in_app_enabled,
+        email: formValue.project_notifications && formValue.email_enabled,
+        push: false,
+        enabled: formValue.project_notifications
+      },
+      project_status_changed: {
+        in_app: formValue.project_notifications && formValue.in_app_enabled,
+        email: formValue.project_notifications && formValue.email_enabled,
+        push: false,
+        enabled: formValue.project_notifications
+      }
+    };
 
     // TODO: implement updatePreferences method
     // Temporary mock implementation
@@ -665,10 +682,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   // Utility functions
   getTypeClasses(type: NotificationType): string {
     const classes: Record<string, string> = {
-      'task_assigned': 'bg-blue-100 text-blue-800',
-      'task_due': 'bg-orange-100 text-orange-800',
-      'task_comment': 'bg-green-100 text-green-800',
       'project_update': 'bg-purple-100 text-purple-800',
+      'client_update': 'bg-blue-100 text-blue-800',
       'system': 'bg-gray-100 text-gray-800'
     };
     return classes[type] || 'bg-gray-100 text-gray-800';
@@ -676,10 +691,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
   getTypeIconClasses(type: NotificationType): string {
     const classes: Record<string, string> = {
-      'task_assigned': 'bg-blue-100 text-blue-600',
-      'task_due': 'bg-orange-100 text-orange-600',
-      'task_comment': 'bg-green-100 text-green-600',
       'project_update': 'bg-purple-100 text-purple-600',
+      'client_update': 'bg-blue-100 text-blue-600',
       'system': 'bg-gray-100 text-gray-600'
     };
     return classes[type] || 'bg-gray-100 text-gray-600';
@@ -687,10 +700,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
   getTypeLabel(type: NotificationType): string {
     const labels: Record<string, string> = {
-      'task_assigned': 'Tâche assignée',
-      'task_due': 'Échéance',
-      'task_comment': 'Commentaire',
       'project_update': 'Projet',
+      'client_update': 'Client',
       'system': 'Système'
     };
     return labels[type] || type;
@@ -718,10 +729,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
   getActionLabel(type: NotificationType): string {
     const labels: Record<string, string> = {
-      'task_assigned': 'Voir la tâche',
-      'task_due': 'Voir la tâche',
-      'task_comment': 'Voir le commentaire',
       'project_update': 'Voir le projet',
+      'client_update': 'Voir le client',
       'system': 'Plus d\'infos'
     };
     return labels[type] || 'Voir plus';
@@ -766,7 +775,4 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     return this.notifications().filter(n => !n.read_at).length;
   }
 
-  openPreferences(): void {
-    // TODO: Implement preferences modal
-  }
 }

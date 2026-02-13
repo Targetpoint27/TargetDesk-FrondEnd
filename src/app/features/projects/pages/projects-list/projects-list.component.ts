@@ -80,8 +80,6 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
       this.currentFilters = {
         status: params['status'] || '',
         department: params['department'] || '',
-        my_projects: params['my_projects'] === 'true',
-        active_only: params['active_only'] === 'true',
         search: params['search'] || ''
       };
       this.loadProjects();
@@ -96,7 +94,7 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
   private loadProjects(): void {
     this.loading.set(true);
 
-    this.projectsApiService.getProjects(this.currentFilters, this.currentPage, this.perPage)
+    this.projectsApiService.getProjects(this.currentFilters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

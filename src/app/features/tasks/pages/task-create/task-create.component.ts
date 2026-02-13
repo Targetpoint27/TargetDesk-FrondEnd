@@ -1,365 +1,304 @@
-// ========================================
-// COMPOSANT CRÉATION DE TÂCHE
-// Formulaire complet pour créer une nouvelle tâche
-// ========================================
-
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil, Observable } from 'rxjs';
+import { Subject, Observable, combineLatest, of } from 'rxjs';
+import { takeUntil, catchError, map } from 'rxjs/operators';
 
-import { Task, TaskPriority, TaskType, CreateTaskRequest } from '../../models/task.models';
-import { Project } from '../../../projects/models/project.models';
-import { UserEntity } from '../../../../core/models/user.models';
 import { TasksApiService } from '../../services/tasks-api.service';
 import { ProjectsApiService } from '../../../projects/services/projects-api.service';
-import { LoggingService } from '../../../../core/logging/logging.service';
+import { ApiService } from '../../../../core/api/api.service';
+import {
+  CreateTaskRequest,
+  TaskStatus,
+  TaskPriority,
+  TaskType,
+  TASK_STATUS_OPTIONS,
+  TASK_PRIORITY_OPTIONS,
+  TASK_TYPE_OPTIONS
+} from '../../../../shared/interfaces/task.interface';
+import { Project } from '../../../projects/models/project.models';
 
 @Component({
   selector: 'app-task-create',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <!-- En-tête -->
-      <div class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="min-h-screen bg-gray-50 py-8">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
           <div class="flex items-center justify-between">
             <div>
-              <h1 class="text-3xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Créer une nouvelle tâche
-              </h1>
-              <p class="mt-2 text-sm text-gray-600">
-                Remplissez les informations pour créer une nouvelle tâche
-              </p>
+              <h1 class="text-3xl font-bold text-gray-900">Créer une nouvelle tâche</h1>
+              <p class="mt-2 text-gray-600">Remplissez les informations ci-dessous pour créer une tâche.</p>
             </div>
             <button
               type="button"
-              (click)="goBack()"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              (click)="onCancel()"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+              <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
-              Retour
+              Annuler
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Contenu principal -->
-      <div class="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <!-- Message d'erreur global -->
-        <div *ngIf="error()" class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-          <div class="flex">
-            <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-              </svg>
-            </div>
-            <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800">Erreur de création</h3>
-              <p class="mt-1 text-sm text-red-700">{{ error() }}</p>
-            </div>
-          </div>
-        </div>
+        <!-- Form -->
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+          <form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
+            <!-- Form Content -->
+            <div class="px-6 py-6 space-y-6">
+              <!-- Project Selection -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <label for="project_id" class="block text-sm font-medium text-gray-900 mb-2">
+                    Projet <span class="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="project_id"
+                    formControlName="project_id"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    [class.border-red-300]="isFieldInvalid('project_id')"
+                  >
+                    <option value="" disabled>Sélectionner un projet</option>
+                    <option *ngFor="let project of projects$ | async" [value]="project.id">
+                      {{ project.name }}
+                    </option>
+                  </select>
+                  <div *ngIf="isFieldInvalid('project_id')" class="mt-1 text-sm text-red-600">
+                    {{ getFieldError('project_id') }}
+                  </div>
+                </div>
 
-        <!-- Formulaire -->
-        <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="space-y-8">
-          <div class="bg-white shadow-sm rounded-lg border border-gray-200">
-            <!-- Informations de base -->
-            <div class="px-6 py-5 border-b border-gray-200">
-              <h3 class="text-lg font-medium text-gray-900">Informations de base</h3>
-              <p class="mt-1 text-sm text-gray-500">Définissez les informations essentielles de la tâche</p>
-            </div>
+                <!-- Task Type -->
+                <div>
+                  <label for="type" class="block text-sm font-medium text-gray-900 mb-2">
+                    Type de tâche
+                  </label>
+                  <select
+                    id="type"
+                    formControlName="type"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option *ngFor="let option of taskTypeOptions" [value]="option.value">
+                      {{ option.label }}
+                    </option>
+                  </select>
+                </div>
+              </div>
 
-            <div class="px-6 py-5 space-y-6">
-              <!-- Titre -->
+              <!-- Task Title -->
               <div>
-                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
-                  Titre de la tâche *
+                <label for="title" class="block text-sm font-medium text-gray-900 mb-2">
+                  Titre de la tâche <span class="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   id="title"
                   formControlName="title"
-                  placeholder="Ex: Implémenter la fonctionnalité de connexion"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  [class.border-red-300]="taskForm.get('title')?.invalid && taskForm.get('title')?.touched"
+                  placeholder="Entrez le titre de la tâche"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  [class.border-red-300]="isFieldInvalid('title')"
                 />
-                <div *ngIf="taskForm.get('title')?.invalid && taskForm.get('title')?.touched" class="mt-1 text-sm text-red-600">
-                  Le titre est obligatoire
+                <div *ngIf="isFieldInvalid('title')" class="mt-1 text-sm text-red-600">
+                  {{ getFieldError('title') }}
                 </div>
               </div>
 
               <!-- Description -->
               <div>
-                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="description" class="block text-sm font-medium text-gray-900 mb-2">
                   Description
                 </label>
                 <textarea
                   id="description"
                   formControlName="description"
                   rows="4"
-                  placeholder="Décrivez en détail ce qui doit être fait..."
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  placeholder="Décrivez la tâche en détail..."
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                 ></textarea>
               </div>
 
-              <!-- Projet et tâche parente -->
+              <!-- Priority and Status -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Projet -->
                 <div>
-                  <label for="project_id" class="block text-sm font-medium text-gray-700 mb-2">
-                    Projet *
-                  </label>
-                  <select
-                    id="project_id"
-                    formControlName="project_id"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    [class.border-red-300]="taskForm.get('project_id')?.invalid && taskForm.get('project_id')?.touched"
-                  >
-                    <option value="">Sélectionnez un projet</option>
-                    <option *ngFor="let project of availableProjects()" [value]="project.id">
-                      {{ project.name }}
-                    </option>
-                  </select>
-                  <div *ngIf="taskForm.get('project_id')?.invalid && taskForm.get('project_id')?.touched" class="mt-1 text-sm text-red-600">
-                    Le projet est obligatoire
-                  </div>
-                </div>
-
-                <!-- Tâche parente -->
-                <div>
-                  <label for="parent_task_id" class="block text-sm font-medium text-gray-700 mb-2">
-                    Tâche parente (optionnel)
-                  </label>
-                  <select
-                    id="parent_task_id"
-                    formControlName="parent_task_id"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  >
-                    <option value="">Aucune tâche parente</option>
-                    <option *ngFor="let task of availableParentTasks()" [value]="task.id">
-                      {{ task.title }} ({{ task.code }})
-                    </option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Classification -->
-          <div class="bg-white shadow-sm rounded-lg border border-gray-200">
-            <div class="px-6 py-5 border-b border-gray-200">
-              <h3 class="text-lg font-medium text-gray-900">Classification</h3>
-              <p class="mt-1 text-sm text-gray-500">Définissez la priorité et le type de tâche</p>
-            </div>
-
-            <div class="px-6 py-5 space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Priorité -->
-                <div>
-                  <label for="priority" class="block text-sm font-medium text-gray-700 mb-2">
-                    Priorité *
+                  <label for="priority" class="block text-sm font-medium text-gray-900 mb-2">
+                    Priorité
                   </label>
                   <select
                     id="priority"
                     formControlName="priority"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="low">Basse</option>
-                    <option value="normal">Normale</option>
-                    <option value="high">Haute</option>
-                    <option value="urgent">Urgente</option>
+                    <option *ngFor="let option of taskPriorityOptions" [value]="option.value">
+                      {{ option.label }}
+                    </option>
                   </select>
                 </div>
 
-                <!-- Type -->
                 <div>
-                  <label for="type" class="block text-sm font-medium text-gray-700 mb-2">
-                    Type *
+                  <label for="status" class="block text-sm font-medium text-gray-900 mb-2">
+                    Statut initial
                   </label>
                   <select
-                    id="type"
-                    formControlName="type"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    id="status"
+                    formControlName="status"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="feature">Fonctionnalité</option>
-                    <option value="bug">Correction de bug</option>
-                    <option value="improvement">Amélioration</option>
-                    <option value="documentation">Documentation</option>
-                    <option value="test">Test</option>
-                    <option value="research">Recherche</option>
-                    <option value="maintenance">Maintenance</option>
+                    <option *ngFor="let option of taskStatusOptions" [value]="option.value">
+                      {{ option.label }}
+                    </option>
                   </select>
                 </div>
-
-                <!-- Estimation -->
-                <div>
-                  <label for="estimated_hours" class="block text-sm font-medium text-gray-700 mb-2">
-                    Estimation (heures)
-                  </label>
-                  <input
-                    type="number"
-                    id="estimated_hours"
-                    formControlName="estimated_hours"
-                    min="0"
-                    step="0.5"
-                    placeholder="Ex: 8"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  />
-                </div>
               </div>
-            </div>
-          </div>
 
-          <!-- Planification -->
-          <div class="bg-white shadow-sm rounded-lg border border-gray-200">
-            <div class="px-6 py-5 border-b border-gray-200">
-              <h3 class="text-lg font-medium text-gray-900">Planification</h3>
-              <p class="mt-1 text-sm text-gray-500">Définissez les dates et assignations</p>
-            </div>
+              <!-- Assigned User -->
+              <div>
+                <label for="assigned_to" class="block text-sm font-medium text-gray-900 mb-2">
+                  Assigner à
+                </label>
+                <select
+                  id="assigned_to"
+                  formControlName="assigned_to"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Non assigné</option>
+                  <option *ngFor="let user of users$ | async" [value]="user.id">
+                    {{ user.first_name }} {{ user.last_name }} ({{ user.email }})
+                  </option>
+                </select>
+              </div>
 
-            <div class="px-6 py-5 space-y-6">
+              <!-- Due Date and Estimated Hours -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Date d'échéance -->
                 <div>
-                  <label for="due_date" class="block text-sm font-medium text-gray-700 mb-2">
+                  <label for="due_date" class="block text-sm font-medium text-gray-900 mb-2">
                     Date d'échéance
                   </label>
                   <input
                     type="date"
                     id="due_date"
                     formControlName="due_date"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
-                <!-- Assigné à -->
                 <div>
-                  <label for="assigned_to" class="block text-sm font-medium text-gray-700 mb-2">
-                    Assigné à
+                  <label for="estimated_hours" class="block text-sm font-medium text-gray-900 mb-2">
+                    Temps estimé (heures)
                   </label>
-                  <select
-                    id="assigned_to"
-                    formControlName="assigned_to"
-                    multiple
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  >
-                    <option *ngFor="let user of availableUsers()" [value]="user.id">
-                      {{ user.first_name }} {{ user.last_name }} ({{ user.email }})
-                    </option>
-                  </select>
-                  <p class="mt-1 text-sm text-gray-500">
-                    Maintenez Ctrl (Cmd sur Mac) pour sélectionner plusieurs utilisateurs
-                  </p>
+                  <input
+                    type="number"
+                    id="estimated_hours"
+                    formControlName="estimated_hours"
+                    placeholder="Ex: 8"
+                    min="0"
+                    step="0.5"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div *ngIf="isLoading" class="flex items-center text-blue-600">
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Création en cours...
                 </div>
               </div>
 
-              <!-- Tags -->
-              <div>
-                <label for="tags" class="block text-sm font-medium text-gray-700 mb-2">
-                  Tags (séparés par des virgules)
-                </label>
-                <input
-                  type="text"
-                  id="tags"
-                  formControlName="tags"
-                  placeholder="Ex: frontend, urgent, client"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-                <p class="mt-1 text-sm text-gray-500">
-                  Séparez les tags par des virgules. Ils seront créés automatiquement s'ils n'existent pas.
-                </p>
+              <div class="flex items-center space-x-3">
+                <button
+                  type="button"
+                  (click)="onCancel()"
+                  class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  [disabled]="isLoading"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  class="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  [disabled]="taskForm.invalid || isLoading"
+                >
+                  {{ isLoading ? 'Création...' : 'Créer la tâche' }}
+                </button>
               </div>
             </div>
+          </form>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div class="flex items-center">
+            <svg class="h-5 w-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="text-sm text-red-800">{{ errorMessage }}</span>
           </div>
+        </div>
 
-          <!-- Actions -->
-          <div class="flex items-center justify-between pt-6">
-            <button
-              type="button"
-              (click)="resetForm()"
-              class="px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-            >
-              Réinitialiser
-            </button>
-
-            <div class="flex space-x-3">
-              <button
-                type="button"
-                (click)="saveAsDraft()"
-                [disabled]="isSubmitting()"
-                class="px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Sauvegarder comme brouillon
-              </button>
-
-              <button
-                type="submit"
-                [disabled]="taskForm.invalid || isSubmitting()"
-                class="inline-flex items-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                <svg *ngIf="isSubmitting()" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                {{ isSubmitting() ? 'Création en cours...' : 'Créer la tâche' }}
-              </button>
-            </div>
+        <!-- Success Message -->
+        <div *ngIf="successMessage" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
+          <div class="flex items-center">
+            <svg class="h-5 w-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span class="text-sm text-green-800">{{ successMessage }}</span>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   `
 })
 export class TaskCreateComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  private tasksService = inject(TasksApiService);
-  private projectsService = inject(ProjectsApiService);
-  private loggingService = inject(LoggingService);
-  private fb = inject(FormBuilder);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
 
-  // État du composant
-  availableProjects = signal<Project[]>([]);
-  availableParentTasks = signal<Task[]>([]);
-  availableUsers = signal<UserEntity[]>([]);
-  isSubmitting = signal(false);
-  error = signal<string | null>(null);
-
-  // Formulaire
   taskForm: FormGroup;
+  isLoading = false;
+  errorMessage: string | null = null;
+  successMessage: string | null = null;
 
-  constructor() {
-    this.taskForm = this.fb.group({
-      title: ['', [Validators.required, Validators.maxLength(255)]],
-      description: [''],
-      project_id: ['', [Validators.required]],
-      parent_task_id: [''],
-      priority: ['normal', [Validators.required]],
-      type: ['feature', [Validators.required]],
-      estimated_hours: [''],
-      due_date: [''],
-      assigned_to: [[]],
-      tags: ['']
-    });
+  // Data for dropdowns
+  projects$: Observable<Project[]> = of([]);
+  users$: Observable<any[]> = of([]);
+
+  // Options for selects
+  taskStatusOptions = TASK_STATUS_OPTIONS;
+  taskPriorityOptions = TASK_PRIORITY_OPTIONS;
+  taskTypeOptions = TASK_TYPE_OPTIONS;
+
+  // Project ID from route params (if navigating from a specific project)
+  projectIdFromRoute: number | null = null;
+
+  constructor(
+    private fb: FormBuilder,
+    private tasksApiService: TasksApiService,
+    private projectsApiService: ProjectsApiService,
+    private apiService: ApiService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {
+    this.taskForm = this.createForm();
+    this.loadDropdownData();
   }
 
   ngOnInit(): void {
-    this.loadInitialData();
-    this.setupFormSubscriptions();
-
-    // Vérifier les paramètres de l'URL
-    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      if (params['project_id']) {
-        this.taskForm.patchValue({ project_id: params['project_id'] });
-      }
-      if (params['parent_task_id']) {
-        this.taskForm.patchValue({ parent_task_id: params['parent_task_id'] });
+    // Check for project ID in route params
+    this.route.queryParams.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(params => {
+      if (params['projectId']) {
+        this.projectIdFromRoute = parseInt(params['projectId'], 10);
+        this.taskForm.patchValue({ project_id: this.projectIdFromRoute });
       }
     });
   }
@@ -369,135 +308,149 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private setupFormSubscriptions(): void {
-    // Charger les tâches du projet quand le projet change
-    this.taskForm.get('project_id')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(projectId => {
-        if (projectId) {
-          this.loadProjectTasks(projectId);
-        } else {
-          this.availableParentTasks.set([]);
-        }
-      });
+  private createForm(): FormGroup {
+    return this.fb.group({
+      project_id: ['', Validators.required],
+      title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
+      description: [''],
+      type: ['tache'],
+      priority: ['normale'],
+      status: ['a_faire'],
+      assigned_to: [null],
+      due_date: [''],
+      estimated_hours: [null, [Validators.min(0)]]
+    });
   }
 
-  private loadInitialData(): void {
-    // Charger les projets
-    this.projectsService.getProjects()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          this.availableProjects.set(response.data);
-        },
-        error: (error) => {
-          this.loggingService.error('Failed to load projects', {
-            component: 'TaskCreateComponent',
-            action: 'loadInitialData',
-            data: { error: error.message }
-          });
+  private loadDropdownData(): void {
+    // Load projects using simple API call (as requested for projects list)
+    this.projects$ = this.apiService.get('projects').pipe(
+      map((response: any) => {
+        // Handle API response format
+        if (response?.data?.data) {
+          return response.data.data;
+        } else if (response?.data) {
+          return Array.isArray(response.data) ? response.data : [response.data];
         }
-      });
+        return [];
+      }),
+      catchError(error => {
+        console.error('Error loading projects:', error);
+        return of([]);
+      })
+    );
 
-    // Charger les utilisateurs
-    // Note: Adaptez cette méthode selon votre service utilisateurs
-    // this.usersService.getUsers()
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: (users) => {
-    //       this.availableUsers.set(users);
-    //     },
-    //     error: (error) => {
-    //       this.loggingService.error('Failed to load users', error);
-    //     }
-    //   });
-  }
-
-  private loadProjectTasks(projectId: number): void {
-    this.tasksService.getTasks({ project_id: projectId, status: 'todo,in_progress' })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          this.availableParentTasks.set(response.data);
-        },
-        error: (error) => {
-          this.loggingService.error('Failed to load project tasks', {
-            component: 'TaskCreateComponent',
-            action: 'loadProjectTasks',
-            data: { error: error.message, projectId }
-          });
+    // Load users using the same pattern as project-create component
+    this.users$ = this.apiService.get('users').pipe(
+      map((response: any) => {
+        // Handle API response format - Structure: { success: true, data: { data: [...] } }
+        let users: any[] = [];
+        if (response && typeof response === 'object' && 'success' in response && response.success) {
+          const responseData = (response as any).data;
+          if (responseData && 'data' in responseData && Array.isArray(responseData.data)) {
+            users = responseData.data;
+          }
         }
-      });
+        return users;
+      }),
+      catchError(error => {
+        console.error('Error loading users:', error);
+        return of([]);
+      })
+    );
   }
 
   onSubmit(): void {
-    if (this.taskForm.valid && !this.isSubmitting()) {
-      this.createTask('todo');
+    if (this.taskForm.invalid) {
+      this.markFormGroupTouched();
+      return;
     }
-  }
 
-  saveAsDraft(): void {
-    if (!this.isSubmitting()) {
-      this.createTask('draft');
-    }
-  }
+    this.isLoading = true;
+    this.errorMessage = null;
+    this.successMessage = null;
 
-  private createTask(status: string): void {
-    this.isSubmitting.set(true);
-    this.error.set(null);
+    const formValue = this.taskForm.value;
+    const projectId = formValue.project_id;
 
-    const formData = this.taskForm.value;
-
-    const createRequest: CreateTaskRequest = {
-      title: formData.title,
-      description: formData.description || '',
-      project_id: formData.project_id,
-      parent_task_id: formData.parent_task_id || undefined,
-      priority: formData.priority as TaskPriority,
-      type: formData.type as TaskType,
-      estimated_hours: formData.estimated_hours ? parseFloat(formData.estimated_hours) : undefined,
-      due_date: formData.due_date || undefined,
-      status: status as any,
-      assigned_to: formData.assigned_to || [],
-      tags: formData.tags ? formData.tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) : []
+    // Prepare task data according to API documentation
+    const taskData: any = {
+      project_id: parseInt(projectId, 10),
+      title: formValue.title,
+      description: formValue.description || undefined,
+      type: formValue.type,
+      priority: formValue.priority,
+      status: formValue.status,
+      estimated_hours: formValue.estimated_hours || undefined,
+      due_date: formValue.due_date || undefined,
+      assigned_to: formValue.assigned_to ? [parseInt(formValue.assigned_to, 10)] : []
     };
 
-    this.tasksService.createTask(createRequest)
-      .pipe(takeUntil(this.destroy$))
+    // Create task
+    this.tasksApiService.createTask(projectId, taskData)
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError(error => {
+          this.isLoading = false;
+          this.errorMessage = error?.message || 'Erreur lors de la création de la tâche';
+          throw error;
+        })
+      )
       .subscribe({
         next: (response) => {
-          this.loggingService.info('Task created successfully', {
-            component: 'TaskCreateComponent',
-            action: 'createTask',
-            data: { taskId: response.data.id, taskTitle: response.data.title, status }
-          });
+          this.isLoading = false;
+          this.successMessage = 'Tâche créée avec succès!';
 
-          // Rediriger vers la page de détail de la tâche
-          this.router.navigate(['/tasks/detail', response.data.id]);
+          // Navigate to my tasks with task detail drawer open
+          setTimeout(() => {
+            if (response?.data?.id) {
+              this.router.navigate(['/dashboard/tasks/my-tasks'], {
+                queryParams: { taskId: response.data.id }
+              });
+            } else {
+              this.router.navigate(['/dashboard/tasks/my-tasks']);
+            }
+          }, 1500);
         },
         error: (error) => {
-          this.error.set(error.error?.message || 'Erreur lors de la création de la tâche');
-          this.isSubmitting.set(false);
-
-          this.loggingService.error('Failed to create task', {
-            component: 'TaskCreateComponent',
-            action: 'createTask',
-            data: { error: error.message, formData: createRequest }
-          });
+          this.isLoading = false;
+          this.errorMessage = error?.message || 'Erreur lors de la création de la tâche';
         }
       });
   }
 
-  resetForm(): void {
-    this.taskForm.reset({
-      priority: 'normal',
-      type: 'feature',
-      assigned_to: []
-    });
-    this.error.set(null);
+  onCancel(): void {
+    // Navigate back to task list or previous page
+    if (this.projectIdFromRoute) {
+      this.router.navigate(['/dashboard/projects/detail', this.projectIdFromRoute]);
+    } else {
+      this.router.navigate(['/dashboard/tasks/my-tasks']);
+    }
   }
 
-  goBack(): void {
-    this.router.navigate(['/tasks']);
+  // Form validation helpers
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.taskForm.get(fieldName);
+    return !!(field && field.invalid && field.touched);
+  }
+
+  getFieldError(fieldName: string): string {
+    const field = this.taskForm.get(fieldName);
+    if (!field || !field.errors || !field.touched) return '';
+
+    if (field.errors['required']) return 'Ce champ est requis';
+    if (field.errors['minlength']) return `Minimum ${field.errors['minlength'].requiredLength} caractères`;
+    if (field.errors['maxlength']) return `Maximum ${field.errors['maxlength'].requiredLength} caractères`;
+    if (field.errors['min']) return `La valeur doit être supérieure ou égale à ${field.errors['min'].min}`;
+    if (field.errors['email']) return 'Format d\'email invalide';
+
+    return 'Champ invalide';
+  }
+
+  private markFormGroupTouched(): void {
+    Object.keys(this.taskForm.controls).forEach(key => {
+      const control = this.taskForm.get(key);
+      control?.markAsTouched();
+    });
   }
 }

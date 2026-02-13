@@ -11,7 +11,6 @@ import {
   InactiveClientsResponse,
   PersonalOverviewResponse,
   PersonalPortfolioResponse,
-  TodayTasksResponse,
   UpcomingAppointmentsResponse
 } from '../interfaces/dashboard.interface';
 
@@ -198,25 +197,6 @@ export class DashboardService {
     );
   }
 
-  /**
-   * Récupère les tâches du jour
-   */
-  getTodaysTasks(): Observable<TodayTasksResponse> {
-    this.setLoading(true);
-
-    return this.apiService.get<TodayTasksResponse>(`${this.baseUrl}/personal/tasks/today`).pipe(
-      map(response => {
-        this.setLoading(false);
-        this.setError(null);
-        return response;
-      }),
-      catchError(error => {
-        this.setLoading(false);
-        this.setError(this.handleError(error));
-        return throwError(() => error);
-      })
-    );
-  }
 
   /**
    * Récupère les RDV à venir

@@ -68,7 +68,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                   type="text"
                   id="name"
                   formControlName="name"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   placeholder="Saisir le nom du projet..."
                   [class.border-red-500]="isFieldInvalid('name')"
                 >
@@ -85,7 +85,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                 <select
                   id="department"
                   formControlName="department"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   [class.border-red-500]="isFieldInvalid('department')"
                 >
                   <option value="">Sélectionner un département</option>
@@ -106,12 +106,12 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                 <select
                   id="project_manager_id"
                   formControlName="project_manager_id"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   [class.border-red-500]="isFieldInvalid('project_manager_id')"
                 >
                   <option value="">Sélectionner un chef de projet</option>
-                  @for (manager of availableManagers; track manager.id) {
-                    <option [value]="manager.id">{{ manager.name || manager.getDisplayName?.() || 'N/A' }}</option>
+                  @for (manager of availableManagers || []; track manager.id) {
+                    <option [value]="manager.id">{{ getManagerDisplayName(manager) }}</option>
                   }
                 </select>
                 @if (isFieldInvalid('project_manager_id')) {
@@ -128,7 +128,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                   type="date"
                   id="start_date"
                   formControlName="start_date"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   [class.border-red-500]="isFieldInvalid('start_date')"
                 >
                 @if (isFieldInvalid('start_date')) {
@@ -144,7 +144,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                   type="date"
                   id="planned_end_date"
                   formControlName="planned_end_date"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   [class.border-red-500]="isFieldInvalid('planned_end_date')"
                 >
                 @if (isFieldInvalid('planned_end_date')) {
@@ -163,7 +163,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                 <select
                   id="risk_indicator"
                   formControlName="risk_indicator"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 >
                   @for (risk of riskOptions; track risk.value) {
                     <option [value]="risk.value">{{ risk.label }}</option>
@@ -182,7 +182,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                   formControlName="estimated_budget"
                   min="0"
                   step="0.01"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   placeholder="0.00"
                 >
               </div>
@@ -197,7 +197,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                 id="description"
                 formControlName="description"
                 rows="4"
-                class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="Description détaillée du projet..."
               ></textarea>
             </div>
@@ -211,7 +211,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                 id="objectives"
                 formControlName="objectives"
                 rows="3"
-                class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="Objectifs du projet..."
               ></textarea>
             </div>
@@ -249,12 +249,12 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
               <select
                 id="client_id"
                 formControlName="client_id"
-                class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 [class.border-red-500]="isFieldInvalid('client_id')"
               >
                 <option value="">Sélectionner un client</option>
                 @for (client of availableClients; track client.id) {
-                  <option [value]="client.id">{{ client.name }}</option>
+                  <option [value]="client.id">{{ getClientDisplayName(client) }}</option>
                 }
               </select>
               @if (isFieldInvalid('client_id')) {
@@ -275,7 +275,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                     type="text"
                     id="external_name"
                     formControlName="name"
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                     placeholder="Nom du client externe..."
                     [class.border-red-500]="isNestedFieldInvalid('external_client_info', 'name')"
                   >
@@ -292,7 +292,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                     type="text"
                     id="external_company"
                     formControlName="company"
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                     placeholder="Nom de l'entreprise..."
                   >
                 </div>
@@ -305,7 +305,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                     type="email"
                     id="external_email"
                     formControlName="email"
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                     placeholder="client@example.com"
                   >
                 </div>
@@ -318,7 +318,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                     type="tel"
                     id="external_phone"
                     formControlName="phone"
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                     placeholder="+33 1 23 45 67 89"
                   >
                 </div>
@@ -332,7 +332,7 @@ import { ClientEntity } from '../../../../domain/entities/client.entity';
                   id="external_address"
                   formControlName="address"
                   rows="3"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   placeholder="Adresse complète du client..."
                 ></textarea>
               </div>
@@ -565,5 +565,29 @@ export class ProjectFormComponent implements OnInit, OnChanges {
         });
       }
     });
+  }
+
+  getManagerDisplayName(manager: UserEntity): string {
+    if (manager.name) {
+      return manager.name;
+    }
+
+    // Essayer d'utiliser les méthodes de l'entité
+    const firstName = manager.getFirstName();
+    const lastName = manager.getLastName();
+
+    if (firstName || lastName) {
+      return `${firstName} ${lastName}`.trim();
+    }
+
+    if (manager.email) {
+      return manager.email;
+    }
+
+    return `Utilisateur #${manager.id}`;
+  }
+
+  getClientDisplayName(client: ClientEntity): string {
+    return client.getDisplayName();
   }
 }

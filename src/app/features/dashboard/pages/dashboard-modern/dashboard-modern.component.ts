@@ -8,7 +8,6 @@ import { takeUntil } from 'rxjs/operators';
 // Import des composants
 import { ClientsEvolutionChartComponent } from '../../../../shared/components/charts/clients-evolution-chart.component';
 import { StatsDoughnutChartComponent } from '../../../../shared/components/charts/stats-doughnut-chart.component';
-import { TodayTasksWidgetComponent } from '../../../../shared/components/widgets/today-tasks-widget.component';
 import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/components/widgets/upcoming-appointments-widget.component';
 
 @Component({
@@ -18,7 +17,6 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
     CommonModule,
     ClientsEvolutionChartComponent,
     StatsDoughnutChartComponent,
-    TodayTasksWidgetComponent,
     UpcomingAppointmentsWidgetComponent
   ],
   template: `
@@ -282,27 +280,20 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
               <div class="text-sm font-medium text-slate-600">RDV à venir</div>
             </div>
 
-            <!-- Tâches en retard -->
+            <!-- Interactions ce mois -->
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/60 shadow-lg hover:shadow-xl transition-all duration-300">
-              <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-500 rounded-2xl flex items-center justify-center mb-4">
-                <i class="bi bi-exclamation-triangle text-white text-xl"></i>
+              <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-2xl flex items-center justify-center mb-4">
+                <i class="bi bi-chat-dots text-white text-xl"></i>
               </div>
               <div class="text-3xl font-bold text-slate-900 mb-1">
-                {{ getPersonalMetrics()?.my_overdue_tasks || 0 }}
+                {{ getPersonalMetrics()?.my_interactions_this_period || 0 }}
               </div>
-              <div class="text-sm font-medium text-slate-600">En retard</div>
+              <div class="text-sm font-medium text-slate-600">Interactions</div>
             </div>
           </div>
 
           <!-- Widgets personnels -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-
-            <!-- Tâches du jour -->
-            <app-today-tasks-widget
-              [data]="getTodayTasks()"
-              [loading]="isLoading()"
-              [error]="globalError()">
-            </app-today-tasks-widget>
 
             <!-- RDV à venir -->
             <app-upcoming-appointments-widget
@@ -310,6 +301,21 @@ import { UpcomingAppointmentsWidgetComponent } from '../../../../shared/componen
               [loading]="isLoading()"
               [error]="globalError()">
             </app-upcoming-appointments-widget>
+
+            <!-- Activité personnelle -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-slate-800">Mon Activité</h3>
+                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                  Ce mois
+                </span>
+              </div>
+              <div class="text-center py-8">
+                <i class="bi bi-graph-up text-4xl text-blue-400 mb-3"></i>
+                <p class="text-slate-600 mb-2">{{ getPersonalMetrics()?.my_interactions_this_period || 0 }} interactions</p>
+                <p class="text-slate-500 text-sm">Continuez sur cette lancée !</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -378,9 +384,6 @@ export class DashboardModernComponent implements OnInit, OnDestroy {
       : this.dashboardFacade.personalData().interactions;
   }
 
-  getTodayTasks() {
-    return this.dashboardFacade.personalData().todayTasks;
-  }
 
   getUpcomingAppointments() {
     return this.dashboardFacade.personalData().upcomingAppointments;

@@ -196,10 +196,10 @@ import {
             @if (project.project_manager) {
               <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2">
                 <span class="text-xs font-medium text-white">
-                  {{ project.project_manager.getInitials?.() || (project.project_manager.name?.substring(0, 2)?.toUpperCase()) || 'NA' }}
+                  {{ project.project_manager.name ? project.project_manager.name.substring(0, 2).toUpperCase() : 'NA' }}
                 </span>
               </div>
-              <span class="text-xs text-gray-600">{{ project.project_manager.name || project.project_manager.getDisplayName?.() || 'N/A' }}</span>
+              <span class="text-xs text-gray-600">{{ project.project_manager.name || 'N/A' }}</span>
             }
           </div>
 

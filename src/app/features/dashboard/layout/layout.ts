@@ -170,6 +170,63 @@ export class DashboardLayoutComponent implements OnInit {
           visible: false
         }
       ]
+    },
+    {
+      id: 'tasks',
+      label: 'Tâches',
+      icon: 'task',
+      route: '/dashboard/tasks',
+      requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+      active: false,
+      visible: false,
+      isExpanded: false,
+      subMenus: [
+        {
+          id: 'tasks-list',
+          label: 'Toutes les tâches',
+          icon: 'list',
+          route: '/dashboard/tasks/list',
+          requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+          active: false,
+          visible: false
+        },
+        {
+          id: 'my-tasks',
+          label: 'Mes tâches',
+          icon: 'person',
+          route: '/dashboard/tasks/my-tasks',
+          requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+          active: false,
+          visible: false
+        },
+        {
+          id: 'tasks-create',
+          label: 'Nouvelle tâche',
+          icon: 'add',
+          route: '/dashboard/tasks/create',
+          requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+          active: false,
+          visible: false
+        },
+        {
+          id: 'overdue-tasks',
+          label: 'Tâches en retard',
+          icon: 'warning',
+          route: '/dashboard/tasks/overdue',
+          requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+          active: false,
+          visible: false
+        },
+        {
+          id: 'time-tracking',
+          label: 'Suivi du temps',
+          icon: 'time',
+          route: '/dashboard/tasks/time-tracking',
+          requiredPermissions: [PERMISSIONS.SYSTEM_VIEW],
+          active: false,
+          visible: false
+        }
+      ]
     }
   ];
 
