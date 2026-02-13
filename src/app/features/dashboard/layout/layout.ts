@@ -121,6 +121,15 @@ export class DashboardLayoutComponent implements OnInit {
       active: false,
       visible: false
     },
+    {
+      id: 'ringover-history',
+      label: 'Historique Ringover',
+      icon: 'phone',
+      route: '/dashboard/ringover-history',
+      requiredPermissions: [PERMISSIONS.CALL_CENTER_ACCESS, PERMISSIONS.DASHBOARD_PERSONAL],
+      active: false,
+      visible: false
+    },
   ];
 
   constructor(

@@ -145,6 +145,11 @@ export const routes: Routes = [
             title: 'Détails de la Réclamation'
           }
         ]
+      },
+      {
+        path: 'ringover-history',
+        loadComponent: () => import('./features/dashboard/pages/call-center/ringover-history/ringover-history.component')
+          .then(c => c.RingoverHistoryComponent)
       }
     ]
   },

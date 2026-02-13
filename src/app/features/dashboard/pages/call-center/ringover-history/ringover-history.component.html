@@ -1,0 +1,114 @@
+<div class="p-6">
+  <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Historique Ringover</h1>
+      <p class="text-slate-500 mt-1 font-medium">Gestion et suivi des appels internationaux avec résumés IA.</p>
+    </div>
+    <div class="flex items-center space-x-3">
+      <div class="bg-blue-50 border border-blue-100 px-4 py-2 rounded-xl shadow-sm">
+        <span class="text-blue-700 font-bold text-lg">{{ calls.length }}</span>
+        <span class="text-blue-600 text-sm ml-1 uppercase font-semibold">Total Appels</span>
+      </div>
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <div class="flex flex-col items-center justify-center h-64 bg-white rounded-3xl border border-slate-100 shadow-sm">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <p class="mt-4 text-slate-400 font-medium">Récupération des données Ringover...</p>
+    </div>
+  }
+
+  <div class="space-y-4">
+    @for (call of calls; track call.id) {
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+        <div class="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="h-10 w-10 rounded-xl flex items-center justify-center shadow-sm"
+                 [ngClass]="call.direction === 'in' ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'">
+              <i class="bi" [ngClass]="call.direction === 'in' ? 'bi-telephone-inbound' : 'bi-telephone-outbound'"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">ID APPEL: {{ call.call_id }}</div>
+              <div class="text-sm font-semibold text-slate-700">{{ call.start_time | date:'EEEE dd MMMM yyyy, HH:mm' }}</div>
+            </div>
+          </div>
+          
+          <div class="flex items-center space-x-2">
+            <span class="px-3 py-1 rounded-lg text-xs font-bold tracking-wide border shadow-sm"
+                  [ngClass]="{
+                    'bg-emerald-50 text-emerald-700 border-emerald-100': call.status === 'ANSWERED',
+                    'bg-amber-50 text-amber-700 border-amber-100': call.status === 'VOICEMAIL',
+                    'bg-rose-50 text-rose-700 border-rose-100': call.status === 'FAILED' || call.status === 'MISSED',
+                    'bg-slate-50 text-slate-700 border-slate-200': call.status === 'CANCELLED'
+                  }">
+              {{ call.status }}
+            </span>
+            <span class="bg-white border border-slate-200 px-2 py-1 rounded-lg text-xs font-mono font-bold text-slate-600">
+              <i class="bi bi-clock mr-1"></i>{{ call.duration }}
+            </span>
+          </div>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-3 border-r border-slate-100 pr-6">
+            <div class="flex items-center space-x-3 mb-4">
+              <div class="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
+                @if (call.flag_url) {
+                  <img [src]="call.flag_url" class="w-full h-full object-cover">
+                } @else {
+                  <i class="bi bi-person-fill text-slate-400 text-xl"></i>
+                }
+              </div>
+              <div>
+                <div class="font-bold text-slate-900 leading-tight">{{ call.contact_name }}</div>
+                <div class="text-xs text-blue-600 font-semibold tracking-tight">{{ call.country || 'International' }}</div>
+              </div>
+            </div>
+            
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-400">De:</span>
+                <span class="text-slate-700 font-mono">{{ formatNumber(call.from) }}</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-400">À:</span>
+                <span class="text-slate-700 font-mono">{{ formatNumber(call.to) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-7 px-2">
+            <div class="flex items-center space-x-2 mb-2">
+              <i class="bi bi-stars text-amber-500 animate-pulse"></i>
+              <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Résumé IA Wi-Export</span>
+            </div>
+            <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100 relative group">
+              <p class="text-sm text-slate-600 leading-relaxed italic line-clamp-3 group-hover:line-clamp-none transition-all">
+                "{{ call.note || 'Aucun résumé n\'a été généré pour cet appel.' }}"
+              </p>
+            </div>
+          </div>
+
+          <div class="lg:col-span-2 flex flex-col justify-center space-y-2">
+            @if (call.recording_url) {
+              <a [href]="call.recording_url" target="_blank" 
+                 class="flex items-center justify-center w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition-all shadow-blue-200 shadow-lg group">
+                <i class="bi bi-play-circle-fill mr-2 text-lg group-hover:scale-110 transition-transform"></i>
+                <span class="font-bold text-sm">ÉCOUTER</span>
+              </a>
+              <button class="text-[10px] text-slate-400 hover:text-blue-600 transition-colors uppercase font-bold text-center">
+                Télécharger MP3
+              </button>
+            } @else {
+              <div class="text-center p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <i class="bi bi-mic-mute text-slate-300 text-xl"></i>
+                <div class="text-[10px] text-slate-400 mt-1 uppercase font-bold">Pas d'audio</div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
