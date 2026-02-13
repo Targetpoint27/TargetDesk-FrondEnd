@@ -1,72 +1,65 @@
-<div class="modal-backdrop">
-  <div class="modal-panel">
+<div class="modal-panel">
 
-    <!-- Header -->
-    <div class="modal-header">
-      <h3 class="modal-title">Résultat du Rappel</h3>
-      <button (click)="handleClose()" class="modal-close-btn">
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
+  <!-- Header -->
+  <div class="modal-header">
+    <h3 class="modal-title">Résultat du Rappel</h3>
+    <button (click)="handleClose()" class="modal-close-btn">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <form [formGroup]="resultForm" (ngSubmit)="handleSubmit()" class="modal-body">
+
+    <div class="form-group">
+      <label class="form-label">Issue de l'appel</label>
+      <div class="result-options">
+        <div *ngFor="let res of results"
+             (click)="resultForm.get('call_result')?.setValue(res.value)"
+             class="result-option"
+             [class.result-option--selected]="resultForm.get('call_result')?.value === res.value">
+          <div class="result-radio"></div>
+          <span class="result-label">{{ res.label }}</span>
+          <svg *ngIf="resultForm.get('call_result')?.value === res.value"
+               class="result-check" width="15" height="15" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+      </div>
     </div>
 
-    <!-- Form -->
-    <form [formGroup]="resultForm" (ngSubmit)="handleSubmit()" class="modal-body">
+    <div class="form-group">
+      <label class="form-label">Notes de l'échange</label>
+      <textarea formControlName="summary" rows="3"
+                class="form-textarea"
+                placeholder="Qu'a dit le client ?"></textarea>
+    </div>
 
-      <!-- Call result options -->
-      <div class="form-group">
-        <label class="form-label">Issue de l'appel</label>
-        <div class="result-options">
-          <div *ngFor="let res of results"
-               (click)="resultForm.get('call_result')?.setValue(res.value)"
-               class="result-option"
-               [class.result-option--selected]="resultForm.get('call_result')?.value === res.value">
-            <div class="result-radio"></div>
-            <span class="result-label">{{ res.label }}</span>
-            <svg *ngIf="resultForm.get('call_result')?.value === res.value"
-                 class="result-check" width="15" height="15" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-            </svg>
-          </div>
+    <div *ngIf="resultForm.get('call_result')?.value && resultForm.get('call_result')?.value !== 'contacte'"
+         class="reschedule-block">
+      <p class="reschedule-heading">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        Reprogrammer le rappel
+      </p>
+      <div class="datetime-grid">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" formControlName="reschedule_date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Heure</label>
+          <input type="time" formControlName="reschedule_time" class="form-input">
         </div>
       </div>
+    </div>
 
-      <!-- Summary -->
-      <div class="form-group">
-        <label class="form-label">Notes de l'échange</label>
-        <textarea formControlName="summary" rows="3"
-                  class="form-textarea"
-                  placeholder="Qu'a dit le client ?"></textarea>
-      </div>
+    <div class="modal-footer">
+      <button type="button" (click)="handleClose()" class="btn-cancel">Annuler</button>
+      <button type="submit" [disabled]="resultForm.invalid" class="btn-submit">Enregistrer</button>
+    </div>
 
-      <!-- Reschedule block — shown when result != contacte -->
-      <div *ngIf="resultForm.get('call_result')?.value && resultForm.get('call_result')?.value !== 'contacte'"
-           class="reschedule-block">
-        <p class="reschedule-heading">
-          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          Reprogrammer le rappel
-        </p>
-        <div class="datetime-grid">
-          <div class="form-group">
-            <label class="form-label">Date</label>
-            <input type="date" formControlName="reschedule_date" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Heure</label>
-            <input type="time" formControlName="reschedule_time" class="form-input">
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="modal-footer">
-        <button type="button" (click)="handleClose()" class="btn-cancel">Annuler</button>
-        <button type="submit" [disabled]="resultForm.invalid" class="btn-submit">Enregistrer</button>
-      </div>
-
-    </form>
-  </div>
+  </form>
 </div>

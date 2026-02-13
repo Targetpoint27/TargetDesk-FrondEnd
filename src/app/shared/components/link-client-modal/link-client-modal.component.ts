@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, switchMap, finalize } from 'rxjs/operators';
@@ -9,7 +9,9 @@ import { SearchResult } from '../../interfaces/search.interface';
   selector: 'app-link-client-modal',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './link-client-modal.component.html'
+  templateUrl: './link-client-modal.component.html',
+  styleUrl: './link-client-modal.component.scss',
+  encapsulation: ViewEncapsulation.None
 })
 export class LinkClientModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();

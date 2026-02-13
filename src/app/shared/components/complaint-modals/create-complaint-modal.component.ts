@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ComplaintCategory, ComplaintSeverity } from '../../../domain/models/complaint.model';
@@ -7,7 +7,9 @@ import { ComplaintCategory, ComplaintSeverity } from '../../../domain/models/com
   selector: 'app-create-complaint-modal',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './create-complaint-modal.component.html'
+  templateUrl: './create-complaint-modal.component.html',
+  styleUrl: './create-complaint-modal.component.scss',
+  encapsulation: ViewEncapsulation.None
 })
 export class CreateComplaintModalComponent {
   @Input() callId!: number;

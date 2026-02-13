@@ -286,3 +286,70 @@ a {
     color: inherit;
   }
 }
+
+.modal-cdk-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: backdrop-in 0.15s ease;
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-cdk-panel {
+  // Ensure the panel itself has no unwanted styles
+  // All visual styling lives in each modal component's SCSS
+  z-index: 1000;
+}
+
+// Fix text color inside all modal panels (white text from body override)
+.modal-cdk-panel {
+  color: #111827;
+
+  input, textarea, select {
+    color: #111827;
+    background: #fafbfc;
+  }
+
+  p, span, label, h1, h2, h3, h4, h5, h6 {
+    color: inherit;
+  }
+
+  .modal-close-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px;
+    color: #374151 !important;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    transition: all 0.15s ease;
+
+    svg {
+      stroke: #374151 !important;
+      fill: none !important;
+      width: 16px;
+      height: 16px;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      background: #f3f4f6 !important;
+      border-color: #d1d5db !important;
+
+      svg { stroke: #111827 !important; }
+    }
+  }
+
+}

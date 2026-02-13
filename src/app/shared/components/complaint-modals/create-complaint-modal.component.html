@@ -1,59 +1,50 @@
-<div class="modal-backdrop">
-  <div class="modal-panel">
+<div class="modal-panel">
 
-    <!-- Header -->
-    <div class="modal-header">
-      <div class="modal-header-info">
-        <h3 class="modal-title">Nouvelle Réclamation</h3>
-        <p class="modal-subtitle">Appel #{{ callId }} → dossier litige</p>
+  <!-- Header -->
+  <div class="modal-header">
+    <div class="modal-header-info">
+      <h3 class="modal-title">Nouvelle Réclamation</h3>
+      <p class="modal-subtitle">Appel #{{ callId }} → dossier litige</p>
+    </div>
+    <button (click)="close.emit()" class="modal-close-btn">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <form [formGroup]="complaintForm" (ngSubmit)="onSubmit()" class="modal-body">
+
+    <div class="two-col-grid">
+      <div class="form-group">
+        <label class="form-label">Catégorie</label>
+        <select formControlName="category" class="form-select">
+          <option value="" disabled>Sélectionner...</option>
+          <option *ngFor="let cat of categories" [value]="cat.value">{{ cat.label }}</option>
+        </select>
       </div>
-      <button (click)="close.emit()" class="modal-close-btn">
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
+      <div class="form-group">
+        <label class="form-label">Gravité (SLA)</label>
+        <select formControlName="severity" class="form-select">
+          <option value="" disabled>Priorité...</option>
+          <option *ngFor="let sev of severities" [value]="sev.value">{{ sev.label }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Détails de l'incident</label>
+      <textarea formControlName="description" rows="4"
+                placeholder="Décrivez précisément le motif de la réclamation..."
+                class="form-textarea"></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" (click)="close.emit()" class="btn-cancel">Annuler</button>
+      <button type="submit" [disabled]="complaintForm.invalid" class="btn-submit btn-submit--danger">
+        Créer la réclamation
       </button>
     </div>
 
-    <!-- Form -->
-    <form [formGroup]="complaintForm" (ngSubmit)="onSubmit()" class="modal-body">
-
-      <!-- Category + Severity -->
-      <div class="two-col-grid">
-        <div class="form-group">
-          <label class="form-label">Catégorie</label>
-          <select formControlName="category" class="form-select">
-            <option value="" disabled>Sélectionner...</option>
-            <option *ngFor="let cat of categories" [value]="cat.value">{{ cat.label }}</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Gravité (SLA)</label>
-          <select formControlName="severity" class="form-select">
-            <option value="" disabled>Priorité...</option>
-            <option *ngFor="let sev of severities" [value]="sev.value">{{ sev.label }}</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Description -->
-      <div class="form-group">
-        <label class="form-label">Détails de l'incident</label>
-        <textarea
-          formControlName="description"
-          rows="4"
-          placeholder="Décrivez précisément le motif de la réclamation..."
-          class="form-textarea"></textarea>
-      </div>
-
-      <!-- Footer -->
-      <div class="modal-footer">
-        <button type="button" (click)="close.emit()" class="btn-cancel">Annuler</button>
-        <button type="submit" [disabled]="complaintForm.invalid" class="btn-submit btn-submit--danger">
-          Créer la réclamation
-        </button>
-      </div>
-
-    </form>
-  </div>
+  </form>
 </div>

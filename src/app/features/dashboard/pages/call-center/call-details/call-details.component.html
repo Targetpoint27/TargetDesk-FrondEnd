@@ -30,7 +30,6 @@
       </div>
 
       <div class="header-actions">
-        <!-- Badges -->
         <div class="header-badges">
           <span class="urgency-dot"
                 [class.dot-critique]="call.urgency === 'critique'"
@@ -43,7 +42,6 @@
           <span class="call-type-label">{{ call.type === 'entrant' ? 'Entrant' : 'Sortant' }}</span>
         </div>
 
-        <!-- Action buttons -->
         <div class="header-btns">
           <button *ngIf="!call.client_id" (click)="openLinkModal()" class="btn-icon" title="Lier à un client">
             <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,7 +62,7 @@
           </button>
 
           <!-- Status dropdown -->
-          <div class="status-dropdown-wrap relative">
+          <div class="status-dropdown-wrap">
             <button (click)="toggleStatusDropdown()" class="btn-icon btn-icon--labeled" title="Changer le statut">
               <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
@@ -110,9 +108,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
               Rappel Programmé
-              <span *ngIf="call.callback_attempts > 0" class="callback-attempts">
-                {{ call.callback_attempts }} tentative(s)
-              </span>
+              <span *ngIf="call.callback_attempts > 0" class="callback-attempts">{{ call.callback_attempts }} tentative(s)</span>
             </div>
             <span *ngIf="call.is_overdue" class="overdue-chip">En retard</span>
           </div>
@@ -173,7 +169,7 @@
               </svg>
             </div>
             <h2 class="card-title">Détails de l'Appel</h2>
-            <button (click)="isComplaintModalOpen = true" class="btn-complaint">
+            <button (click)="openComplaintModal()" class="btn-complaint">
               <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
@@ -217,11 +213,8 @@
             <span class="notes-count">{{ call.notes?.length || 0 }}</span>
           </div>
 
-          <!-- Notes list -->
           <div class="card-body" *ngIf="call.notes && call.notes.length > 0">
-            <div *ngFor="let note of call.notes"
-                 class="note-item"
-                 [class.note-item--important]="note.is_important">
+            <div *ngFor="let note of call.notes" class="note-item" [class.note-item--important]="note.is_important">
               <svg *ngIf="note.is_important" class="note-star" width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
               </svg>
@@ -232,7 +225,6 @@
             </div>
           </div>
 
-          <!-- No notes -->
           <div class="card-body" *ngIf="!call.notes || call.notes.length === 0">
             <div class="empty-notes">
               <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,7 +234,6 @@
             </div>
           </div>
 
-          <!-- Add note -->
           <div class="card-footer">
             <button *ngIf="!showNoteForm" (click)="toggleNoteForm()" class="add-note-btn">
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,15 +241,13 @@
               </svg>
               Ajouter une note
             </button>
-
             <form *ngIf="showNoteForm" [formGroup]="noteForm" (ngSubmit)="handleAddNote()" class="note-form">
               <div class="form-group">
                 <label class="form-label">Note</label>
-                <textarea formControlName="note" rows="4" class="form-textarea"
-                          placeholder="Écrivez votre note ici..."></textarea>
+                <textarea formControlName="note" rows="4" class="form-textarea" placeholder="Écrivez votre note ici..."></textarea>
               </div>
               <label class="checkbox-label">
-                <input type="checkbox" formControlName="is_important" id="is_important" class="checkbox-input">
+                <input type="checkbox" formControlName="is_important" class="checkbox-input">
                 <span>Marquer comme importante</span>
               </label>
               <div class="note-form-actions">
@@ -292,7 +281,6 @@
               <h3 class="client-name">{{ call.client.name }}</h3>
               <span class="client-type-badge">{{ call.client.type }}</span>
             </div>
-
             <div class="client-fields">
               <div class="client-field">
                 <span class="client-field-label">ID</span>
@@ -312,7 +300,6 @@
               </div>
             </div>
 
-            <!-- Client history -->
             <div class="client-history">
               <h4 class="history-heading">
                 <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,16 +320,13 @@
                     {{ history.status.replace('_', ' ') }}
                   </span>
                 </div>
-
                 <div *ngIf="(callFacade.clientHistory$ | async)?.length === 0" class="history-empty">
                   Aucun historique disponible
                 </div>
               </div>
             </div>
 
-            <button (click)="isLinkModalOpen = true" class="change-client-btn">
-              Changer le client lié
-            </button>
+            <button (click)="openChangeLinkModal()" class="change-client-btn">Changer le client lié</button>
           </div>
         </div>
 
@@ -357,16 +341,13 @@
             <h2 class="card-title">Assignment</h2>
           </div>
           <div class="card-body">
-            <!-- Not assigned -->
             <div *ngIf="!call.assigned_agent" class="unassigned-block">
               <i class="bi bi-person-plus unassigned-icon"></i>
               <p>Cet appel n'est pas encore assigné.</p>
               <button (click)="handleStatusChange('en_cours', call)" class="btn-assign-self">
-                <i class="bi bi-hand-index-thumb"></i>
-                S'assigner l'appel
+                <i class="bi bi-hand-index-thumb"></i> S'assigner l'appel
               </button>
             </div>
-            <!-- Assigned -->
             <div *ngIf="call.assigned_agent" class="agent-block">
               <span class="field-label">Agent assigné</span>
               <div class="agent-row">
@@ -394,7 +375,7 @@
             <div class="timeline">
               <div class="timeline-item">
                 <div class="timeline-dot timeline-dot--blue"></div>
-                <div class="timeline-line" *ngIf="true"></div>
+                <div class="timeline-line"></div>
                 <div class="timeline-content">
                   <p class="timeline-label">Appel créé</p>
                   <p class="timeline-date">{{ formatDate(call.created_at) }}</p>
@@ -444,7 +425,7 @@
       </div>
     </div>
 
-    <!-- ── MODALS ──────────────────────────────────────────────────────────── -->
+    <!-- ── INLINE MODALS (edit + close only — others use CDK overlay) ──────── -->
 
     <app-edit-call-modal
       *ngIf="isEditModalOpen && (call$ | async) as call"
@@ -462,27 +443,6 @@
     </app-close-call-modal>
 
     <div *ngIf="showStatusDropdown" (click)="closeStatusDropdown()" class="dropdown-backdrop"></div>
-
-    <app-schedule-callback-modal
-      *ngIf="isScheduleModalOpen && (call$ | async) as call"
-      [call]="call"
-      (onClose)="closeScheduleModal()"
-      (onSubmit)="handleScheduleCallback($event)">
-    </app-schedule-callback-modal>
-
-    <app-create-complaint-modal
-      *ngIf="isComplaintModalOpen"
-      [callId]="call.id"
-      [clientId]="call.client_id"
-      (close)="isComplaintModalOpen = false"
-      (submit)="onComplaintSubmit($event)">
-    </app-create-complaint-modal>
-
-    <app-link-client-modal
-      *ngIf="isLinkModalOpen"
-      (close)="isLinkModalOpen = false"
-      (confirm)="handleLinkConfirm($event)">
-    </app-link-client-modal>
 
   </ng-container>
 </div>

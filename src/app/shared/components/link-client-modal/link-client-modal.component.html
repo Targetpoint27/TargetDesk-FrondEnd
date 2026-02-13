@@ -1,68 +1,54 @@
-<div class="modal-backdrop">
-  <div class="modal-panel">
+<div class="modal-panel">
 
-    <!-- Header -->
-    <div class="modal-header">
-      <h3 class="modal-title">Associer un Client</h3>
-      <button (click)="close.emit()" class="modal-close-btn">
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
+  <!-- Header -->
+  <div class="modal-header">
+    <h3 class="modal-title">Associer un Client</h3>
+    <button (click)="close.emit()" class="modal-close-btn">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="modal-body">
+
+    <div class="search-wrap">
+      <svg class="search-icon" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input [formControl]="searchControl" type="text"
+             placeholder="Rechercher par nom, email, téléphone..."
+             class="search-input">
     </div>
 
-    <!-- Search + Results -->
-    <div class="modal-body">
+    <div class="results-list">
 
-      <!-- Search input -->
-      <div class="search-wrap">
-        <svg class="search-icon" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-        <input
-          [formControl]="searchControl"
-          type="text"
-          placeholder="Rechercher par nom, email, téléphone..."
-          class="search-input">
+      <div *ngIf="isLoading" class="results-state">
+        <div class="loading-spinner"></div>
+        <p>Recherche en cours...</p>
       </div>
 
-      <!-- Results list -->
-      <div class="results-list">
-
-        <!-- Loading -->
-        <div *ngIf="isLoading" class="results-state">
-          <div class="loading-spinner"></div>
-          <p>Recherche en cours...</p>
-        </div>
-
-        <!-- Client cards -->
-        <div *ngFor="let result of results"
-             (click)="onSelectClient(result.id)"
-             class="client-card">
-          <div class="client-avatar">{{ result.name.substring(0, 1) }}</div>
-          <div class="client-info">
-            <span class="client-name">{{ result.name }}</span>
-            <span class="client-detail">
-              <i class="bi bi-envelope"></i> {{ result.email }}
-            </span>
-            <span class="client-detail">
-              <i class="bi bi-telephone"></i> {{ result.phone }}
-            </span>
-            <div class="client-meta">
-              <span class="client-type-badge">{{ result.type }}</span>
-              <span *ngIf="result.client_id" class="client-id">{{ result.client_id }}</span>
-            </div>
+      <div *ngFor="let result of results"
+           (click)="onSelectClient(result.id)"
+           class="client-card">
+        <div class="client-avatar">{{ result.name.substring(0, 1) }}</div>
+        <div class="client-info">
+          <span class="client-name">{{ result.name }}</span>
+          <span class="client-detail"><i class="bi bi-envelope"></i> {{ result.email }}</span>
+          <span class="client-detail"><i class="bi bi-telephone"></i> {{ result.phone }}</span>
+          <div class="client-meta">
+            <span class="client-type-badge">{{ result.type }}</span>
+            <span *ngIf="result.client_id" class="client-id">{{ result.client_id }}</span>
           </div>
-          <i class="bi bi-link-45deg link-icon"></i>
         </div>
-
-        <!-- Empty state -->
-        <div *ngIf="!isLoading && results.length === 0 && searchControl.value" class="results-state">
-          <i class="bi bi-person-x empty-icon"></i>
-          <p>Aucun client trouvé pour "{{ searchControl.value }}"</p>
-        </div>
-
+        <i class="bi bi-link-45deg link-icon"></i>
       </div>
+
+      <div *ngIf="!isLoading && results.length === 0 && searchControl.value" class="results-state">
+        <i class="bi bi-person-x empty-icon"></i>
+        <p>Aucun client trouvé pour "{{ searchControl.value }}"</p>
+      </div>
+
     </div>
   </div>
 </div>

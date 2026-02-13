@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Call, CallbackResultRequest } from '../../../domain/models/call.model';
@@ -7,7 +7,10 @@ import { Call, CallbackResultRequest } from '../../../domain/models/call.model';
   selector: 'app-callback-result-modal',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './callback-result-modal.component.html'
+  templateUrl: './callback-result-modal.component.html',
+  styleUrl: './callback-result-modal.component.scss',
+  encapsulation: ViewEncapsulation.None
+
 })
 export class CallbackResultModalComponent {
   @Input() call!: Call;

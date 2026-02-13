@@ -1,60 +1,54 @@
-<div class="modal-backdrop">
-  <div class="modal-panel">
+<div class="modal-panel">
 
-    <!-- Header -->
-    <div class="modal-header">
-      <h3 class="modal-title">Programmer un Rappel</h3>
-      <button (click)="handleClose()" class="modal-close-btn">
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
+  <!-- Header -->
+  <div class="modal-header">
+    <h3 class="modal-title">Programmer un Rappel</h3>
+    <button (click)="handleClose()" class="modal-close-btn">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="scheduleForm" (ngSubmit)="handleSubmit()" class="modal-body">
+
+    <div class="datetime-grid">
+      <div class="form-group">
+        <label class="form-label">Date du rappel</label>
+        <input type="date" formControlName="date" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Heure</label>
+        <input type="time" formControlName="time" class="form-input">
+      </div>
     </div>
 
-    <!-- Form -->
-    <form [formGroup]="scheduleForm" (ngSubmit)="handleSubmit()" class="modal-body">
+    <div class="form-group">
+      <label class="form-label">Motif du rappel</label>
+      <select formControlName="reason" class="form-select">
+        <option value="">Sélectionner un motif...</option>
+        <option value="Client indisponible">Client indisponible</option>
+        <option value="Besoin d'infos techniques">Besoin d'infos techniques</option>
+        <option value="Suivi de devis">Suivi de devis</option>
+        <option value="Autre">Autre</option>
+      </select>
+    </div>
 
-      <!-- Date + Time -->
-      <div class="datetime-grid">
-        <div class="form-group">
-          <label class="form-label">Date du rappel</label>
-          <input type="date" formControlName="date" class="form-input">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Heure</label>
-          <input type="time" formControlName="time" class="form-input">
-        </div>
-      </div>
+    <div class="form-group">
+      <label class="form-label">
+        Instructions
+        <span class="label-optional">— Optionnel</span>
+      </label>
+      <textarea formControlName="notes" rows="3"
+                class="form-textarea"
+                placeholder="Notes pour l'agent qui rappellera..."></textarea>
+    </div>
 
-      <!-- Reason -->
-      <div class="form-group">
-        <label class="form-label">Motif du rappel</label>
-        <select formControlName="reason" class="form-select">
-          <option value="">Sélectionner un motif...</option>
-          <option value="Client indisponible">Client indisponible</option>
-          <option value="Besoin d'infos techniques">Besoin d'infos techniques</option>
-          <option value="Suivi de devis">Suivi de devis</option>
-          <option value="Autre">Autre</option>
-        </select>
-      </div>
+    <div class="modal-footer">
+      <button type="button" (click)="handleClose()" class="btn-cancel">Annuler</button>
+      <button type="submit" [disabled]="scheduleForm.invalid" class="btn-submit">Planifier</button>
+    </div>
 
-      <!-- Notes -->
-      <div class="form-group">
-        <label class="form-label">
-          Instructions
-          <span class="label-optional">— Optionnel</span>
-        </label>
-        <textarea formControlName="notes" rows="3"
-                  class="form-textarea"
-                  placeholder="Notes pour l'agent qui rappellera..."></textarea>
-      </div>
-
-      <!-- Footer -->
-      <div class="modal-footer">
-        <button type="button" (click)="handleClose()" class="btn-cancel">Annuler</button>
-        <button type="submit" [disabled]="scheduleForm.invalid" class="btn-submit">Planifier</button>
-      </div>
-
-    </form>
-  </div>
+  </form>
 </div>

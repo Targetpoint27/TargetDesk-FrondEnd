@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Call, ScheduleCallbackRequest } from '../../../domain/models/call.model';
@@ -7,7 +7,9 @@ import { Call, ScheduleCallbackRequest } from '../../../domain/models/call.model
   selector: 'app-schedule-callback-modal',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './schedule-callback-modal.component.html'
+  templateUrl: './schedule-callback-modal.component.html',
+  styleUrl: './schedule-callback-modal.component.scss',
+  encapsulation: ViewEncapsulation.None
 })
 export class ScheduleCallbackModalComponent {
   @Input() call!: Call;
