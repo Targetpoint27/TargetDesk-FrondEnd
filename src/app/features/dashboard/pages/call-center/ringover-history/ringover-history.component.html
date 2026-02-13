@@ -1,114 +1,172 @@
 <div class="p-6">
-  <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-    <div>
-      <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Historique Ringover</h1>
-      <p class="text-slate-500 mt-1 font-medium">Gestion et suivi des appels internationaux avec résumés IA.</p>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Historique Ringover</h1>
+      <p class="page-subtitle">Gestion et suivi des appels internationaux avec résumés IA.</p>
     </div>
-    <div class="flex items-center space-x-3">
-      <div class="bg-blue-50 border border-blue-100 px-4 py-2 rounded-xl shadow-sm">
-        <span class="text-blue-700 font-bold text-lg">{{ calls.length }}</span>
-        <span class="text-blue-600 text-sm ml-1 uppercase font-semibold">Total Appels</span>
+    <div class="header-right">
+      <div class="total-badge">
+        <span class="total-value">{{ calls.length }}</span>
+        <span class="total-label">Total Appels</span>
       </div>
     </div>
   </div>
 
+  <!-- Loading -->
   @if (isLoading) {
-    <div class="flex flex-col items-center justify-center h-64 bg-white rounded-3xl border border-slate-100 shadow-sm">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      <p class="mt-4 text-slate-400 font-medium">Récupération des données Ringover...</p>
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Récupération des données Ringover...</p>
     </div>
   }
 
-  <div class="space-y-4">
-    @for (call of calls; track call.id) {
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
-        <div class="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
-          <div class="flex items-center space-x-4">
-            <div class="h-10 w-10 rounded-xl flex items-center justify-center shadow-sm"
-                 [ngClass]="call.direction === 'in' ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'">
-              <i class="bi" [ngClass]="call.direction === 'in' ? 'bi-telephone-inbound' : 'bi-telephone-outbound'"></i>
-            </div>
-            <div>
-              <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">ID APPEL: {{ call.call_id }}</div>
-              <div class="text-sm font-semibold text-slate-700">{{ call.start_time | date:'EEEE dd MMMM yyyy, HH:mm' }}</div>
-            </div>
-          </div>
-          
-          <div class="flex items-center space-x-2">
-            <span class="px-3 py-1 rounded-lg text-xs font-bold tracking-wide border shadow-sm"
-                  [ngClass]="{
-                    'bg-emerald-50 text-emerald-700 border-emerald-100': call.status === 'ANSWERED',
-                    'bg-amber-50 text-amber-700 border-amber-100': call.status === 'VOICEMAIL',
-                    'bg-rose-50 text-rose-700 border-rose-100': call.status === 'FAILED' || call.status === 'MISSED',
-                    'bg-slate-50 text-slate-700 border-slate-200': call.status === 'CANCELLED'
-                  }">
-              {{ call.status }}
-            </span>
-            <span class="bg-white border border-slate-200 px-2 py-1 rounded-lg text-xs font-mono font-bold text-slate-600">
-              <i class="bi bi-clock mr-1"></i>{{ call.duration }}
-            </span>
-          </div>
-        </div>
+  <!-- Calls List -->
+  @if (!isLoading) {
+    <div class="calls-list">
+      @for (call of pagedCalls; track call.id) {
+        <div class="call-card">
 
-        <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div class="lg:col-span-3 border-r border-slate-100 pr-6">
-            <div class="flex items-center space-x-3 mb-4">
-              <div class="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
+          <!-- Card Header -->
+          <div class="call-card-header">
+            <div class="call-header-left">
+              <div class="direction-icon"
+                   [class.direction-in]="call.direction === 'in'"
+                   [class.direction-out]="call.direction !== 'in'">
+                <i class="bi" [ngClass]="call.direction === 'in' ? 'bi-telephone-inbound' : 'bi-telephone-outbound'"></i>
+              </div>
+              <div class="call-id-date">
+                <span class="call-id">ID: {{ call.call_id }}</span>
+                <span class="call-date">{{ call.start_time | date:'EEEE dd MMMM yyyy, HH:mm' }}</span>
+              </div>
+            </div>
+            <div class="call-header-right">
+              <span class="status-badge"
+                    [class.status-answered]="call.status === 'ANSWERED'"
+                    [class.status-voicemail]="call.status === 'VOICEMAIL'"
+                    [class.status-missed]="call.status === 'FAILED' || call.status === 'MISSED'"
+                    [class.status-cancelled]="call.status === 'CANCELLED'">
+                {{ call.status }}
+              </span>
+              <span class="duration-badge">
+                <i class="bi bi-clock"></i>
+                {{ call.duration }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="call-card-body">
+
+            <!-- Contact -->
+            <div class="contact-col">
+              <div class="contact-avatar">
                 @if (call.flag_url) {
-                  <img [src]="call.flag_url" class="w-full h-full object-cover">
+                  <img [src]="call.flag_url" [alt]="call.country">
                 } @else {
-                  <i class="bi bi-person-fill text-slate-400 text-xl"></i>
+                  <i class="bi bi-person-fill"></i>
                 }
               </div>
-              <div>
-                <div class="font-bold text-slate-900 leading-tight">{{ call.contact_name }}</div>
-                <div class="text-xs text-blue-600 font-semibold tracking-tight">{{ call.country || 'International' }}</div>
+              <div class="contact-info">
+                <span class="contact-name">{{ call.contact_name }}</span>
+                <span class="contact-country">{{ call.country || 'International' }}</span>
+              </div>
+              <div class="contact-numbers">
+                <div class="number-row">
+                  <span class="num-label">De</span>
+                  <span class="num-value">{{ formatNumber(call.from) }}</span>
+                </div>
+                <div class="number-row">
+                  <span class="num-label">À</span>
+                  <span class="num-value">{{ formatNumber(call.to) }}</span>
+                </div>
               </div>
             </div>
-            
-            <div class="space-y-2">
-              <div class="flex justify-between text-xs">
-                <span class="text-slate-400">De:</span>
-                <span class="text-slate-700 font-mono">{{ formatNumber(call.from) }}</span>
-              </div>
-              <div class="flex justify-between text-xs">
-                <span class="text-slate-400">À:</span>
-                <span class="text-slate-700 font-mono">{{ formatNumber(call.to) }}</span>
-              </div>
-            </div>
-          </div>
 
-          <div class="lg:col-span-7 px-2">
-            <div class="flex items-center space-x-2 mb-2">
-              <i class="bi bi-stars text-amber-500 animate-pulse"></i>
-              <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Résumé IA Wi-Export</span>
-            </div>
-            <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100 relative group">
-              <p class="text-sm text-slate-600 leading-relaxed italic line-clamp-3 group-hover:line-clamp-none transition-all">
-                "{{ call.note || 'Aucun résumé n\'a été généré pour cet appel.' }}"
-              </p>
-            </div>
-          </div>
-
-          <div class="lg:col-span-2 flex flex-col justify-center space-y-2">
-            @if (call.recording_url) {
-              <a [href]="call.recording_url" target="_blank" 
-                 class="flex items-center justify-center w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition-all shadow-blue-200 shadow-lg group">
-                <i class="bi bi-play-circle-fill mr-2 text-lg group-hover:scale-110 transition-transform"></i>
-                <span class="font-bold text-sm">ÉCOUTER</span>
-              </a>
-              <button class="text-[10px] text-slate-400 hover:text-blue-600 transition-colors uppercase font-bold text-center">
-                Télécharger MP3
-              </button>
-            } @else {
-              <div class="text-center p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                <i class="bi bi-mic-mute text-slate-300 text-xl"></i>
-                <div class="text-[10px] text-slate-400 mt-1 uppercase font-bold">Pas d'audio</div>
+            <!-- AI Summary -->
+            <div class="summary-col">
+              <div class="summary-label">
+                <i class="bi bi-stars"></i>
+                Résumé IA Wi-Export
               </div>
-            }
+              <div class="summary-body">
+                <p>"{{ call.note || 'Aucun résumé n\'a été généré pour cet appel.' }}"</p>
+              </div>
+            </div>
+
+            <!-- Recording -->
+            <div class="recording-col">
+              @if (call.recording_url) {
+                <a [href]="call.recording_url" target="_blank" class="btn-listen">
+                  <i class="bi bi-play-circle-fill"></i>
+                  Écouter
+                </a>
+                <button class="btn-download" type="button">
+                  <i class="bi bi-download"></i>
+                  MP3
+                </button>
+              } @else {
+                <div class="no-audio">
+                  <i class="bi bi-mic-mute"></i>
+                  <span>Pas d'audio</span>
+                </div>
+              }
+            </div>
+
           </div>
         </div>
+      }
+    </div>
+
+    <!-- Pagination -->
+    @if (hasPagination) {
+      <div class="pagination-wrapper">
+
+        <!-- Info -->
+        <p class="pagination-info">
+          Affichage de
+          <strong>{{ (currentPage - 1) * pageSize + 1 }}</strong>
+          à
+          <strong>{{ Math.min(currentPage * pageSize, calls.length) }}</strong>
+          sur
+          <strong>{{ calls.length }}</strong>
+          appels
+        </p>
+
+        <!-- Nav -->
+        <nav class="pagination-nav">
+          <button class="page-btn page-btn-arrow"
+                  (click)="onPreviousPage()"
+                  [disabled]="!canGoPrevious">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+
+          @for (page of getPageNumbers(); track $index) {
+            @if (page === -1) {
+              <span class="page-ellipsis">…</span>
+            } @else {
+              <button class="page-btn page-btn-number"
+                      [class.active]="page === currentPage"
+                      (click)="onPageChange(page)">
+                {{ page }}
+              </button>
+            }
+          }
+
+          <button class="page-btn page-btn-arrow"
+                  (click)="onNextPage()"
+                  [disabled]="!canGoNext">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+        </nav>
+
       </div>
     }
-  </div>
+  }
+
 </div>

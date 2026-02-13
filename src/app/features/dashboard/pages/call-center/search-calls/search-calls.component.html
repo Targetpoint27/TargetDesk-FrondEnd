@@ -1,282 +1,216 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/20 -m-6 p-6">
-  <div class="max-w-7xl mx-auto space-y-6">
-    
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h2 class="text-2xl font-bold text-gray-900">Rechercher des Appels</h2>
-        <p class="text-gray-500 text-sm mt-1">Recherchez et filtrez vos appels</p>
-      </div>
-      
-      <div class="flex gap-3">
-        <button 
-          (click)="toggleFilters()"
-          class="bg-white/50 hover:bg-white text-gray-600 px-4 py-2.5 rounded-xl transition-all duration-200 border border-transparent hover:border-gray-200 flex items-center gap-2 text-sm font-medium">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-          </svg>
-          {{ showFilters ? 'Masquer' : 'Afficher' }} Filtres
-          <span *ngIf="activeFiltersCount > 0" class="bg-blue-600 text-black text-xs px-2 py-0.5 rounded-full">
-            {{ activeFiltersCount }}
-          </span>
-        </button>
+<div class="search-page">
 
-        <button 
-          (click)="exportToCSV()"
-          class="bg-white/50 hover:bg-white text-gray-600 px-4 py-2.5 rounded-xl transition-all duration-200 border border-transparent hover:border-gray-200 flex items-center gap-2 text-sm font-medium">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          Exporter
-        </button>
-      </div>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Rechercher des Appels</h1>
+      <p class="page-subtitle">Recherchez et filtrez vos appels</p>
     </div>
+    <div class="header-actions">
+      <button (click)="toggleFilters()" class="btn-secondary">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+        </svg>
+        {{ showFilters ? 'Masquer' : 'Afficher' }} Filtres
+        <span *ngIf="activeFiltersCount > 0" class="filter-count-badge">
+          {{ activeFiltersCount }}
+        </span>
+      </button>
 
-    <!-- Search Bar -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-      <form [formGroup]="searchForm" class="flex gap-3">
-        <div class="flex-1 relative">
-          <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-          <input
-            type="text"
-            formControlName="query"
-            placeholder="Rechercher par ID, téléphone, nom, ou résumé..."
-            class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white text-gray-900">
-        </div>
-        <button
-          type="button"
-          *ngIf="searchForm.get('query')?.value"
-          (click)="clearFilters()"
-          class="px-6 py-3 bg-gray-100 text-gray-600 font-semibold rounded-xl hover:bg-gray-200 transition-colors">
-          Effacer
-        </button>
-      </form>
+      <button (click)="exportToCSV()" class="btn-secondary">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Exporter
+      </button>
     </div>
-
-    <!-- Main Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      
-      <!-- Filters Sidebar -->
-      <div *ngIf="showFilters" class="lg:col-span-1">
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sticky top-6">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="font-bold text-gray-900">Filtres</h3>
-            <button
-              *ngIf="activeFiltersCount > 0"
-              (click)="clearFilters()"
-              class="text-xs text-blue-600 hover:text-blue-700 font-medium">
-              Réinitialiser
-            </button>
-          </div>
-
-          <form [formGroup]="filterForm" class="space-y-6">
-            
-            <!-- Type Filter -->
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Type d'appel</label>
-              <select
-                formControlName="type"
-                (change)="applyFilters()"
-                class="w-full px-3 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
-                <option value="">Tous</option>
-                <option *ngFor="let option of typeOptions" [value]="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Status Filter -->
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Statut</label>
-              <select
-                formControlName="status"
-                (change)="applyFilters()"
-                class="w-full px-3 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
-                <option value="">Tous</option>
-                <option *ngFor="let option of statusOptions" [value]="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Urgency Filter -->
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Urgence</label>
-              <select
-                formControlName="urgency"
-                (change)="applyFilters()"
-                class="w-full px-3 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
-                <option value="">Tous</option>
-                <option *ngFor="let option of urgencyOptions" [value]="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Assignment Filter -->
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Assignment</label>
-              <select
-                formControlName="assigned_to"
-                (change)="applyFilters()"
-                class="w-full px-3 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
-                <option *ngFor="let option of assignmentOptions" [value]="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Period Filter -->
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Période</label>
-              <select
-                formControlName="period"
-                (change)="applyFilters()"
-                class="w-full px-3 py-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
-                <option value="">Toutes</option>
-                <option *ngFor="let option of periodOptions" [value]="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Custom Date Range (only if period = custom) -->
-            <div *ngIf="filterForm.get('period')?.value === 'custom'" class="space-y-3">
-              <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Du</label>
-                <input
-                  type="date"
-                  formControlName="date_from"
-                  (change)="applyFilters()"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Au</label>
-                <input
-                  type="date"
-                  formControlName="date_to"
-                  (change)="applyFilters()"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
-              </div>
-            </div>
-
-          </form>
-        </div>
-      </div>
-
-      <!-- Results -->
-      <div [ngClass]="showFilters ? 'lg:col-span-3' : 'lg:col-span-4'">
-        
-        <!-- Results Header -->
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="font-bold text-gray-900">Résultats</h3>
-              <p class="text-sm text-gray-500 mt-1">
-                {{ totalResults }} appel(s) trouvé(s)
-              </p>
-            </div>
-            
-            <div *ngIf="activeFiltersCount > 0" class="flex flex-wrap gap-2">
-              <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                {{ activeFiltersCount }} filtre(s) actif(s)
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Loading State -->
-        <div *ngIf="isLoading" class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12">
-          <div class="flex flex-col items-center justify-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-            <p class="mt-4 text-gray-600 font-medium">Recherche en cours...</p>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div *ngIf="!isLoading && filteredCalls.length === 0" class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12">
-          <div class="text-center">
-            <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun résultat</h3>
-            <p class="text-gray-500 mb-4">Essayez de modifier vos critères de recherche ou filtres</p>
-            <button
-              (click)="clearFilters()"
-              class="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors">
-              Réinitialiser les filtres
-            </button>
-          </div>
-        </div>
-
-        <!-- Results Table -->
-        <div *ngIf="!isLoading && filteredCalls.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">ID Appel</th>
-                  <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Contact</th>
-                  <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Objet</th>
-                  <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Statut</th>
-                  <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Urgence</th>
-                  <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Date</th>
-                  <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-200">
-                <tr *ngFor="let call of filteredCalls" class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                      </svg>
-                      <span class="text-sm font-mono font-semibold text-gray-900">{{ call.call_id }}</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="text-sm">
-                      <p class="font-medium text-gray-900">{{ call.caller_name || 'N/A' }}</p>
-                      <p class="text-gray-500 font-mono text-xs">{{ call.phone_number }}</p>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <p class="text-sm text-gray-900 max-w-xs truncate">{{ call.object }}</p>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span [class]="getStatusClass(call.status)" class="px-3 py-1 rounded-full text-xs font-semibold uppercase">
-                      {{ call.status.replace('_', ' ') }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span [class]="getUrgencyClass(call.urgency)" class="px-3 py-1 rounded-full text-xs font-semibold uppercase">
-                      {{ call.urgency }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {{ formatDate(call.created_at) }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <button
-                      (click)="viewCall(call.id)"
-                      class="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center gap-1">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                      </svg>
-                      Voir
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
   </div>
+
+  <!-- Search Bar -->
+  <div class="search-bar-container">
+    <form [formGroup]="searchForm" class="search-bar-form">
+      <div class="search-input-wrap">
+        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input
+          type="text"
+          formControlName="query"
+          placeholder="Rechercher par ID, téléphone, nom, ou résumé..."
+          class="search-input">
+      </div>
+      <button
+        type="button"
+        *ngIf="searchForm.get('query')?.value"
+        (click)="clearFilters()"
+        class="btn-secondary">
+        Effacer
+      </button>
+    </form>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-grid" [class.has-filters]="showFilters">
+
+    <!-- Filters Sidebar -->
+    <aside *ngIf="showFilters" class="filters-sidebar">
+      <div class="filters-card">
+        <div class="filters-header">
+          <h3 class="filters-title">Filtres</h3>
+          <button *ngIf="activeFiltersCount > 0" (click)="clearFilters()" class="reset-link">
+            Réinitialiser
+          </button>
+        </div>
+
+        <form [formGroup]="filterForm" class="filters-form">
+
+          <div class="filter-group">
+            <label>Type d'appel</label>
+            <select formControlName="type" (change)="applyFilters()">
+              <option value="">Tous</option>
+              <option *ngFor="let option of typeOptions" [value]="option.value">{{ option.label }}</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Statut</label>
+            <select formControlName="status" (change)="applyFilters()">
+              <option value="">Tous</option>
+              <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Urgence</label>
+            <select formControlName="urgency" (change)="applyFilters()">
+              <option value="">Tous</option>
+              <option *ngFor="let option of urgencyOptions" [value]="option.value">{{ option.label }}</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Assignment</label>
+            <select formControlName="assigned_to" (change)="applyFilters()">
+              <option *ngFor="let option of assignmentOptions" [value]="option.value">{{ option.label }}</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Période</label>
+            <select formControlName="period" (change)="applyFilters()">
+              <option value="">Toutes</option>
+              <option *ngFor="let option of periodOptions" [value]="option.value">{{ option.label }}</option>
+            </select>
+          </div>
+
+          <div *ngIf="filterForm.get('period')?.value === 'custom'" class="date-range-group">
+            <div class="filter-group">
+              <label>Du</label>
+              <input type="date" formControlName="date_from" (change)="applyFilters()">
+            </div>
+            <div class="filter-group">
+              <label>Au</label>
+              <input type="date" formControlName="date_to" (change)="applyFilters()">
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </aside>
+
+    <!-- Results Panel -->
+    <div class="results-panel">
+
+      <!-- Results Header -->
+      <div class="results-header">
+        <div class="results-meta">
+          <h3 class="results-title">Résultats</h3>
+          <p class="results-count">{{ totalResults }} appel(s) trouvé(s)</p>
+        </div>
+        <span *ngIf="activeFiltersCount > 0" class="active-filters-chip">
+          {{ activeFiltersCount }} filtre(s) actif(s)
+        </span>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="state-card">
+        <div class="loading-spinner"></div>
+        <p>Recherche en cours...</p>
+      </div>
+
+      <!-- Empty -->
+      <div *ngIf="!isLoading && filteredCalls.length === 0" class="state-card">
+        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <h3>Aucun résultat</h3>
+        <p>Essayez de modifier vos critères de recherche ou filtres</p>
+        <button (click)="clearFilters()" class="btn-primary">Réinitialiser les filtres</button>
+      </div>
+
+      <!-- Table -->
+      <div *ngIf="!isLoading && filteredCalls.length > 0" class="table-container">
+        <div class="table-scroll">
+          <table class="calls-table">
+            <thead>
+              <tr>
+                <th>ID Appel</th>
+                <th>Contact</th>
+                <th>Objet</th>
+                <th>Statut</th>
+                <th>Urgence</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let call of filteredCalls" class="table-row">
+                <td>
+                  <div class="call-id-cell">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="call-icon">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                    <span class="call-id-text">{{ call.call_id }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="contact-cell">
+                    <span class="contact-name">{{ call.caller_name || 'N/A' }}</span>
+                    <span class="contact-phone">{{ call.phone_number }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="object-text">{{ call.object }}</span>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getStatusClass(call.status)">
+                    {{ call.status.replace('_', ' ') }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getUrgencyClass(call.urgency)">
+                    {{ call.urgency }}
+                  </span>
+                </td>
+                <td class="date-cell">
+                  {{ formatDate(call.created_at) }}
+                </td>
+                <td>
+                  <button (click)="viewCall(call.id)" class="view-btn">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    Voir
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div>

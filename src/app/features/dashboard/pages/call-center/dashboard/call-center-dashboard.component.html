@@ -1,61 +1,42 @@
-<div class="space-y-6">
-  <!-- Header Section -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-    <div>
-      <h2 class="text-2xl font-bold text-gray-900">Centre d'Appels</h2>
-      <p class="text-gray-500 text-sm mt-1">Gérez votre file d'attente et vos appels actifs</p>
+<div class="dashboard-page" *ngIf="state$ | async as state">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Centre d'Appels</h1>
+      <p class="page-subtitle">Gérez votre file d'attente et vos appels actifs</p>
     </div>
-    
-    <div class="flex gap-3">
-      <!-- Search Button -->
-      <button 
-        routerLink="/dashboard/call-center/search"
-        class="bg-white/50 hover:bg-white text-gray-600 px-4 py-2.5 rounded-xl transition-all duration-200 border border-transparent hover:border-blue-300 flex items-center gap-2 text-sm font-medium group">
-        <svg class="w-4 h-4 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="header-actions">
+      <button routerLink="/dashboard/call-center/search" class="btn-secondary">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
-        <span class="group-hover:text-blue-600 transition-colors">Rechercher</span>
+        Rechercher
       </button>
 
-      <!-- Department Queue Button -->
-      <button 
-        routerLink="/dashboard/call-center/department-queue"
-        class="bg-white/50 hover:bg-white text-gray-600 px-4 py-2.5 rounded-xl transition-all duration-200 border border-transparent hover:border-indigo-300 flex items-center gap-2 text-sm font-medium group">
-        <i class="bi bi-people group-hover:text-indigo-600 transition-colors"></i>
-        <span class="group-hover:text-indigo-600 transition-colors">File Département</span>
+      <button routerLink="/dashboard/call-center/department-queue" class="btn-secondary">
+        <i class="bi bi-people"></i>
+        File Département
       </button>
 
-      <!-- Callbacks Button -->
-      <button 
-        routerLink="/dashboard/call-center/callbacks"
-        class="bg-white/50 hover:bg-white text-gray-600 px-4 py-2.5 rounded-xl transition-all duration-200 border border-transparent hover:border-red-300 flex items-center gap-2 text-sm font-medium group relative">
-        <i class="bi bi-telephone-outbound group-hover:text-red-600 transition-colors"></i>
-        <span class="group-hover:text-red-600 transition-colors">Rappels</span>
-        
-        <span *ngIf="(overdueCount$ | async) ?? 0 > 0" 
-              class="absolute -top-1 -right-1 flex h-5 w-5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-5 w-5 bg-red-600 text-[10px] text-white items-center justify-center font-black">
-            {{ overdueCount$ | async }}
-          </span>
+      <button routerLink="/dashboard/call-center/callbacks" class="btn-secondary btn-callbacks">
+        <i class="bi bi-telephone-outbound"></i>
+        Rappels
+        <span *ngIf="(overdueCount$ | async) ?? 0 > 0" class="overdue-badge">
+          <span class="overdue-ping"></span>
+          <span class="overdue-count">{{ overdueCount$ | async }}</span>
         </span>
       </button>
 
-      <!-- Refresh Button -->
-      <button 
-        (click)="refreshData()"
-        class="bg-white/50 hover:bg-white text-gray-600 px-4 py-2.5 rounded-xl transition-all duration-200 border border-transparent hover:border-gray-200 flex items-center gap-2 text-sm font-medium">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <button (click)="refreshData()" class="btn-secondary">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
         </svg>
         Actualiser
       </button>
 
-      <!-- Create Call Button -->
-      <button 
-        routerLink="/dashboard/call-center/create-call"
-        class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl transition-all duration-200 shadow-lg shadow-blue-200 flex items-center gap-2 text-sm font-semibold">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <button routerLink="/dashboard/call-center/create-call" class="btn-primary">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
         Créer un appel
@@ -64,174 +45,155 @@
   </div>
 
   <!-- Stats Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4" *ngIf="state$ | async as state">
-    <!-- Total Queue -->
-    <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-white/60 shadow-sm hover:shadow-md transition-all">
-      <div class="flex justify-between items-start mb-2">
-        <div class="p-2.5 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 rounded-xl">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-          </svg>
-        </div>
-        <span class="text-2xl font-bold text-gray-900">{{ state.stats.totalInQueue }}</span>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--blue">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
       </div>
-      <p class="text-sm font-medium text-gray-600">File d'attente</p>
+      <div class="stat-info">
+        <span class="stat-value">{{ state.stats.totalInQueue }}</span>
+        <span class="stat-label">File d'attente</span>
+      </div>
     </div>
 
-    <!-- Urgent Calls -->
-    <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-white/60 shadow-sm hover:shadow-md transition-all">
-      <div class="flex justify-between items-start mb-2">
-        <div class="p-2.5 bg-gradient-to-br from-red-50 to-orange-50 text-red-600 rounded-xl">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-        </div>
-        <span class="text-2xl font-bold text-gray-900">{{ state.stats.urgentCalls }}</span>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--red">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
       </div>
-      <p class="text-sm font-medium text-gray-600">Urgents</p>
+      <div class="stat-info">
+        <span class="stat-value">{{ state.stats.urgentCalls }}</span>
+        <span class="stat-label">Urgents</span>
+      </div>
     </div>
 
-    <!-- New Calls -->
-    <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-white/60 shadow-sm hover:shadow-md transition-all">
-      <div class="flex justify-between items-start mb-2">
-        <div class="p-2.5 bg-gradient-to-br from-emerald-50 to-green-50 text-emerald-600 rounded-xl">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-        </div>
-        <span class="text-2xl font-bold text-gray-900">{{ state.stats.newCalls }}</span>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--green">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
       </div>
-      <p class="text-sm font-medium text-gray-600">Nouveaux</p>
+      <div class="stat-info">
+        <span class="stat-value">{{ state.stats.newCalls }}</span>
+        <span class="stat-label">Nouveaux</span>
+      </div>
     </div>
 
-    <!-- Callbacks -->
-    <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-white/60 shadow-sm hover:shadow-md transition-all">
-      <div class="flex justify-between items-start mb-2">
-        <div class="p-2.5 bg-gradient-to-br from-amber-50 to-yellow-50 text-amber-600 rounded-xl">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-          </svg>
-        </div>
-        <span class="text-2xl font-bold text-gray-900">{{ state.stats.totalCallbacks }}</span>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--amber">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+        </svg>
       </div>
-      <p class="text-sm font-medium text-gray-600">Rappels</p>
+      <div class="stat-info">
+        <span class="stat-value">{{ state.stats.totalCallbacks }}</span>
+        <span class="stat-label">Rappels</span>
+      </div>
     </div>
   </div>
 
-  <!-- Queue List -->
-  <div class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/60 overflow-hidden" *ngIf="state$ | async as state">
-    <div class="p-5 border-b border-gray-100/50 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <h3 class="font-semibold text-gray-900">Ma File d'Attente</h3>
-        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
-          {{ state.myQueueCalls.length }}
-        </span>
+  <!-- Queue Table -->
+  <div class="queue-container">
+    <div class="queue-header">
+      <div class="queue-title-group">
+        <h3 class="queue-title">Ma File d'Attente</h3>
+        <span class="queue-count">{{ state.myQueueCalls.length }}</span>
       </div>
-      <button 
-        routerLink="/dashboard/call-center/search" 
-        class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+      <a routerLink="/dashboard/call-center/search" class="view-all-link">
         Tout voir
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
         </svg>
-      </button>
+      </a>
     </div>
-    
+
+    <!-- Loading State -->
+    <div *ngIf="state.isLoading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Chargement de la file d'attente...</p>
+    </div>
+
     <!-- Empty State -->
-    <div *ngIf="state.myQueueCalls.length === 0" class="p-12 text-center">
-      <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+    <div *ngIf="!state.isLoading && state.myQueueCalls.length === 0" class="empty-state">
+      <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
       </svg>
-      <p class="text-gray-500 font-medium">Aucun appel en attente</p>
-      <p class="text-sm text-gray-400 mt-1">Votre file d'attente est vide</p>
+      <p>Aucun appel en attente</p>
+      <span>Votre file d'attente est vide</span>
     </div>
 
-    <!-- Call List -->
-    <div class="divide-y divide-gray-100/50">
-      <div *ngFor="let call of state.myQueueCalls.slice(0, 5)" 
-           class="p-4 hover:bg-white/50 transition-all cursor-pointer group relative"
+    <!-- Call Rows -->
+    <div *ngIf="!state.isLoading && state.myQueueCalls.length > 0" class="queue-list">
+      <div *ngFor="let call of state.myQueueCalls.slice(0, 5)"
+           class="call-row"
            [routerLink]="['/dashboard/call-center/calls', call.id]">
-        
-        <!-- Call Type Border -->
-        <div class="absolute left-0 top-0 bottom-0 w-1 rounded-r transition-all"
-             [ngClass]="{
-               'bg-gradient-to-b from-green-500 to-emerald-600': call.type === 'entrant',
-               'bg-gradient-to-b from-blue-500 to-indigo-600': call.type === 'sortant'
-             }"></div>
 
-        <div class="flex items-center justify-between pl-3">
-          <div class="flex items-center gap-4 flex-1">
-            
-            <!-- Call Type Icon -->
-            <div class="flex-shrink-0">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
-                   [ngClass]="{
-                     'bg-green-50 text-green-600 group-hover:bg-green-100': call.type === 'entrant',
-                     'bg-blue-50 text-blue-600 group-hover:bg-blue-100': call.type === 'sortant'
-                   }">
-                <!-- Incoming Call Icon -->
-                <svg *ngIf="call.type === 'entrant'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                </svg>
-                <!-- Outgoing Call Icon -->
-                <svg *ngIf="call.type === 'sortant'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 3l4 4m0 0l-4 4m4-4H8m13 13v-3a2 2 0 00-2-2h-1.28a1 1 0 00-.948.684l-1.498 4.493a1 1 0 00.502 1.21l2.257 1.13a11.042 11.042 0 01-5.516 5.516l-1.13-2.257a1 1 0 00-1.21-.502l-4.493 1.498a1 1 0 00-.684.949V19a2 2 0 002 2h1"/>
-                </svg>
-              </div>
+        <!-- Type accent bar -->
+        <div class="call-type-bar"
+             [class.bar-entrant]="call.type === 'entrant'"
+             [class.bar-sortant]="call.type === 'sortant'">
+        </div>
+
+        <div class="call-row-inner">
+
+          <!-- Left: icon + urgency + info -->
+          <div class="call-left">
+            <div class="call-type-icon"
+                 [class.icon-entrant]="call.type === 'entrant'"
+                 [class.icon-sortant]="call.type === 'sortant'">
+              <!-- Entrant -->
+              <svg *ngIf="call.type === 'entrant'" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+              </svg>
+              <!-- Sortant -->
+              <svg *ngIf="call.type === 'sortant'" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 3l4 4m0 0l-4 4m4-4H8m13 13v-3a2 2 0 00-2-2h-1.28a1 1 0 00-.948.684l-1.498 4.493a1 1 0 00.502 1.21l2.257 1.13a11.042 11.042 0 01-5.516 5.516l-1.13-2.257a1 1 0 00-1.21-.502l-4.493 1.498a1 1 0 00-.684.949V19a2 2 0 002 2h1"/>
+              </svg>
             </div>
 
-            <!-- Urgency Indicator -->
-            <div class="w-2 h-2 rounded-full flex-shrink-0" 
-                 [ngClass]="{
-                   'bg-red-500 animate-pulse shadow-lg shadow-red-500/50': call.urgency === 'critique',
-                   'bg-orange-500': call.urgency === 'urgent',
-                   'bg-blue-500': call.urgency === 'normal'
-                 }"></div>
-            
-            <!-- Call Info -->
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <p class="text-sm font-semibold text-gray-900 truncate">
-                  {{ call.caller_name || call.phone_number }}
-                </p>
-                <span class="text-xs text-gray-400 font-mono flex-shrink-0">{{ call.call_id }}</span>
+            <div class="urgency-dot"
+                 [class.dot-critique]="call.urgency === 'critique'"
+                 [class.dot-urgent]="call.urgency === 'urgent'"
+                 [class.dot-normal]="call.urgency === 'normal'">
+            </div>
+
+            <div class="call-info">
+              <div class="call-name-row">
+                <span class="call-name">{{ call.caller_name || call.phone_number }}</span>
+                <span class="call-id-tag">{{ call.call_id }}</span>
               </div>
-              <p class="text-xs text-gray-600 truncate">{{ call.object }}</p>
+              <span class="call-object">{{ call.object }}</span>
             </div>
           </div>
-          
-          <!-- Right Side -->
-          <div class="flex items-center gap-4 flex-shrink-0 ml-4">
-            <!-- Status Badge -->
-            <span class="px-2.5 py-1 rounded-lg text-xs font-semibold uppercase"
-                  [ngClass]="getStatusClass(call.status)">
-              {{ call.status.replace('_', ' ') }}
-            </span>
 
-            <!-- Time -->
-            <span class="text-xs text-gray-400 min-w-[100px] text-right">
-              {{ formatDate(call.created_at) }}
+          <!-- Right: status + date + arrow -->
+          <div class="call-right">
+            <span class="status-badge" [ngClass]="getStatusClass(call.status)">
+              {{ formatStatus(call.status) }}
             </span>
-            
-            <!-- Arrow Icon -->
-            <svg class="w-5 h-5 text-gray-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span class="call-date">{{ formatDate(call.created_at) }}</span>
+            <svg class="arrow-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
           </div>
+
         </div>
       </div>
     </div>
 
-    <!-- View All Footer (if more than 5 calls) -->
-    <div *ngIf="state.myQueueCalls.length > 5" class="p-4 bg-gray-50 border-t border-gray-100">
-      <button 
-        routerLink="/dashboard/call-center/search"
-        class="w-full py-2.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors flex items-center justify-center gap-2">
+    <!-- View More Footer -->
+    <div *ngIf="state.myQueueCalls.length > 5" class="queue-footer">
+      <button routerLink="/dashboard/call-center/search" class="view-more-btn">
         Voir {{ state.myQueueCalls.length - 5 }} appel(s) de plus
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
     </div>
+
   </div>
+
 </div>

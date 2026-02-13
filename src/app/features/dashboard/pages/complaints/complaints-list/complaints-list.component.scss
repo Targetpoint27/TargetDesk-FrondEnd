@@ -1,20 +1,337 @@
-.overdue-row {
-  border-left: 4px solid var(--color-error); // Highlighting late tickets
-  background-color: #fef2f2; // Very light red
+/**
+ * Complaints List — TargetDesk design system
+ * Matches Clients/Ringover conventions
+ */
+
+// ── Page Layout ───────────────────────────────────────────────────────────────
+
+.complaints-page {
+  padding: 16px;
+  background: #fafbfc;
+  min-height: 100%;
 }
 
-.sla-badge {
-  @apply font-mono font-bold px-2 py-1 rounded text-xs;
-  &.urgent {
-    @apply text-red-600 bg-red-50 animate-pulse; // Pulse for late SLA
+// ── Page Header ───────────────────────────────────────────────────────────────
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.header-left {
+  .page-title {
+    margin: 0 0 4px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #1f2937;
   }
-  &.normal {
-    @apply text-blue-600 bg-blue-50;
+
+  .page-subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: #6b7280;
   }
 }
 
-// Consistent with your layout glassmorphism
-.glass-table-container {
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.8);
+// ── Metrics Cards ─────────────────────────────────────────────────────────────
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metric-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 20px 24px;
+
+  .metric-label {
+    margin: 0 0 8px 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .metric-value {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+  }
+
+  &--danger {
+    background: #fef2f2;
+    border-color: #fecaca;
+
+    .metric-label {
+      color: #f87171;
+    }
+
+    .metric-value {
+      color: #dc2626;
+    }
+  }
+
+  &--primary {
+    background: #4f46e5;
+    border-color: #4338ca;
+
+    .metric-label {
+      color: #c7d2fe;
+    }
+
+    .metric-value {
+      color: #ffffff;
+    }
+  }
+}
+
+// ── Table Container ───────────────────────────────────────────────────────────
+
+.table-container {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  background: #f9fafb;
+
+  .table-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+}
+
+// ── Loading ───────────────────────────────────────────────────────────────────
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 16px;
+
+  .loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #f3f4f6;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 14px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: #6b7280;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.complaints-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead {
+    background: #f9fafb;
+
+    th {
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      border-bottom: 1px solid #e5e7eb;
+      white-space: nowrap;
+
+      &.text-right {
+        text-align: right;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #f3f4f6;
+      cursor: pointer;
+      transition: background 0.12s ease;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background: #f5f3ff;
+      }
+
+      // Overdue row highlight
+      &.row-overdue {
+        border-left: 3px solid #ef4444;
+        background: #fef9f9;
+
+        &:hover {
+          background: #fef2f2;
+        }
+      }
+    }
+
+    td {
+      padding: 12px 16px;
+      color: #374151;
+      vertical-align: middle;
+    }
+  }
+}
+
+// ── Table Cell Styles ─────────────────────────────────────────────────────────
+
+.complaint-id {
+  font-weight: 700;
+  color: #4f46e5;
+  font-size: 13px;
+
+  tr:hover & {
+    text-decoration: underline;
+  }
+}
+
+.client-name {
+  font-weight: 500;
+  color: #111827;
+}
+
+.category-cell {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+// Severity badges — matches TargetDesk type-badge pattern
+.severity-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border: 1px solid transparent;
+
+  &.severity-critique {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fecaca;
+  }
+
+  &.severity-eleve {
+    background: #ffedd5;
+    color: #9a3412;
+    border-color: #fed7aa;
+  }
+
+  &.severity-moyen {
+    background: #e0e7ff;
+    color: #3730a3;
+    border-color: #c7d2fe;
+  }
+
+  &.severity-faible {
+    background: #f0fdf4;
+    color: #166534;
+    border-color: #bbf7d0;
+  }
+}
+
+// Status cell with dot indicator
+.status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &.dot-ouverte {
+    background: #f59e0b;
+    box-shadow: 0 0 0 2px #fef3c7;
+    animation: pulse 1.5s infinite;
+  }
+
+  &.dot-analyse {
+    background: #3b82f6;
+    box-shadow: 0 0 0 2px #dbeafe;
+    animation: pulse 1.5s infinite;
+  }
+
+  &.dot-resolue {
+    background: #10b981;
+    box-shadow: 0 0 0 2px #d1fae5;
+  }
+
+  &.dot-cloture {
+    background: #9ca3af;
+    box-shadow: 0 0 0 2px #f3f4f6;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+// SLA text
+.text-right {
+  text-align: right;
+}
+
+.sla-text {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+
+  &.sla-overdue {
+    color: #dc2626;
+  }
 }

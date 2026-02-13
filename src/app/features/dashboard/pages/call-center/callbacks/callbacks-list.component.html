@@ -1,131 +1,137 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/20 -m-6 p-6 font-sans">
-  <div class="max-w-7xl mx-auto space-y-6">
-    
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h2 class="text-2xl font-bold text-gray-900">File de Rappels</h2>
-        <p class="text-gray-500 text-sm mt-1">Gérez vos rappels programmés et appels manqués</p>
-      </div>
-      
-      <div class="flex gap-3">
-        <button 
-          (click)="onRefresh()" 
-          class="bg-white/70 hover:bg-white text-gray-600 px-4 py-2.5 rounded-xl transition-all border border-gray-100 hover:border-blue-200 flex items-center gap-2 text-sm font-semibold">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-          </svg>
-          Actualiser
-        </button>
+<div class="callbacks-page">
 
-        <button 
-          routerLink="/dashboard/call-center/dashboard" 
-          class="bg-white/70 hover:bg-white text-gray-600 px-4 py-2.5 rounded-xl transition-all border border-gray-100 hover:border-indigo-200 flex items-center gap-2 text-sm font-semibold">
-          <i class="bi bi-chevron-left text-xs"></i>
-          Tableau de bord
-        </button>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button routerLink="/dashboard/call-center/dashboard" class="back-btn">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="page-title">File de Rappels</h1>
+        <p class="page-subtitle">Gérez vos rappels programmés et appels manqués</p>
       </div>
     </div>
+    <button (click)="onRefresh()" class="btn-secondary">
+      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      Actualiser
+    </button>
+  </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      
-      <div class="lg:col-span-1">
-        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-6">
-          <h3 class="font-bold text-gray-900 mb-6 flex items-center gap-2 text-sm uppercase tracking-widest opacity-60">
-            <i class="bi bi-bar-chart-fill text-blue-600"></i>
-            Statistiques
-          </h3>
+  <!-- Stats + Content Grid -->
+  <div class="page-grid">
 
-          <div class="space-y-4">
-            <div class="p-5 bg-blue-50/50 rounded-2xl border border-blue-100/50 transition-all">
-              <label class="block text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Total Rappels</label>
-              <p class="text-3xl font-black text-gray-900">{{ (callbacks$ | async)?.length || 0 }}</p>
-            </div>
-
-            <div class="p-5 bg-red-50/50 rounded-2xl border border-red-100/50 transition-all">
-              <label class="block text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-1">En retard</label>
-              <p class="text-3xl font-black text-gray-900">{{ overdueCount$ | async }}</p>
-            </div>
-          </div>
+    <!-- Stats Panel -->
+    <aside class="stats-panel">
+      <div class="stats-card">
+        <h3 class="stats-heading">
+          <i class="bi bi-bar-chart-fill"></i>
+          Statistiques
+        </h3>
+        <div class="stat-item">
+          <span class="stat-label">Total Rappels</span>
+          <span class="stat-value">{{ (callbacks$ | async)?.length || 0 }}</span>
+        </div>
+        <div class="stat-item stat-item--danger">
+          <span class="stat-label">En retard</span>
+          <span class="stat-value">{{ overdueCount$ | async }}</span>
         </div>
       </div>
+    </aside>
 
-      <div class="lg:col-span-3">
-        <div *ngIf="!(isLoading$ | async) && (callbacks$ | async) as calls" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="bg-gray-50/50 border-b border-gray-100">
+    <!-- Main Content -->
+    <div class="main-content">
+
+      <!-- Loading -->
+      <div *ngIf="isLoading$ | async" class="state-card">
+        <div class="loading-spinner"></div>
+        <p>Chargement des rappels...</p>
+      </div>
+
+      <!-- Empty -->
+      <div *ngIf="!(isLoading$ | async) && (callbacks$ | async)?.length === 0" class="state-card state-card--empty">
+        <i class="bi bi-telephone-x empty-icon"></i>
+        <p>Aucun rappel programmé</p>
+      </div>
+
+      <!-- Table -->
+      <div *ngIf="!(isLoading$ | async) && (callbacks$ | async) as calls">
+        <div *ngIf="calls.length > 0" class="table-container">
+          <div class="table-scroll">
+            <table class="callbacks-table">
+              <thead>
                 <tr>
-                  <th class="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact</th>
-                  <th class="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Objet / Motif</th>
-                  <th class="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Planifié</th>
-                  <th class="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Urgence</th>
-                  <th class="px-6 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Action</th>
+                  <th>Contact</th>
+                  <th>Objet / Motif</th>
+                  <th>Planifié</th>
+                  <th>Urgence</th>
+                  <th class="col-right">Action</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100">
-                <tr *ngFor="let call of calls" 
+              <tbody>
+                <tr *ngFor="let call of calls"
                     (click)="viewCall(call.id)"
-                    class="hover:bg-blue-50/10 transition-all duration-200 cursor-pointer group">
-                  
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-3">
-                      <div class="w-11 h-11 rounded-xl flex items-center justify-center transition-all border"
-                           [ngClass]="call.is_overdue ? 'bg-red-50 text-red-600 border-red-100 shadow-sm shadow-red-50' : 'bg-blue-50 text-blue-600 border-blue-100 shadow-sm shadow-blue-50'">
-                        <i class="bi text-lg" [ngClass]="call.is_overdue ? 'bi-person-exclamation' : 'bi-person-fill'"></i>
+                    class="table-row"
+                    [class.row-overdue]="call.is_overdue">
+
+                  <!-- Contact -->
+                  <td>
+                    <div class="contact-cell">
+                      <div class="contact-avatar"
+                           [class.avatar-overdue]="call.is_overdue"
+                           [class.avatar-normal]="!call.is_overdue">
+                        <i class="bi" [ngClass]="call.is_overdue ? 'bi-person-exclamation' : 'bi-person-fill'"></i>
                       </div>
-                      <div>
-                        <p class="font-bold text-gray-900 text-sm tracking-tight" [class.text-red-700]="call.is_overdue">
+                      <div class="contact-info">
+                        <span class="contact-name" [class.contact-name--overdue]="call.is_overdue">
                           {{ call.caller_name }}
-                        </p>
-                        <p class="text-[11px] text-gray-400 font-mono">{{ call.phone_number }}</p>
+                        </span>
+                        <span class="contact-phone">{{ call.phone_number }}</span>
                       </div>
                     </div>
                   </td>
 
-                  <td class="px-6 py-4">
-                    <div class="max-w-xs">
-                      <p class="text-sm font-semibold text-gray-800 truncate">{{ call.object }}</p>
-                      <p class="text-[11px] text-blue-500 font-medium italic truncate mt-0.5 opacity-80">
-                        {{ call.callback_reason || 'Aucun motif spécifié' }}
-                      </p>
+                  <!-- Object / Reason -->
+                  <td>
+                    <div class="object-cell">
+                      <span class="object-title">{{ call.object }}</span>
+                      <span class="object-reason">{{ call.callback_reason || 'Aucun motif spécifié' }}</span>
                     </div>
                   </td>
 
-                  <td class="px-6 py-4">
-                    <div class="flex flex-col">
-                      <span [class.text-red-600]="call.is_overdue" class="text-sm font-bold text-gray-900">
+                  <!-- Scheduled date -->
+                  <td>
+                    <div class="date-cell">
+                      <span class="date-value" [class.date-overdue]="call.is_overdue">
                         {{ formatDate(call.scheduled_callback_date) }}
                       </span>
-                      <span class="text-[10px] font-black uppercase tracking-tighter text-gray-400">
-                        {{ call.time_until }}
-                      </span>
+                      <span class="date-until">{{ call.time_until }}</span>
                     </div>
                   </td>
 
-                  <td class="px-6 py-4">
-                    <span [class]="getUrgencyClass(call.urgency)" class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                  <!-- Urgency -->
+                  <td>
+                    <span class="urgency-badge" [ngClass]="getUrgencyClass(call.urgency)">
                       {{ call.urgency }}
                     </span>
                   </td>
 
-                  <td class="px-6 py-4 text-right">
-                    <button 
-                      class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                  <!-- Action -->
+                  <td class="col-right">
+                    <button class="btn-treat">
                       Traiter
                     </button>
                   </td>
+
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-
-        <div *ngIf="!(isLoading$ | async) && (callbacks$ | async)?.length === 0" 
-             class="p-24 text-center bg-white/50 backdrop-blur-sm rounded-2xl border border-dashed border-gray-200">
-          <i class="bi bi-telephone-x text-4xl text-gray-200 mb-4 block"></i>
-          <p class="text-gray-500 font-bold uppercase tracking-widest text-xs">Aucun rappel programmé</p>
-        </div>
       </div>
+
     </div>
   </div>
+
 </div>

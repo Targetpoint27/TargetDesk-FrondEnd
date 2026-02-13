@@ -1,189 +1,264 @@
-<div class="min-h-screen bg-gray-50/30 p-6" *ngIf="complaint$ | async as rec">
-  <div class="max-w-7xl mx-auto mb-6">
-    <div class="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-      <div class="flex items-center gap-4">
-        <button [routerLink]="['/dashboard/complaints']" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-          <i class="bi bi-arrow-left text-xl"></i>
-        </button>
-        <div>
-          <h1 class="text-xl font-bold text-gray-900">{{ rec.complaint_number }}</h1>
-          <p class="text-xs text-gray-500 uppercase font-black tracking-widest">Créée le {{ rec.created_at | date:'dd/MM/yyyy' }}</p>
-        </div>
+<div class="details-page" *ngIf="complaint$ | async as rec">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button [routerLink]="['/dashboard/complaints']" class="back-btn">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="page-title">{{ rec.complaint_number }}</h1>
+        <p class="page-subtitle">Créée le {{ rec.created_at | date:'dd/MM/yyyy' }}</p>
       </div>
-      <div class="flex gap-3">
-        <span [class]="'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest ' + rec.status">
-          {{ rec.status_label }}
-        </span>
-      </div>
+    </div>
+    <div class="header-right">
+      <span class="status-badge"
+            [class.status-ouverte]="rec.status === 'ouverte'"
+            [class.status-analyse]="rec.status === 'en_analyse'"
+            [class.status-resolue]="rec.status === 'resolue'"
+            [class.status-cloture]="rec.status === 'cloture'">
+        {{ rec.status_label }}
+      </span>
     </div>
   </div>
 
-  <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-    
-    <div class="lg:col-span-1 space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h2 class="text-sm font-black text-blue-600 uppercase tracking-widest mb-4">Contexte de l'appel</h2>
-        <div class="space-y-4">
-          <div>
-            <label class="text-[10px] font-bold text-gray-400 uppercase">Objet de l'appel</label>
-            <p class="text-gray-900 font-semibold">{{ rec.category_label }}</p>
+  <!-- Lifecycle Progress -->
+  <div class="lifecycle-bar">
+    <div class="lifecycle-step" [class.step-done]="['en_analyse','resolue','cloture'].includes(rec.status)" [class.step-active]="rec.status === 'ouverte'">
+      <span class="step-dot"></span>
+      <span class="step-label">Ouverture</span>
+    </div>
+    <div class="lifecycle-line" [class.line-done]="['en_analyse','resolue','cloture'].includes(rec.status)"></div>
+    <div class="lifecycle-step" [class.step-done]="['resolue','cloture'].includes(rec.status)" [class.step-active]="rec.status === 'en_analyse'">
+      <span class="step-dot"></span>
+      <span class="step-label">Analyse</span>
+    </div>
+    <div class="lifecycle-line" [class.line-done]="['resolue','cloture'].includes(rec.status)"></div>
+    <div class="lifecycle-step" [class.step-done]="rec.status === 'cloture'" [class.step-active]="rec.status === 'resolue'">
+      <span class="step-dot"></span>
+      <span class="step-label">Résolution</span>
+    </div>
+    <div class="lifecycle-line" [class.line-done]="rec.status === 'cloture'"></div>
+    <div class="lifecycle-step" [class.step-active]="rec.status === 'cloture'">
+      <span class="step-dot"></span>
+      <span class="step-label">Clôture</span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="details-grid">
+
+    <!-- Left: Context Panel -->
+    <div class="context-panel">
+      <div class="panel-card">
+        <h2 class="panel-title">
+          <i class="bi bi-info-circle"></i>
+          Contexte de l'appel
+        </h2>
+        <div class="context-items">
+          <div class="context-item">
+            <label>Client</label>
+            <p>{{ rec.client_name }}</p>
           </div>
-          <div>
-            <label class="text-[10px] font-bold text-gray-400 uppercase">Description initiale</label>
-            <p class="text-sm text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">{{ rec.description }}</p>
+          <div class="context-item">
+            <label>Objet de l'appel</label>
+            <p>{{ rec.category_label }}</p>
+          </div>
+          <div class="context-item">
+            <label>Gravité</label>
+            <span class="severity-badge"
+                  [class.severity-critique]="rec.severity === 'critique'"
+                  [class.severity-eleve]="rec.severity === 'eleve'"
+                  [class.severity-moyen]="rec.severity === 'moyen'"
+                  [class.severity-faible]="rec.severity === 'faible'">
+              {{ rec.severity }}
+            </span>
+          </div>
+          <div class="context-item">
+            <label>Échéance SLA</label>
+            <span class="sla-value" [class.sla-overdue]="rec.is_overdue">{{ rec.sla_text }}</span>
+          </div>
+          <div class="context-item">
+            <label>Description initiale</label>
+            <p class="description-text">{{ rec.description }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Show filled analysis if already past ouverte -->
+      <div class="panel-card panel-card--readonly" *ngIf="rec.root_cause">
+        <h2 class="panel-title">
+          <i class="bi bi-search"></i>
+          Analyse enregistrée
+        </h2>
+        <div class="context-items">
+          <div class="context-item">
+            <label>Cause racine</label>
+            <p>{{ rec.root_cause }}</p>
+          </div>
+          <div class="context-item" *ngIf="rec.actions_taken">
+            <label>Actions menées</label>
+            <p>{{ rec.actions_taken }}</p>
+          </div>
+          <div class="context-item" *ngIf="rec.proposed_solution">
+            <label>Solution proposée</label>
+            <p>{{ rec.proposed_solution }}</p>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="lg:col-span-2 space-y-6">
-      
-      <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-        <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-          <i class="bi bi-search text-blue-600"></i> Analyse du Litige
-        </h2>
-        
-        <form [formGroup]="complaintForm" (ngSubmit)="onSave()" class="space-y-6">
-            <div>
-                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
-                Cause Racine (Root Cause)
-                </label>
-                <textarea 
-                formControlName="root_cause" 
-                rows="3" 
-                class="w-full text-black p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
-                placeholder="Pourquoi ce problème est-il survenu ?">
-                </textarea>
-            </div>
+    <!-- Right: Action Panel -->
+    <div class="action-panel">
 
-            <div>
-                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
-                Actions Menées
-                </label>
-                <textarea 
-                formControlName="actions_taken" 
-                rows="3" 
-                class="w-full p-4 bg-gray-50 text-black border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
-                placeholder="Qu'avez-vous fait pour investiguer ?">
-                </textarea>
-            </div>
+      <!-- STEP 1 — Always visible: Investigation form -->
+      <div class="action-card">
+        <div class="action-card-header">
+          <h2 class="action-title">
+            <i class="bi bi-search"></i>
+            Analyse du Litige
+          </h2>
+          <span class="step-tag">Étape 1</span>
+        </div>
 
-            <div>
-                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
-                Solution Proposée
-                </label>
-                <textarea 
-                formControlName="proposed_solution" 
-                rows="3" 
-                class="w-full p-4 bg-gray-50 text-black border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
-                placeholder="Comment comptez-vous résoudre cela ?">
-                </textarea>
-            </div>
+        <form [formGroup]="complaintForm" (ngSubmit)="onSave()">
+          <div class="form-group">
+            <label>Cause Racine (Root Cause)</label>
+            <textarea
+              formControlName="root_cause"
+              rows="3"
+              placeholder="Pourquoi ce problème est-il survenu ?">
+            </textarea>
+          </div>
 
-            <div class="pt-4 border-t border-gray-100 flex justify-end">
-                <button 
-                type="submit" 
-                [disabled]="complaintForm.invalid || (isLoading$ | async)"
-                class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center gap-2">
-                <i class="bi bi-save"></i> 
-                {{ (isLoading$ | async) ? 'Enregistrement...' : "Enregistrer l'analyse" }}
-                </button>
-            </div>
+          <div class="form-group">
+            <label>Actions Menées</label>
+            <textarea
+              formControlName="actions_taken"
+              rows="3"
+              placeholder="Qu'avez-vous fait pour investiguer ?">
+            </textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Solution Proposée</label>
+            <textarea
+              formControlName="proposed_solution"
+              rows="3"
+              placeholder="Comment comptez-vous résoudre cela ?">
+            </textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit"
+                    class="btn-primary"
+                    [disabled]="complaintForm.invalid || (isLoading$ | async)">
+              <i class="bi bi-save"></i>
+              {{ (isLoading$ | async) ? 'Enregistrement...' : "Enregistrer l'analyse" }}
+            </button>
+          </div>
         </form>
       </div>
 
-      <div class="mt-6" *ngIf="rec.status === 'en_analyse'">
-        <div class="bg-white rounded-2xl shadow-xl border-t-4 border-t-emerald-500 border border-gray-100 p-8">
-          <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <i class="bi bi-check2-circle text-emerald-600"></i> Résolution du Litige
+      <!-- STEP 2 — Resolution form (only when en_analyse) -->
+      <div class="action-card action-card--success" *ngIf="rec.status === 'en_analyse'">
+        <div class="action-card-header">
+          <h2 class="action-title">
+            <i class="bi bi-check2-circle"></i>
+            Résolution du Litige
           </h2>
-          
-          <form [formGroup]="resolutionForm" (ngSubmit)="onResolve()" class="space-y-6">
-            <div class="form-group">
-              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Résumé de la Solution</label>
-              <textarea 
-                formControlName="resolution_summary" 
-                rows="3" 
-                class="w-full text-black p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-                placeholder="Expliquez la solution finale apportée au client..."></textarea>
-            </div>
-
-            <div class="form-group">
-              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Détails du Dédommagement (Optionnel)</label>
-              <textarea 
-                formControlName="compensation_details" 
-                rows="2" 
-                class="w-full p-4 bg-gray-50 text-black border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-                placeholder="Ex: Geste commercial, remboursement, etc."></textarea>
-            </div>
-
-            <div class="form-group">
-              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Niveau de Satisfaction</label>
-              <select formControlName="client_satisfaction" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-black">
-                <option value="">Sélectionner un avis...</option>
-                <option value="satisfait">Satisfait</option>
-                <option value="partiellement_satisfait">Partiellement Satisfait</option>
-                <option value="non_satisfait">Non Satisfait</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Résumé de la Solution</label>
-              <textarea formControlName="resolution_summary" rows="3" class="w-full text-black p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"></textarea>
-            </div>
-
-            <div class="pt-4 border-t border-gray-100 flex justify-end">
-              <button 
-                type="submit" 
-                [disabled]="resolutionForm.invalid || (isLoading$ | async)"
-                class="px-8 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all flex items-center gap-2">
-                <i class="bi bi-check-lg"></i>
-                Confirmer la Résolution
-              </button>
-            </div>
-          </form>
+          <span class="step-tag step-tag--success">Étape 2</span>
         </div>
+
+        <form [formGroup]="resolutionForm" (ngSubmit)="onResolve()">
+          <div class="form-group">
+            <label>Résumé de la Solution</label>
+            <textarea
+              formControlName="resolution_summary"
+              rows="3"
+              placeholder="Expliquez la solution finale apportée au client...">
+            </textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Détails du Dédommagement <span class="optional">(Optionnel)</span></label>
+            <textarea
+              formControlName="compensation_details"
+              rows="2"
+              placeholder="Ex: Geste commercial, remboursement, etc.">
+            </textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Niveau de Satisfaction Client</label>
+            <select formControlName="client_satisfaction">
+              <option value="">Sélectionner un avis...</option>
+              <option value="satisfait">Satisfait</option>
+              <option value="partiellement_satisfait">Partiellement Satisfait</option>
+              <option value="non_satisfait">Non Satisfait</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit"
+                    class="btn-success"
+                    [disabled]="resolutionForm.invalid || (isLoading$ | async)">
+              <i class="bi bi-check-lg"></i>
+              Confirmer la Résolution
+            </button>
+          </div>
+        </form>
       </div>
 
-      <div class="mt-6" *ngIf="rec.status === 'resolue'">
-        <div class="bg-white rounded-2xl shadow-xl border-t-4 border-t-blue-600 border border-gray-100 p-8">
-          <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <i class="bi bi-door-closed text-blue-600"></i> Clôture & Satisfaction Client
+      <!-- STEP 3 — Closure form (only when resolue) -->
+      <div class="action-card action-card--neutral" *ngIf="rec.status === 'resolue'">
+        <div class="action-card-header">
+          <h2 class="action-title">
+            <i class="bi bi-door-closed"></i>
+            Clôture & Satisfaction Client
           </h2>
-          
-          <form [formGroup]="closureForm" (ngSubmit)="onClose()" class="space-y-6">
-            <div class="form-group">
-              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Niveau de Satisfaction</label>
-              <select formControlName="client_satisfaction" class="w-full text-black p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Sélectionner un avis...</option>
-                <option value="satisfait">Satisfait</option>
-                <option value="partiellement_satisfait">Partiellement Satisfait</option>
-                <option value="non_satisfait">Non Satisfait</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Commentaire de Clôture</label>
-              <textarea 
-                formControlName="closing_comment" 
-                rows="3" 
-                class="w-full p-4 bg-gray-50 text-black border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Note finale sur l'échange avec le client..."></textarea>
-            </div>
-
-            <div class="pt-4 border-t border-gray-100 flex justify-end">
-              <button 
-                type="submit" 
-                [disabled]="closureForm.invalid || (isLoading$ | async)"
-                class="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-all flex items-center gap-2">
-                <i class="bi bi-archive"></i>
-                Clôturer Définitivement
-              </button>
-            </div>
-          </form>
+          <span class="step-tag step-tag--neutral">Étape 3</span>
         </div>
+
+        <form [formGroup]="closureForm" (ngSubmit)="onClose()">
+          <div class="form-group">
+            <label>Niveau de Satisfaction</label>
+            <select formControlName="client_satisfaction">
+              <option value="">Sélectionner un avis...</option>
+              <option value="satisfait">Satisfait</option>
+              <option value="partiellement_satisfait">Partiellement Satisfait</option>
+              <option value="non_satisfait">Non Satisfait</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Commentaire de Clôture</label>
+            <textarea
+              formControlName="closing_comment"
+              rows="3"
+              placeholder="Note finale sur l'échange avec le client...">
+            </textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit"
+                    class="btn-neutral"
+                    [disabled]="closureForm.invalid || (isLoading$ | async)">
+              <i class="bi bi-archive"></i>
+              Clôturer Définitivement
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Closed state -->
+      <div class="closed-state" *ngIf="rec.status === 'cloture'">
+        <i class="bi bi-check-circle-fill"></i>
+        <p>Cette réclamation a été clôturée définitivement.</p>
+        <span>{{ rec.closed_at | date:'dd/MM/yyyy à HH:mm' }}</span>
       </div>
 
     </div>
   </div>
+
 </div>
