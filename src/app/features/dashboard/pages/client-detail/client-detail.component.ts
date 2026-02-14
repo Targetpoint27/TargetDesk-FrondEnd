@@ -7,7 +7,7 @@ import { PERMISSIONS } from '../../../../domain/models/permission.models';
 
 import { ClientEntity } from '../../../../domain/entities/client.entity';
 import { ContactEntity } from '../../../../domain/entities/contact.entity';
-import { GetClientsUseCase } from '../../../../domain/use-cases/client/get-clients.use-case';
+import { GetClientByIdUseCase } from '../../../../domain/use-cases/client/get-client-by-id.use-case';
 import { GetClientContactsUseCase } from '../../../../domain/use-cases/contact/get-client-contacts.use-case';
 import { DeleteContactUseCase } from '../../../../domain/use-cases/contact/delete-contact.use-case';
 import { MakePrimaryContactUseCase } from '../../../../domain/use-cases/contact/make-primary-contact.use-case';
@@ -637,7 +637,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   activeTab: 'overview' | 'contacts' | 'categories' | 'documents' | 'notes' | 'calls' | 'appointments' | 'timeline' = 'overview';
 
   constructor(
-    private getClientsUseCase: GetClientsUseCase,
+    private getClientByIdUseCase: GetClientByIdUseCase,
     private getClientContactsUseCase: GetClientContactsUseCase,
     private deleteContactUseCase: DeleteContactUseCase,
     private makePrimaryContactUseCase: MakePrimaryContactUseCase,
@@ -681,23 +681,16 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.error.set(null);
 
-    // For now, we'll use a mock client since we don't have a getClientById method
-    // In a real app, you'd have a dedicated use case for getting a single client
-    return this.getClientsUseCase.execute({ page: 1, perPage: 1000 })
+    return this.getClientByIdUseCase.execute(clientId)
       .pipe(
         takeUntil(this.destroy$)
       ).subscribe({
-        next: (result) => {
-          if (result.success && result.data) {
-            const foundClient = result.data.items.find(c => c.id === clientId);
-            if (foundClient) {
-              this.client.set(foundClient);
-              this.loadContacts();
-            } else {
-              this.error.set('Client non trouvé');
-            }
+        next: (client) => {
+          if (client) {
+            this.client.set(client);
+            this.loadContacts();
           } else {
-            this.error.set(result.error || 'Erreur lors du chargement');
+            this.error.set('Client non trouvé');
           }
           this.isLoading.set(false);
         },
