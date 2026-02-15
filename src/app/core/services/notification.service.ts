@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import {
@@ -11,15 +11,25 @@ import {
   RemindersListResponse
 } from '../interfaces/notification.interface';
 import { ApiService } from '../api/api.service';
+import { ToastService } from './toast.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
+  private toastService = inject(ToastService);
   private notificationCountSubject = new BehaviorSubject<number>(0);
   public notificationCount$ = this.notificationCountSubject.asObservable();
 
   constructor(private apiService: ApiService) {}
+
+  error(message: string): void {
+    this.toastService.error(message, 'Erreur de supervision');
+  }
+
+  success(message: string): void {
+    this.toastService.success(message, 'Action réussie');
+  }
 
   getUserPreferences(userId: string): Observable<NotificationPreferences> {
     return this.apiService.get<NotificationResponse<UserPreferencesResponse>>(
@@ -94,21 +104,17 @@ export class NotificationService {
 
   validateTiming(timing: number[]): string[] {
     const errors: string[] = [];
-
     if (timing.length === 0) {
       errors.push("Au moins un timing doit être sélectionné");
     }
-
     if (timing.length > 5) {
       errors.push("Maximum 5 timings autorisés");
     }
-
     timing.forEach(time => {
       if (time < 1 || time > 10080) {
         errors.push("Les timings doivent être entre 1 minute et 1 semaine");
       }
     });
-
     return errors;
   }
 }

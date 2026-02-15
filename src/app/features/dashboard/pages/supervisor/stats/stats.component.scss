@@ -1,0 +1,66 @@
+:host {
+  display: block;
+}
+
+/* Period Switcher Styling */
+.period-btn {
+  @apply px-4 py-1.5 text-xs font-bold text-slate-500 rounded-md transition-all duration-200 border border-transparent;
+  
+  &:hover {
+    @apply bg-slate-50 text-blue-600;
+  }
+
+  &.active {
+    @apply bg-blue-600 text-white shadow-md border-blue-700;
+  }
+}
+
+/* KPI Card Grid */
+.stat-card {
+  @apply bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col transition-transform duration-300;
+  
+  &:hover {
+    @apply shadow-md -translate-y-1;
+  }
+  
+  .label {
+    @apply text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1;
+  }
+  
+  .value {
+    @apply text-2xl font-black text-slate-800 tracking-tight;
+  }
+}
+
+/* Chart Container Styling */
+.chart-container {
+  @apply bg-white p-6 rounded-2xl border border-slate-100 shadow-sm;
+  
+  h3 {
+    @apply text-xs font-black text-slate-500 uppercase tracking-wider mb-6 flex items-center;
+    
+    &::before {
+      content: '';
+      @apply w-1 h-4 bg-blue-500 rounded-full mr-2;
+    }
+  }
+}
+
+/* Responsive Chart Height */
+canvas {
+  @apply w-full;
+  min-height: 300px;
+  max-height: 400px;
+}
+
+/* Custom scrollbar for the stats page if needed */
+.stats-wrapper {
+  @apply overflow-y-auto max-h-full pr-2;
+  
+  &::-webkit-scrollbar {
+    @apply w-1;
+  }
+  &::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 rounded-full;
+  }
+}

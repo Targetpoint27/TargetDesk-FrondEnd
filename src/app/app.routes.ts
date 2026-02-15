@@ -127,7 +127,6 @@ export const routes: Routes = [
           },
         ]
       },
-      // Complaints Sub-Module
       {
         path: 'complaints',
         canActivate: [RoleGuard],
@@ -155,6 +154,32 @@ export const routes: Routes = [
         path: 'ringover-history',
         loadComponent: () => import('./features/dashboard/pages/call-center/ringover-history/ringover-history.component')
           .then(c => c.RingoverHistoryComponent)
+      },
+      {
+        path: 'supervisor',
+        canActivate: [RoleGuard],
+        data: {
+          // Only users with supervisor or manager permissions can enter
+          permissions: [PERMISSIONS.CALL_CENTER_SUPERVISOR, PERMISSIONS.CALL_CENTER_MANAGER, PERMISSIONS.CALL_CENTER_ADMIN],
+          requireAllPermissions: false
+        },
+        children: [
+          {
+            path: '',
+            redirectTo: 'dashboard',
+            pathMatch: 'full'
+          },
+          {
+            path: 'dashboard',
+            loadComponent: () => import('./features/dashboard/pages/supervisor/dashboard/dashboard.component')
+              .then(c => c.SupervisorDashboardComponent)
+          },
+          {
+            path: 'stats',
+            loadComponent: () => import('./features/dashboard/pages/supervisor/stats/stats.component')
+              .then(c => c.SupervisorStatsComponent)
+          }
+        ]
       }
     ]
   },

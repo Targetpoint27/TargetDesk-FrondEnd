@@ -130,6 +130,15 @@ export class DashboardLayoutComponent implements OnInit {
       active: false,
       visible: false
     },
+    {
+      id: 'supervisor',
+      label: 'Supervision',
+      icon: 'supervisor',
+      route: '/dashboard/supervisor',
+      requiredPermissions: [PERMISSIONS.CALL_CENTER_SUPERVISOR, PERMISSIONS.CALL_CENTER_ADMIN],
+      active: false,
+      visible: false
+    }
   ];
 
   constructor(

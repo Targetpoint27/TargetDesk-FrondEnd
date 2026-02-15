@@ -1,0 +1,48 @@
+<div class="p-6 space-y-6" *ngIf="stats$ | async as data">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Statistiques d'Équipe</h1>
+      <p class="text-sm text-slate-500">Performance globale et respect des SLAs</p>
+    </div>
+    <div class="flex bg-white rounded-lg p-1 border border-slate-200 shadow-sm">
+      <button (click)="loadStats('today')" [class.active]="currentPeriod === 'today'" class="period-btn">Aujourd'hui</button>
+      <button (click)="loadStats('week')" [class.active]="currentPeriod === 'week'" class="period-btn">Semaine</button>
+      <button (click)="loadStats('month')" [class.active]="currentPeriod === 'month'" class="period-btn">Mois</button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="stat-card">
+      <span class="label">Total Appels</span>
+      <span class="value">{{ data.kpis.total_calls }}</span>
+    </div>
+    <div class="stat-card border-l-4 border-red-500">
+      <span class="label">Appels Manqués</span>
+      <span class="value text-red-600">{{ data.kpis.missed_calls }}</span>
+    </div>
+    <div class="stat-card border-l-4 border-emerald-500">
+      <span class="label">Taux de Réponse</span>
+      <span class="value text-emerald-600">{{ data.kpis.response_rate }}</span>
+    </div>
+    <div class="stat-card border-l-4 border-blue-500">
+      <span class="label">Conformité SLA</span>
+      <span class="value text-blue-600">{{ data.kpis.sla_compliance }}</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+      <h3 class="text-sm font-black text-slate-700 uppercase mb-6">Évolution du Volume</h3>
+      <canvas baseChart 
+              [data]="getEvolutionData(data.graphs.volume_evolution)" 
+              [type]="lineChartType"></canvas>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+      <h3 class="text-sm font-black text-slate-700 uppercase mb-6">Distribution des Statuts</h3>
+      <canvas baseChart 
+            [data]="getDistributionData(data.graphs.status_distribution)" 
+            [type]="barChartType">
+      </canvas>
+    </div>
+</div>

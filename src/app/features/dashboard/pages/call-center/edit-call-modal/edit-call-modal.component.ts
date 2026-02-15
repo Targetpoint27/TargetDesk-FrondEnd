@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Call, Department, UpdateCallRequest } from '../../../../../domain/models/call.model';
@@ -8,7 +8,8 @@ import { Call, Department, UpdateCallRequest } from '../../../../../domain/model
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './edit-call-modal.component.html',
-  styleUrl: './edit-call-modal.component.scss'
+  styleUrl: './edit-call-modal.component.scss',
+  encapsulation: ViewEncapsulation.None
 })
 export class EditCallModalComponent implements OnInit {
   @Input() call!: Call;

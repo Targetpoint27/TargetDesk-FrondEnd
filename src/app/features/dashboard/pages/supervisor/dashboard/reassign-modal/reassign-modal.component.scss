@@ -1,0 +1,23 @@
+.agent-option-card {
+  @apply p-4 rounded-2xl border border-slate-100 bg-white cursor-pointer transition-all;
+  
+  &:hover {
+    @apply border-blue-200 bg-blue-50/30;
+  }
+  
+  &.selected {
+    @apply border-blue-600 bg-blue-50 ring-1 ring-blue-600;
+  }
+}
+
+.custom-scrollbar {
+  &::-webkit-scrollbar {
+    @apply w-1;
+  }
+  &::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 rounded-full;
+  }
+}

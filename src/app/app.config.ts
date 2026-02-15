@@ -86,6 +86,8 @@ import {
 import { ReportRepository } from './domain/repositories/report.repository';
 import { ReportApiRepository } from './infrastructure/repositories/report-api.repository';
 import { GetDailyReportUseCase } from './domain/use-cases/report/get-daily-report.use-case';
+import { SupervisorRepository } from './domain/repositories/supervisor.repository';
+import { SupervisorApiRepository } from './infrastructure/repositories/supervisor-api.repository';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -154,6 +156,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: ReportRepository,
       useClass: ReportApiRepository
+    },
+    {
+      provide: SupervisorRepository,
+      useClass: SupervisorApiRepository
     },
     // TODO: Add UserRepository implementation when needed
     // {
