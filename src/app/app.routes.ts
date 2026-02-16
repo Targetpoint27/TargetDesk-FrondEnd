@@ -185,6 +185,26 @@ export const routes: Routes = [
               .then(c => c.SupervisorComplaintsComponent)
           },
         ]
+      },
+      {
+        path: 'manager',
+        canActivate: [RoleGuard],
+        data: {
+          permissions: [PERMISSIONS.CALL_CENTER_MANAGER, PERMISSIONS.CALL_CENTER_ADMIN],
+          requireAllPermissions: false
+        },
+        children: [
+          {
+            path: '',
+            redirectTo: 'analytics',
+            pathMatch: 'full'
+          },
+          {
+            path: 'analytics',
+            loadComponent: () => import('./features/dashboard/pages/manager/analytics.component')
+              .then(c => c.AnalyticsComponent)
+          }
+        ]
       }
     ]
   },

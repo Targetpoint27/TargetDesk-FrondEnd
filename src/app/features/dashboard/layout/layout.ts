@@ -138,6 +138,15 @@ export class DashboardLayoutComponent implements OnInit {
       requiredPermissions: [PERMISSIONS.CALL_CENTER_SUPERVISOR, PERMISSIONS.CALL_CENTER_ADMIN],
       active: false,
       visible: false
+    },
+    {
+      id: 'manager',
+      label: 'Analyses Manager',
+      icon: 'analytics',
+      route: '/dashboard/manager/analytics',
+      requiredPermissions: [PERMISSIONS.CALL_CENTER_MANAGER, PERMISSIONS.CALL_CENTER_ADMIN],
+      active: false,
+      visible: false
     }
   ];
 

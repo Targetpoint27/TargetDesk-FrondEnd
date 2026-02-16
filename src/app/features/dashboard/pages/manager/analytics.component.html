@@ -1,0 +1,130 @@
+<div class="analytics-page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1 class="page-title">Analyses Manager</h1>
+      <p class="page-subtitle">Pilotage stratégique du département</p>
+    </div>
+    <div class="page-header-actions">
+      <button
+        (click)="exportToPDF()"
+        [disabled]="isExporting"
+        class="btn-export">
+        <i class="bi" [class.bi-download]="!isExporting" [class.bi-hourglass-split]="isExporting"></i>
+        {{ isExporting ? 'Génération...' : 'Exporter PDF' }}
+      </button>
+      <select [(ngModel)]="selectedPeriod" (change)="onPeriodChange()" class="period-select">
+        <option value="week">Cette semaine</option>
+        <option value="month">Ce mois</option>
+        <option value="quarter">Trimestre</option>
+        <option value="year">Année</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="kpi-grid" *ngIf="facade.dashboard$ | async as dash">
+
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--indigo"></div>
+      <span class="kpi-label">Volume Total</span>
+      <div class="kpi-value-row">
+        <span class="kpi-value">{{ dash.kpis.total_volume.current }}</span>
+        <span class="kpi-evolution" [class.kpi-evolution--up]="dash.kpis.total_volume.evolution > 0">
+          {{ dash.kpis.total_volume.evolution }}% vs période préc.
+        </span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--blue"></div>
+      <span class="kpi-label">Taux de Réponse</span>
+      <span class="kpi-value kpi-value--blue">{{ dash.kpis.response_rate }}</span>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--green"></div>
+      <span class="kpi-label">Taux de Résolution</span>
+      <span class="kpi-value kpi-value--green">{{ dash.kpis.resolution_rate }}</span>
+    </div>
+
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-accent"></div>
+        <h3 class="chart-title">Évolution du Volume</h3>
+      </div>
+      <div class="chart-body">
+        <canvas id="trendsChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-accent chart-accent--amber"></div>
+        <h3 class="chart-title">Heures d'Affluence</h3>
+      </div>
+      <div class="chart-body">
+        <canvas id="heatmapChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Performance table -->
+  <div class="table-card">
+
+    <div class="table-card-header">
+      <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      <h3 class="table-title">Performance & Charge par Agent</h3>
+    </div>
+
+    <!-- Desktop table -->
+    <div class="table-wrap">
+      <table class="perf-table">
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>Appels Traités</th>
+            <th>État de Charge</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let agent of facade.performance$ | async" class="table-row">
+            <td class="td-agent">
+              <div class="agent-avatar">{{ agent.name.charAt(0) }}</div>
+              {{ agent.name }}
+            </td>
+            <td class="td-calls">{{ agent.calls_count }}</td>
+            <td>
+              <span class="badge" [ngClass]="agent.load_status">{{ agent.load_status }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="mobile-list">
+      <div *ngFor="let agent of facade.performance$ | async" class="mobile-item">
+        <div class="mobile-item-left">
+          <div class="agent-avatar">{{ agent.name.charAt(0) }}</div>
+          <div>
+            <p class="td-agent-name">{{ agent.name }}</p>
+            <p class="td-calls-label">{{ agent.calls_count }} appels traités</p>
+          </div>
+        </div>
+        <span class="badge" [ngClass]="agent.load_status">{{ agent.load_status }}</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
