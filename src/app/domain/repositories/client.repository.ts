@@ -21,6 +21,11 @@ export interface PaginationResult<T> {
   };
 }
 
+export interface CustomFieldRequest {
+  field_key: string;
+  field_value: string;
+}
+
 export interface CreateClientRequest {
   name: string;
   type: 'particulier' | 'entreprise';
@@ -32,6 +37,7 @@ export interface CreateClientRequest {
   website?: string;
   notes?: string;
   category_ids?: number[];
+  custom_fields?: CustomFieldRequest[];
 }
 
 export interface UpdateClientRequest {
@@ -45,6 +51,7 @@ export interface UpdateClientRequest {
   website?: string;
   notes?: string;
   category_ids?: number[];
+  custom_fields?: CustomFieldRequest[];
 }
 
 /**

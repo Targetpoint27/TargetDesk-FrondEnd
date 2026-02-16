@@ -1,0 +1,184 @@
+// Modal Overlay
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; // Increased z-index
+  padding: 20px;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalAppear 0.15s ease-out;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.note-details-modal {
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column; // Ensure content stacks vertically
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0; // Prevent header from shrinking
+
+    h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.2s;
+
+      &:hover {
+        background: #f3f4f6;
+      }
+
+      svg {
+        color: #6b7280;
+      }
+    }
+  }
+
+  .modal-content {
+    padding: 24px;
+    max-height: calc(90vh - 140px); // Adjust height dynamically
+    overflow-y: auto;
+    flex-grow: 1; // Allow content to take available space
+
+    .note-details-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 24px; // Row and column gap
+    }
+
+    .detail-item {
+      display: flex;
+      flex-direction: column; // Label and value stack vertically by default
+      flex-basis: calc(50% - 12px); // Two columns per row
+      word-break: break-word; // Prevent long words from overflowing
+
+      &.full-width {
+        flex-basis: 100%; // Single column for content
+      }
+
+      .label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #6b7280;
+        margin-bottom: 4px;
+      }
+
+      .value {
+        font-size: 15px;
+        color: #1f2937;
+        line-height: 1.4;
+
+        &.content-text {
+          white-space: pre-wrap; // Preserve whitespace and newlines for content
+        }
+
+        &.badge {
+          display: inline-block;
+          padding: 2px 8px;
+          border-radius: 9999px; // Pill shape
+          font-size: 12px;
+          font-weight: 600;
+          color: white;
+          background-color: #4f46e5; // Example color
+          margin-left: 8px;
+
+          &.pinned-badge {
+            background-color: #ef4444; // Red for pinned
+          }
+        }
+      }
+
+      .user-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #2563eb; // Example primary color
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        margin-right: 6px;
+      }
+    }
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+    flex-shrink: 0; // Prevent actions from shrinking
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      &.btn-secondary {
+        background: white;
+        border: 1px solid #d1d5db;
+        color: #374151;
+
+        &:hover:not(:disabled) {
+          background: #f3f4f6;
+          border-color: #9ca3af;
+        }
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

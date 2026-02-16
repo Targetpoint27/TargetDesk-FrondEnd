@@ -164,10 +164,17 @@ export abstract class DocumentRepository {
     const formData = new FormData();
     formData.append('file', request.file);
     formData.append('title', request.title);
-    formData.append('category', request.category);
+
+    if (request.category) {
+      formData.append('category', request.category);
+    }
 
     if (request.description) {
       formData.append('description', request.description);
+    }
+
+    if (request.folder_path) {
+      formData.append('folder_path', request.folder_path);
     }
 
     return formData;

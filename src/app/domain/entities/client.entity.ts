@@ -7,6 +7,18 @@ import { CategoryEntity, CategorySummary, getCategoryTypeInfo } from './category
 
 export type ClientType = 'particulier' | 'entreprise';
 
+export interface CustomField {
+  readonly id?: number; // Added 'id' property
+  readonly field_key: string;
+  readonly field_value: string;
+  readonly field_label?: string;
+  readonly field_type?: string;
+  readonly field_description?: string;
+  readonly is_required?: boolean;
+  readonly display_order?: number;
+  readonly formatted_value?: string;
+}
+
 export interface ClientEntityData {
   readonly id?: number;
   readonly clientId?: string;
@@ -32,6 +44,9 @@ export interface ClientEntityData {
   readonly categories_count?: number;
   readonly categories_summary?: CategorySummary[];
   readonly categories?: CategoryEntity[];
+
+  // Custom fields
+  readonly custom_fields?: CustomField[];
 }
 
 export class ClientEntity {
@@ -60,6 +75,7 @@ export class ClientEntity {
       categories_count: data.categories_count ?? 0,
       categories_summary: data.categories_summary ?? [],
       categories: data.categories ?? [],
+      custom_fields: data.custom_fields ?? [],
     });
   }
 
@@ -85,6 +101,9 @@ export class ClientEntity {
   get categoriesCount(): number { return this.data.categories_count; }
   get categoriesSummary(): CategorySummary[] { return this.data.categories_summary; }
   get categories(): CategoryEntity[] { return this.data.categories; }
+
+  // Custom fields getters
+  get customFields(): CustomField[] { return this.data.custom_fields; }
 
   // Business logic methods
   isCompany(): boolean {
@@ -154,6 +173,33 @@ export class ClientEntity {
 
   getCategoryColors(): string[] {
     return this.categories.map(cat => cat.color);
+  }
+
+  // Custom fields business methods
+  hasCustomFields(): boolean {
+    return this.customFields && this.customFields.length > 0;
+  }
+
+  getCustomFieldValue(fieldKey: string): string | null {
+    const field = this.customFields?.find(f => f.field_key === fieldKey);
+    return field?.field_value || null;
+  }
+
+  getCustomFieldByKey(fieldKey: string): CustomField | null {
+    return this.customFields?.find(f => f.field_key === fieldKey) || null;
+  }
+
+  getCustomFieldsSortedByOrder(): CustomField[] {
+    if (!this.customFields) return [];
+    return [...this.customFields].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+  }
+
+  getRequiredCustomFields(): CustomField[] {
+    return this.customFields?.filter(f => f.is_required) || [];
+  }
+
+  hasRequiredCustomFieldsEmpty(): boolean {
+    return this.getRequiredCustomFields().some(f => !f.field_value || f.field_value.trim().length === 0);
   }
 
   // Validation methods

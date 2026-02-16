@@ -4,6 +4,7 @@
  */
 
 import { CategoryType } from '../../domain/entities/category.entity';
+import { CustomFieldRequest } from '../../domain/repositories/client.repository';
 
 export interface CategoryApiModel {
   id: number;
@@ -52,6 +53,8 @@ export interface ClientApiModel {
   categories_count?: number;
   categories_summary?: CategorySummaryApiModel[];
   categories?: CategoryApiModel[];
+  // Custom fields
+  custom_fields?: CustomFieldRequest[];
 }
 
 export interface CreateClientApiRequest {
@@ -78,6 +81,7 @@ export interface UpdateClientApiRequest {
   website?: string;
   notes?: string;
   category_ids?: number[];
+  custom_fields?: CustomFieldRequest[];
 }
 
 export interface ClientApiResponse {

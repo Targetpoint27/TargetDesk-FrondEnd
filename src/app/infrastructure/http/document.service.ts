@@ -15,7 +15,10 @@ import {
   CreateDocumentRequest,
   UpdateDocumentRequest,
   DocumentVersion,
-  EntityType
+  EntityType,
+  DocumentFolder,
+  CreateFolderRequest,
+  FolderResponse
 } from '../../domain/entities/document.entity';
 import { DocumentRepository, UploadOptions, UploadProgress } from '../../domain/repositories/document.repository';
 
@@ -262,6 +265,40 @@ export class DocumentHttpService extends DocumentRepository {
   }
 
   /**
+   * List folders for entity
+   */
+  getFolders(entityId: number): Observable<DocumentFolder[]> {
+    const endpoint = this.buildEndpoint(entityId, 'folders');
+
+    return this.apiService.get<FolderResponse>(endpoint).pipe(
+      map(response => {
+        if (response.success) {
+          return response.data.folders;
+        }
+        throw new Error('Erreur lors du chargement des dossiers');
+      }),
+      catchError(this.handleError('getting folders'))
+    );
+  }
+
+  /**
+   * Create a new folder
+   */
+  createFolder(entityId: number, folderRequest: CreateFolderRequest): Observable<DocumentFolder> {
+    const endpoint = this.buildEndpoint(entityId, 'folders');
+
+    return this.apiService.post<any>(endpoint, folderRequest).pipe(
+      map(response => {
+        if (response.success) {
+          return response.data;
+        }
+        throw new Error(response.message || 'Erreur lors de la création du dossier');
+      }),
+      catchError(this.handleError('creating folder'))
+    );
+  }
+
+  /**
    * Build endpoint for entity (relative to API base URL)
    */
   protected override buildEndpoint(entityId: number, path: string = ''): string {
@@ -288,6 +325,12 @@ export class DocumentHttpService extends DocumentRepository {
       }
       if (filters.latest_only !== undefined) {
         params['latest_only'] = filters.latest_only.toString();
+      }
+      if (filters.folder_path) {
+        params['folder_path'] = filters.folder_path;
+      }
+      if (filters.search) {
+        params['search'] = filters.search;
       }
     }
 
@@ -339,6 +382,10 @@ export class DocumentHttpService extends DocumentRepository {
 
     if (request.description) {
       formData.append('description', request.description);
+    }
+
+    if (request.folder_path) {
+      formData.append('folder_path', request.folder_path);
     }
 
     if (request.category) {

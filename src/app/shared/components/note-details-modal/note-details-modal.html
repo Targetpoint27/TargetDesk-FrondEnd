@@ -1,0 +1,65 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="onClose()">
+  <div class="modal-container note-details-modal" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="modal-header">
+      <h3>Détails de la note</h3>
+      <button type="button" class="btn-close" (click)="onClose()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
+          <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="modal-content">
+      @if (note) {
+        <div class="note-details-section">
+          <div class="detail-item">
+            <span class="label">Titre:</span>
+            <span class="value">{{ note.title }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Type:</span>
+            <span class="value">{{ getTypeLabel(note.type) }}</span>
+            @if (note.is_pinned) {
+              <span class="value badge pinned-badge">Épinglée</span>
+            }
+          </div>
+          <div class="detail-item full-width">
+            <span class="label">Contenu:</span>
+            <p class="value content-text">{{ note.content }}</p>
+          </div>
+          <div class="detail-item">
+            <span class="label">Créée par:</span>
+            <span class="value">
+              <span class="user-avatar">{{ getUserInitials(note.user.name) }}</span>
+              {{ note.user.name }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Date de création:</span>
+            <span class="value">{{ formatDate(note.created_at) }}</span>
+          </div>
+          @if (note.attachments_count > 0) {
+            <div class="detail-item">
+              <span class="label">Pièces jointes:</span>
+              <span class="value">{{ note.attachments_count }}</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <p>Aucune note sélectionnée.</p>
+        </div>
+      }
+    </div>
+
+    <!-- Actions -->
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="onClose()">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>

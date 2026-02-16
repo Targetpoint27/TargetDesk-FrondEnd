@@ -7,6 +7,7 @@ import { PERMISSIONS } from '../../../../domain/models/permission.models';
 
 import { ClientEntity } from '../../../../domain/entities/client.entity';
 import { ContactEntity } from '../../../../domain/entities/contact.entity';
+import { ClientNote } from '../../../../domain/models/crm.models'; // Import ClientNote
 import { GetClientByIdUseCase } from '../../../../domain/use-cases/client/get-client-by-id.use-case';
 import { GetClientContactsUseCase } from '../../../../domain/use-cases/contact/get-client-contacts.use-case';
 import { DeleteContactUseCase } from '../../../../domain/use-cases/contact/delete-contact.use-case';
@@ -197,14 +198,7 @@ import { ClientDocumentsComponent } from '../../../../shared/components/client-d
                 <div class="quick-actions-card">
                   <h3>Actions rapides</h3>
                   <div class="quick-actions-grid">
-                    @if (canCreateCall$ | async) {
-                      <button class="quick-action" (click)="callClient()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" stroke="currentColor" stroke-width="2"/>
-                        </svg>
-                        <span>Appeler</span>
-                      </button>
-                    }
+  
                     <button class="quick-action" (click)="emailClient()">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="2"/>
@@ -308,25 +302,41 @@ import { ClientDocumentsComponent } from '../../../../shared/components/client-d
                       </div>
                     </div>
 
-                    <!-- Notes Card -->
-                    <div class="info-card" *ngIf="client()?.notes">
-                      <div class="info-section">
-                        <h3>Notes</h3>
-                        <div class="notes-text">{{ client()?.notes }}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Système Section - Full width -->
-                  <div class="info-card">
-                    <div class="info-section system-info">
-                      <h3>Informations système</h3>
-                      <div class="system-grid">
-                        <div class="system-item" *ngIf="client()?.createdBy">
-                          <span class="label">Créé par</span>
-                          <span class="value">{{ client()?.getCreatorName() }}</span>
-                        </div>
-                        <div class="system-item">
+                                         <!-- Notes Card -->
+                                        <div class="info-card" *ngIf="client()?.notes">
+                                          <div class="info-section">
+                                            <h3>Notes</h3>
+                                            <div class="notes-text">{{ client()?.notes }}</div>
+                                          </div>
+                                        </div>
+                    
+                                                            <!-- Custom Fields Card -->
+                                                            <div class="info-card" *ngIf="client()?.customFields && client()!.customFields.length > 0">
+                                                              <div class="info-section">
+                                                                <h3>Champs personnalisés</h3>
+                                                                <div class="info-grid">
+                                                                  @for (field of client()?.customFields; track field.id) {
+                                                                                                <div class="info-row">
+                                                                                                  <span class="label">Nom du champ:</span>
+                                                                                                  <span class="value">{{ field.field_label }}</span>
+                                                                                                </div>
+                                                                                                <div class="info-row">
+                                                                                                  <span class="label">Valeur:</span>
+                                                                                                  <span class="value">{{ field.formatted_value }}</span>
+                                                                                                </div>                                                                  }
+                                                                </div>
+                                                              </div>
+                                                            </div>                                      </div>
+                    
+                                      <!-- Système Section - Full width -->
+                                      <div class="info-card">
+                                        <div class="info-section system-info">
+                                          <h3>Informations système</h3>
+                                          <div class="system-grid">
+                                            <div class="system-item" *ngIf="client()?.createdBy">
+                                              <span class="label">Créé par</span>
+                                              <span class="value">{{ client()?.getCreatorName() }}</span>
+                                            </div>                        <div class="system-item">
                           <span class="label">Créé le</span>
                           <span class="value">{{ formatDate(client()?.createdAt || null) }}</span>
                         </div>
@@ -466,17 +476,19 @@ import { ClientDocumentsComponent } from '../../../../shared/components/client-d
             }
 
             <!-- Notes Tab -->
-            @if (activeTab === 'notes' && (canCreateNote$ | async)) {
+            <!-- @if (activeTab === 'notes' && (canCreateNote$ | async)) { -->
               <div class="notes-content">
                 <div class="section-card">
                   <app-client-notes
                     [clientId]="client()?.id || 0"
                     (addNoteRequested)="addNote()"
-                    (addAppointmentRequested)="scheduleAppointment()">
+                    (addAppointmentRequested)="scheduleAppointment()"
+                    [canEditNote]="canUpdateNote$ | async"
+                    (editNoteRequested)="onEditNoteFromNotes($event)">
                   </app-client-notes>
                 </div>
               </div>
-            }
+            <!-- } -->
 
             <!-- Calls Tab -->
             @if (activeTab === 'calls' && (canCreateCall$ | async)) {
@@ -558,10 +570,12 @@ import { ClientDocumentsComponent } from '../../../../shared/components/client-d
       @if (showNoteFormModal) {
         <app-note-form-modal
           [isOpen]="showNoteFormModal"
+          [note]="editingNote"
           [clientId]="client()?.id || null"
+          [readOnly]="false"
           (close)="onCloseNoteFormModal()"
-          (noteCreated)="onNoteCreated()">
-        </app-note-form-modal>
+          (noteCreated)="onNoteCreated()"
+          (noteUpdated)="onNoteUpdated($event)" />
       }
 
       <!-- Call Form Modal -->
@@ -607,6 +621,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   canCreateAppointment$!: Observable<boolean>;
   canManageDocuments$!: Observable<boolean>;
   canViewCategories$!: Observable<boolean>;
+  canUpdateNote$!: Observable<boolean>; // New permission observable
 
   // ViewChild pour accéder aux composants enfants
   @ViewChild(ClientNotesComponent) notesComponent!: ClientNotesComponent;
@@ -632,6 +647,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   showNoteFormModal = false;
   showCallFormModal = false;
   showAppointmentFormModal = false;
+  editingNote: ClientNote | null = null; // New property for editing notes
 
   // Tabs Management
   activeTab: 'overview' | 'contacts' | 'categories' | 'documents' | 'notes' | 'calls' | 'appointments' | 'timeline' = 'overview';
@@ -657,6 +673,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
     this.canCreateAppointment$ = this.permissionService.hasPermission(PERMISSIONS.CONTACTS_CREATE);
     this.canManageDocuments$ = this.permissionService.hasPermission(PERMISSIONS.DOCUMENTS_CREATE);
     this.canViewCategories$ = this.permissionService.hasPermission(PERMISSIONS.SYSTEM_VIEW);
+    this.canUpdateNote$ = this.permissionService.hasPermission(PERMISSIONS.DOCUMENTS_UPDATE);
 
     this.route.params.pipe(
       takeUntil(this.destroy$),
@@ -826,12 +843,30 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
 
   // CRM Modal Handlers
   onCloseNoteFormModal(): void {
+    console.log('onCloseNoteFormModal called.');
     this.showNoteFormModal = false;
+    this.editingNote = null; // Reset editingNote
+    console.log('showNoteFormModal set to false:', this.showNoteFormModal);
   }
 
   onNoteCreated(): void {
     this.showNoteFormModal = false;
     this.messageService.showSuccess('Note créée avec succès');
+
+    // Rafraîchir la liste des notes
+    if (this.notesComponent) {
+      this.notesComponent.loadNotes();
+    }
+
+    // Rafraîchir l'historique/timeline
+    if (this.timelineComponent) {
+      this.timelineComponent.loadTimeline();
+    }
+  }
+
+  onNoteUpdated(note: ClientNote): void {
+    this.showNoteFormModal = false;
+    this.messageService.showSuccess('Note modifiée avec succès');
 
     // Rafraîchir la liste des notes
     if (this.notesComponent) {
@@ -893,21 +928,22 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   }
 
   addNote(): void {
+    console.log('addNote called.');
     const clientData = this.client();
     if (!clientData) {
       this.messageService.showError('Aucun client sélectionné');
       return;
     }
+    this.editingNote = null; // Ensure no note is pre-filled when adding
     this.showNoteFormModal = true;
+    console.log('showNoteFormModal set to true (addNote):', this.showNoteFormModal);
   }
 
-  callClient(): void {
-    const clientData = this.client();
-    if (clientData?.phone) {
-      this.showCallFormModal = true;
-    } else {
-      this.messageService.showInfo('Aucun numéro de téléphone disponible');
-    }
+  onEditNoteFromNotes(note: ClientNote): void {
+    console.log('onEditNoteFromNotes called. Note:', note);
+    this.editingNote = note;
+    this.showNoteFormModal = true;
+    console.log('showNoteFormModal set to true (onEditNoteFromNotes):', this.showNoteFormModal);
   }
 
   retryLoading(): void {

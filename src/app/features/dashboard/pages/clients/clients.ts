@@ -21,7 +21,7 @@ import { AuthFacade } from '../../../auth/auth.facade';
 import { ClientEntity } from '../../../../domain/entities/client.entity';
 import { CategoryEntity } from '../../../../domain/entities/category.entity';
 import { ContactEntity } from '../../../../domain/entities/contact.entity';
-import { CreateClientRequest, UpdateClientRequest } from '../../../../domain/repositories/client.repository';
+import { CreateClientRequest, UpdateClientRequest, CustomFieldRequest } from '../../../../domain/repositories/client.repository';
 import { UserEntity } from '../../../../domain/entities/user.entity';
 import { AppError } from '../../../../core/error/error.service';
 import { SimpleNotificationService } from '../../../../shared/services/simple-notification.service';
@@ -94,6 +94,9 @@ export class Clients implements OnInit, OnDestroy {
   availableCategories: CategoryEntity[] = [];
   searchQuery = '';
   editingClient: ClientEntity | null = null;
+
+  // Custom fields management
+  customFields: CustomFieldRequest[] = [];
 
   // Nouveaux filtres pour la recherche avancée
   sectorFilter = '';
@@ -211,7 +214,7 @@ export class Clients implements OnInit, OnDestroy {
   }
 
   onCreateClient(): void {
-    if (this.clientForm.valid) {
+    if (this.isFormValid) {
       const currentUser = this.authFacade.getCurrentUser();
       if (!currentUser) {
         console.error('User not authenticated');
@@ -228,7 +231,8 @@ export class Clients implements OnInit, OnDestroy {
         sector: this.clientForm.value.sector?.trim() || undefined,
         website: this.clientForm.value.website?.trim() || undefined,
         notes: this.clientForm.value.notes?.trim() || undefined,
-        category_ids: this.getSelectedCategoryIds()
+        category_ids: this.getSelectedCategoryIds(),
+        custom_fields: this.getCustomFieldsData()
       };
 
       this.clientFacade.createClient(clientData, currentUser.id).pipe(
@@ -369,6 +373,9 @@ export class Clients implements OnInit, OnDestroy {
       notes: client.notes || ''
     });
 
+    // Load custom fields
+    this.loadClientCustomFields(client);
+
     // Si les catégories ne sont pas déjà chargées, les récupérer du backend
     if (!client.categories || client.categories.length === 0) {
       console.log('Categories not loaded, fetching client details...');
@@ -380,7 +387,7 @@ export class Clients implements OnInit, OnDestroy {
   }
 
   onUpdateClient(): void {
-    if (this.clientForm.valid && this.editingClient) {
+    if (this.isFormValid && this.editingClient) {
       const currentUser = this.authFacade.getCurrentUser();
       if (!currentUser) {
         console.error('User not authenticated');
@@ -397,7 +404,8 @@ export class Clients implements OnInit, OnDestroy {
         sector: this.clientForm.value.sector?.trim() || undefined,
         website: this.clientForm.value.website?.trim() || undefined,
         notes: this.clientForm.value.notes?.trim() || undefined,
-        category_ids: this.getSelectedCategoryIds()
+        category_ids: this.getSelectedCategoryIds(),
+        custom_fields: this.getCustomFieldsData()
       };
 
       this.clientFacade.updateClient(this.editingClient.id, updateData, currentUser.id).pipe(
@@ -484,6 +492,9 @@ export class Clients implements OnInit, OnDestroy {
 
           // Load categories
           this.loadClientCategories(client);
+
+          // Load custom fields
+          this.loadClientCustomFields(client);
         } else {
           console.log('Client not found');
           this.selectedCategoryIds = [];
@@ -687,7 +698,7 @@ export class Clients implements OnInit, OnDestroy {
     return this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
       type: ['entreprise', [Validators.required]],
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.email]],
       phone: ['', [Validators.pattern(/^[\d\s\-\+\(\)\.]{8,20}$/)]],
       address: ['', [Validators.maxLength(500)]],
       siret: ['', [Validators.pattern(/^\d{14}$/)]],
@@ -715,6 +726,8 @@ export class Clients implements OnInit, OnDestroy {
     while (categoriesArray.length) {
       categoriesArray.removeAt(0);
     }
+    // Reset custom fields
+    this.customFields = [];
     this.clientForm.markAsUntouched();
   }
 
@@ -744,6 +757,60 @@ export class Clients implements OnInit, OnDestroy {
 
   getSelectedCategoryIds(): number[] {
     return this.selectedCategoryIds.length > 0 ? this.selectedCategoryIds : this.categoriesFormArray.value || [];
+  }
+
+  // Custom fields management methods
+  addCustomField(): void {
+    this.customFields.push({
+      field_key: '',
+      field_value: ''
+    });
+  }
+
+  removeCustomField(index: number): void {
+    if (this.customFields.length > 0 && index >= 0 && index < this.customFields.length) {
+      this.customFields.splice(index, 1);
+    }
+  }
+
+  updateCustomFieldKey(index: number, key: string): void {
+    if (this.customFields[index]) {
+      this.customFields[index].field_key = key;
+    }
+  }
+
+  updateCustomFieldValue(index: number, value: string): void {
+    if (this.customFields[index]) {
+      this.customFields[index].field_value = value;
+    }
+  }
+
+  getCustomFieldsData(): CustomFieldRequest[] {
+    return this.customFields.filter(field =>
+      field.field_key && field.field_key.trim() &&
+      field.field_value && field.field_value.trim()
+    ).map(field => ({
+      field_key: field.field_key.trim(),
+      field_value: field.field_value.trim()
+    }));
+  }
+
+  private loadClientCustomFields(client: ClientEntity): void {
+    // Load custom fields from client entity
+    if (client.customFields && client.customFields.length > 0) {
+      this.customFields = client.customFields.map(field => ({
+        field_key: field.field_key,
+        field_value: field.field_value
+      }));
+    } else {
+      this.customFields = [];
+    }
+    // Force change detection to update the UI
+    this.cdr.detectChanges();
+  }
+
+  trackByIndex(index: number, item: any): number {
+    return index;
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
@@ -931,6 +998,27 @@ export class Clients implements OnInit, OnDestroy {
 
   getNextPage(state: ClientsState): number {
     return state.pagination ? state.pagination.currentPage + 1 : 1;
+  }
+
+  // Form validation including custom fields
+  get isFormValid(): boolean {
+    // Check basic form validation
+    if (!this.clientForm.valid) {
+      return false;
+    }
+
+    // Check custom fields validation - fields must have both key and value if one is filled
+    for (const field of this.customFields) {
+      const hasKey = field.field_key && field.field_key.trim().length > 0;
+      const hasValue = field.field_value && field.field_value.trim().length > 0;
+
+      // If one is filled but not the other, form is invalid
+      if (hasKey !== hasValue) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   // Getters for template pagination

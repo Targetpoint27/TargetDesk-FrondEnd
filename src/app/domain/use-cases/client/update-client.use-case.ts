@@ -87,14 +87,10 @@ export class UpdateClientUseCase {
     }
 
     // Email validation (if provided)
-    if (request.email !== undefined) {
-      if (!request.email || request.email.trim().length === 0) {
-        errors['email'] = ['L\'email est obligatoire'];
-      } else {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(request.email)) {
-          errors['email'] = ['L\'email n\'est pas valide'];
-        }
+    if (request.email !== undefined && request.email && request.email.trim().length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(request.email)) {
+        errors['email'] = ['L\'email n\'est pas valide'];
       }
     }
 

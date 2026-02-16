@@ -34,8 +34,32 @@ export interface DocumentOwner {
 }
 
 export type DocumentCategory = 'contrat' | 'devis' | 'facture' | 'autre';
-export type DocumentSortField = 'name' | 'date' | 'type' | 'category' | 'size';
+export type DocumentSortField = 'name' | 'date' | 'type' | 'category' | 'size' | 'folder';
 export type SortOrder = 'asc' | 'desc';
+
+// Folder management interfaces
+export interface DocumentFolder {
+  path: string;
+  name: string;
+  level: number;
+  document_count: number;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateFolderRequest {
+  folder_name: string;
+  parent_path?: string;
+  description?: string;
+}
+
+export interface FolderResponse {
+  success: boolean;
+  data: {
+    folders: DocumentFolder[];
+  };
+}
 
 export interface DocumentEntity {
   id: number;
@@ -64,6 +88,11 @@ export interface DocumentEntity {
   uploader: DocumentUploader;
   client?: DocumentOwner; // For client documents
   supplier?: DocumentOwner; // For supplier documents
+  // Folder properties
+  folder_path?: string | null;
+  folder_name?: string | null;
+  folder_level?: number;
+  legacy_category?: string | null;
 }
 
 export interface DocumentVersion {
@@ -86,13 +115,16 @@ export interface DocumentFilters {
   sort?: DocumentSortField;
   order?: SortOrder;
   latest_only?: boolean;
+  folder_path?: string;
+  search?: string;
 }
 
 export interface CreateDocumentRequest {
   file: File;
   title: string;
   description?: string;
-  category: DocumentCategory;
+  category?: DocumentCategory; // Optional for folder-based system
+  folder_path?: string; // For hierarchical folder system
 }
 
 export interface UpdateDocumentRequest {
@@ -132,7 +164,8 @@ export class Document {
     public readonly previewUrl: string,
     public readonly canPreview: boolean,
     public readonly uploader: DocumentUploader,
-    public readonly owner: DocumentOwner
+    public readonly owner: DocumentOwner,
+    public readonly folderPath: string | null // Added folderPath
   ) {}
 
   /**
@@ -164,7 +197,8 @@ export class Document {
       data.preview_url,
       data.can_preview,
       data.uploader,
-      data.client || data.supplier!
+      data.client || data.supplier!,
+      data.folder_path || null // Pass folder_path
     );
   }
 
@@ -246,7 +280,8 @@ export class Document {
       this.previewUrl,
       this.canPreview,
       this.uploader,
-      this.owner
+      this.owner,
+      this.folderPath // Include folderPath
     );
   }
 }

@@ -3,9 +3,11 @@
  * Value objects and domain events for client operations
  */
 
-// Note: CreateClientRequest and UpdateClientRequest are defined in client.repository.ts
-// We re-export them here for convenience but they are the source of truth
-export type { CreateClientRequest, UpdateClientRequest } from '../repositories/client.repository';
+// Import types from repository
+import type { CreateClientRequest, UpdateClientRequest, CustomFieldRequest } from '../repositories/client.repository';
+
+// Re-export for convenience
+export type { CreateClientRequest, UpdateClientRequest, CustomFieldRequest } from '../repositories/client.repository';
 
 // Temporary local types for avoiding circular dependencies
 interface LocalUpdateClientRequest {
@@ -18,6 +20,7 @@ interface LocalUpdateClientRequest {
   sector?: string;
   website?: string;
   notes?: string;
+  custom_fields?: CustomFieldRequest[];
 }
 
 export interface ClientSearchParams {

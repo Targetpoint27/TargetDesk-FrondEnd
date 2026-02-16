@@ -58,7 +58,9 @@ export class ClientMapper {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         pivot: cat.pivot
-      }) as any)
+      }) as any),
+      // Map custom fields
+      custom_fields: apiModel.custom_fields || []
     };
 
     return ClientEntity.create(data);
@@ -105,6 +107,7 @@ export class ClientMapper {
     if (domainRequest.website !== undefined) apiRequest.website = domainRequest.website;
     if (domainRequest.notes !== undefined) apiRequest.notes = domainRequest.notes;
     if (domainRequest.category_ids !== undefined) apiRequest.category_ids = domainRequest.category_ids;
+    if (domainRequest.custom_fields !== undefined) apiRequest.custom_fields = domainRequest.custom_fields;
 
     return apiRequest;
   }

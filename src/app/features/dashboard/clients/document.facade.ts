@@ -13,7 +13,9 @@ import {
   CreateDocumentRequest,
   UpdateDocumentRequest,
   DocumentVersion,
-  DocumentStatistics
+  DocumentStatistics,
+  DocumentFolder,
+  CreateFolderRequest
 } from '../../../domain/entities/document.entity';
 import { UploadOptions } from '../../../domain/repositories/document.repository';
 
@@ -40,11 +42,13 @@ export interface DocumentsState {
   statistics: DocumentStatistics;
   selectedDocument: Document | null;
   isLoading: boolean;
+  isLoadingFolders: boolean;
   isUploading: boolean;
   uploadProgress: number;
   error: string | null;
   filters: DocumentFilters;
   searchTerm: string;
+  folders?: DocumentFolder[];
 }
 
 @Injectable({
@@ -61,11 +65,13 @@ export class ClientDocumentFacade {
     },
     selectedDocument: null,
     isLoading: false,
+    isLoadingFolders: false,
     isUploading: false,
     uploadProgress: 0,
     error: null,
     filters: { latest_only: true },
-    searchTerm: ''
+    searchTerm: '',
+    folders: []
   });
 
   public readonly state$ = this.stateSubject.asObservable();
@@ -433,6 +439,41 @@ export class ClientDocumentFacade {
   }
 
   /**
+   * Load folders for client
+   */
+  loadFolders(clientId: number): Observable<DocumentFolder[]> {
+    this.updateState({ isLoadingFolders: true, error: null });
+
+    return this.documentService.getFolders(clientId).pipe(
+      tap(folders => {
+        this.updateState({ folders, isLoadingFolders: false });
+      }),
+      catchError(error => {
+        this.updateState({ error: error.message, isLoadingFolders: false });
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Create a new folder
+   */
+  createFolder(clientId: number, request: CreateFolderRequest): Observable<DocumentFolder> {
+    this.updateState({ error: null });
+
+    return this.documentService.createFolder(clientId, request).pipe(
+      tap(newFolder => {
+        const currentFolders = this.currentState.folders || [];
+        this.updateState({ folders: [...currentFolders, newFolder] });
+      }),
+      catchError(error => {
+        this.updateState({ error: error.message });
+        throw error;
+      })
+    );
+  }
+
+  /**
    * Clear error
    */
   clearError(): void {
@@ -453,11 +494,13 @@ export class ClientDocumentFacade {
       },
       selectedDocument: null,
       isLoading: false,
+      isLoadingFolders: false,
       isUploading: false,
       uploadProgress: 0,
       error: null,
       filters: { latest_only: true },
-      searchTerm: ''
+      searchTerm: '',
+      folders: []
     });
   }
 

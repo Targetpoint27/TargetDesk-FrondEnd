@@ -545,6 +545,114 @@
               </div>
             </div>
 
+            <!-- Champs personnalisés -->
+            <div class="form-section custom-fields-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <svg class="section-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                  </svg>
+                  <h3>Champs personnalisés</h3>
+                  <span class="section-badge">{{ customFields.length }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="add-field-btn"
+                  (click)="addCustomField()"
+                  title="Ajouter un nouveau champ">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                  </svg>
+                  Ajouter
+                </button>
+              </div>
+
+              @if (customFields.length === 0) {
+                <div class="empty-state">
+                  <div class="empty-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="9" y1="9" x2="15" y2="15"/>
+                      <line x1="15" y1="9" x2="9" y2="15"/>
+                    </svg>
+                  </div>
+                  <h4>Aucun champ personnalisé</h4>
+                  <p>Personnalisez vos fiches clients avec des champs spécifiques à votre activité</p>
+                  <button
+                    type="button"
+                    class="add-first-field-btn"
+                    (click)="addCustomField()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/>
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Créer mon premier champ
+                  </button>
+                </div>
+              } @else {
+                <div class="custom-fields-grid">
+                  @for (field of customFields; track trackByIndex($index, field); let i = $index) {
+                    <div class="custom-field-card" [class.has-content]="field.field_key || field.field_value">
+                      <div class="field-header">
+                        <div class="field-number">{{ i + 1 }}</div>
+                        <button
+                          type="button"
+                          class="remove-field-btn"
+                          (click)="removeCustomField(i)"
+                          title="Supprimer ce champ">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                          </svg>
+                        </button>
+                      </div>
+
+                      <div class="field-content">
+                        <div class="field-group">
+                          <label [for]="'custom_key_' + i" class="field-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                              <path d="M9 12l2 2 4-4"/>
+                              <circle cx="12" cy="12" r="9"/>
+                            </svg>
+                            Nom du champ
+                          </label>
+                          <input
+                            [id]="'custom_key_' + i"
+                            type="text"
+                            class="field-input key-input"
+                            [value]="field.field_key"
+                            (input)="updateCustomFieldKey(i, $any($event.target).value)"
+                            placeholder="Ex: Code client, Secteur...">
+                        </div>
+
+                        <div class="field-group">
+                          <label [for]="'custom_value_' + i" class="field-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                              <polyline points="14,2 14,8 20,8"/>
+                              <line x1="16" y1="13" x2="8" y2="13"/>
+                              <line x1="16" y1="17" x2="8" y2="17"/>
+                              <polyline points="10,9 9,9 8,9"/>
+                            </svg>
+                            Valeur
+                          </label>
+                          <input
+                            [id]="'custom_value_' + i"
+                            type="text"
+                            class="field-input value-input"
+                            [value]="field.field_value"
+                            (input)="updateCustomFieldValue(i, $any($event.target).value)"
+                            placeholder="Saisissez la valeur">
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
             <!-- Actions -->
             <div class="form-actions d-flex justify-content-end gap-2">
               <button
@@ -557,7 +665,7 @@
               <button
                 type="submit"
                 class="btn btn-primary"
-                [disabled]="!clientForm.valid || isCreatingClient || isUpdatingClient">
+                [disabled]="!isFormValid || isCreatingClient || isUpdatingClient">
                 <span class="spinner-border spinner-border-sm me-1"
                       [style.display]="(isCreatingClient || isUpdatingClient) ? 'inline-block' : 'none'"></span>
                 @if (editingClient) {

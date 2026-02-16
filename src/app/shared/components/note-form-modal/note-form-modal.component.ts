@@ -40,8 +40,9 @@ import { MessageService } from '../../services/message.service';
                 required
                 maxlength="255"
                 placeholder="Titre de la note..."
-                autocomplete="off">
-              <div *ngIf="titleControl.invalid && titleControl.touched" class="form-error">
+                autocomplete="off"
+                [disabled]="readOnly">
+              <div *ngIf="titleControl.invalid && titleControl.touched && !readOnly" class="form-error">
                 <div *ngIf="titleControl.errors?.['required']">Le titre est obligatoire</div>
               </div>
             </div>
@@ -50,7 +51,7 @@ import { MessageService } from '../../services/message.service';
             <div class="form-row">
               <div class="form-group">
                 <label for="type" class="form-label">Type</label>
-                <select id="type" name="type" class="form-control" [(ngModel)]="formData.type">
+                <select id="type" name="type" class="form-control" [(ngModel)]="formData.type" [disabled]="readOnly">
                   <option value="normal">Normale</option>
                   <option value="important">Importante</option>
                   <option value="private">Privée</option>
@@ -63,7 +64,8 @@ import { MessageService } from '../../services/message.service';
                     type="checkbox"
                     id="is_pinned"
                     name="is_pinned"
-                    [(ngModel)]="formData.is_pinned">
+                    [(ngModel)]="formData.is_pinned"
+                    [disabled]="readOnly">
                   <label for="is_pinned" class="checkbox-label">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path d="M16 4v6l3 7v1H5v-1l3-7V4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2z" stroke="currentColor" stroke-width="2"/>
@@ -87,21 +89,28 @@ import { MessageService } from '../../services/message.service';
                 required
                 rows="8"
                 placeholder="Décrivez le contenu de votre note..."
-                autocomplete="off"></textarea>
-              <div *ngIf="contentControl.invalid && contentControl.touched" class="form-error">
+                autocomplete="off"
+                [disabled]="readOnly"></textarea>
+              <div *ngIf="contentControl.invalid && contentControl.touched && !readOnly" class="form-error">
                 <div *ngIf="contentControl.errors?.['required']">Le contenu est obligatoire</div>
               </div>
             </div>
 
             <!-- Actions -->
             <div class="modal-actions">
-              <button type="button" class="btn btn-secondary" (click)="onClose()" [disabled]="isSubmitting()">
-                Annuler
-              </button>
-              <button type="submit" class="btn btn-primary" [disabled]="noteForm.invalid || isSubmitting()">
-                <span *ngIf="isSubmitting()" class="spinner"></span>
-                {{ isSubmitting() ? 'Enregistrement...' : (note ? 'Modifier' : 'Créer') }}
-              </button>
+              @if (readOnly) {
+                <button type="button" class="btn btn-secondary" (click)="onClose()">
+                  Fermer
+                </button>
+              } @else {
+                <button type="button" class="btn btn-secondary" (click)="onClose()" [disabled]="isSubmitting()">
+                  Annuler
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="noteForm.invalid || isSubmitting()">
+                  <span *ngIf="isSubmitting()" class="spinner"></span>
+                  {{ isSubmitting() ? 'Enregistrement...' : (note ? 'Modifier' : 'Créer') }}
+                </button>
+              }
             </div>
           </form>
         </div>
@@ -114,6 +123,7 @@ export class NoteFormModalComponent implements OnInit {
   @Input() isOpen = false;
   @Input() note: ClientNote | null = null;
   @Input() clientId: number | null = null;
+  @Input() readOnly: boolean = false; // New input property
   @Output() close = new EventEmitter<void>();
   @Output() noteCreated = new EventEmitter<ClientNote>();
   @Output() noteUpdated = new EventEmitter<ClientNote>();
@@ -213,6 +223,15 @@ export class NoteFormModalComponent implements OnInit {
       content: '',
       type: 'normal',
       is_pinned: false
+    };
+  }
+
+  private populateFormData(note: ClientNote): void {
+    this.formData = {
+      title: note.title,
+      content: note.content,
+      type: note.type,
+      is_pinned: note.is_pinned
     };
   }
 }

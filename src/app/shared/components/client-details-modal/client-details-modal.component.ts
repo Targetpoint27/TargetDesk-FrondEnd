@@ -105,6 +105,19 @@ import { ClientTimelineComponent } from '../client-timeline/client-timeline.comp
                 <div class="notes-text">{{ client.notes }}</div>
               </div>
 
+              <!-- Champs personnalisés -->
+              <div class="info-section" *ngIf="client.customFields && client.customFields.length > 0">
+                <h3>Champs personnalisés</h3>
+                <div class="custom-fields-display">
+                  <div *ngFor="let field of client.customFields" class="custom-field-item">
+                    <div class="info-row">
+                      <span class="label">{{ field.field_key }}</span>
+                      <span class="value">{{ field.field_value }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Système -->
               <div class="info-section system-info">
                 <div class="system-grid">
