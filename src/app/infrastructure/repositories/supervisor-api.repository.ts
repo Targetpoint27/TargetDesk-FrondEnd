@@ -37,11 +37,6 @@ export class SupervisorApiRepository extends SupervisorRepository {
       .pipe(map(res => res.data));
   }
 
-  getTeamComplaints(): Observable<SupervisorComplaint[]> {
-    return this.apiService.get<ApiResponse<SupervisorComplaint[]>>(`${this.BASE_PATH}/complaints`)
-      .pipe(map(res => res.data));
-  }
-
   reassignCall(callId: number, data: ReassignCallRequest): Observable<Call> {
     return this.apiService.put<ApiResponse<Call>>(`${this.BASE_PATH}/calls/${callId}/reassign`, data)
       .pipe(map(res => res.data));
@@ -61,5 +56,21 @@ export class SupervisorApiRepository extends SupervisorRepository {
     return this.apiService.post<void>(`/call-center/supervisor/agents/${agentId}/notify`, { 
       call_id: callId 
     });
+  }
+
+  override getTeamComplaints(): Observable<SupervisorComplaint[]> {
+    return this.apiService.get<SupervisorComplaint[]>('/call-center/supervisor/complaints');
+  }
+
+  override escalateComplaint(id: number): Observable<void> {
+    return this.apiService.post<void>(`/call-center/supervisor/complaints/${id}/escalate`, {});
+  }
+
+  override validateResolution(id: number): Observable<void> {
+    return this.apiService.post<void>(`/call-center/supervisor/complaints/${id}/validate`, {});
+  }
+
+  override closeComplaint(id: number): Observable<void> {
+    return this.apiService.post<void>(`/call-center/supervisor/complaints/${id}/close`, {});
   }
 }

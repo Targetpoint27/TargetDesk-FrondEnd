@@ -178,7 +178,12 @@ export const routes: Routes = [
             path: 'stats',
             loadComponent: () => import('./features/dashboard/pages/supervisor/stats/stats.component')
               .then(c => c.SupervisorStatsComponent)
-          }
+          },
+          {
+            path: 'complaints',
+            loadComponent: () => import('./features/dashboard/pages/supervisor/complaints/complaints.component')
+              .then(c => c.SupervisorComplaintsComponent)
+          },
         ]
       }
     ]

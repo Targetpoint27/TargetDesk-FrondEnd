@@ -1,82 +1,174 @@
-<div class="p-6 space-y-6" *ngIf="report$ | async as data">
-  <div class="flex justify-between items-center">
-    <h1 class="text-2xl font-bold text-slate-800">Mes appels du {{ data.date | date:'dd/MM/yyyy' }}</h1>
-    <div class="flex space-x-2">
-      <button (click)="onViewYesterday()" class="btn btn-outline-primary btn-sm">
-        <i class="bi bi-arrow-left mr-1"></i> Voir hier
+<div class="report-page" *ngIf="report$ | async as data">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1 class="page-title">Mes appels du {{ data.date | date:'dd/MM/yyyy' }}</h1>
+      <p class="page-subtitle">Rapport d'activité journalier</p>
+    </div>
+    <div class="page-header-actions">
+      <button (click)="onViewYesterday()" class="btn-yesterday">
+        <i class="bi bi-arrow-left"></i>
+        <span>Voir hier</span>
       </button>
-      <button (click)="exportToExcel(data)" class="btn btn-success btn-sm">
-        <i class="bi bi-file-earmark-excel mr-1"></i> Excel
+      <button (click)="exportToExcel(data)" class="btn-export btn-export--excel">
+        <i class="bi bi-file-earmark-excel"></i>
+        <span>Excel</span>
       </button>
-      <button (click)="exportToPDF(data)" class="btn btn-danger btn-sm">
-        <i class="bi bi-file-earmark-pdf mr-1"></i> PDF
+      <button (click)="exportToPDF(data)" class="btn-export btn-export--pdf">
+        <i class="bi bi-file-earmark-pdf"></i>
+        <span>PDF</span>
       </button>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-      <p class="text-xs text-slate-500 uppercase font-bold">Taités</p>
-      <h3 class="text-2xl font-black text-blue-600">{{ data.summary.total_treated }}</h3>
+  <!-- KPI cards -->
+  <div class="kpi-grid">
+
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--blue"></div>
+      <div class="kpi-icon kpi-icon--blue">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+      <span class="kpi-label">Traités</span>
+      <span class="kpi-value kpi-value--blue">{{ data.summary.total_treated }}</span>
     </div>
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-      <p class="text-xs text-slate-500 uppercase font-bold">Clôturés</p>
-      <h3 class="text-2xl font-black text-emerald-600">{{ data.summary.total_closed }}</h3>
+
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--green"></div>
+      <div class="kpi-icon kpi-icon--green">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <span class="kpi-label">Clôturés</span>
+      <span class="kpi-value kpi-value--green">{{ data.summary.total_closed }}</span>
     </div>
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-      <p class="text-xs text-slate-500 uppercase font-bold">En cours</p>
-      <h3 class="text-2xl font-black text-amber-600">{{ data.summary.total_in_progress }}</h3>
+
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--amber"></div>
+      <div class="kpi-icon kpi-icon--amber">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <span class="kpi-label">En cours</span>
+      <span class="kpi-value kpi-value--amber">{{ data.summary.total_in_progress }}</span>
     </div>
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-      <p class="text-xs text-slate-500 uppercase font-bold">Temps Total</p>
-      <h3 class="text-2xl font-black text-slate-800">{{ data.summary.total_time_seconds | number }}s</h3>
+
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--slate"></div>
+      <div class="kpi-icon kpi-icon--slate">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <span class="kpi-label">Temps Total</span>
+      <span class="kpi-value">{{ data.summary.total_time_seconds | number }}s</span>
     </div>
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-      <p class="text-xs text-slate-500 uppercase font-bold">Temps Moyen</p>
-      <h3 class="text-2xl font-black text-indigo-600">{{ data.summary.avg_time_per_call }}</h3>
+
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--indigo"></div>
+      <div class="kpi-icon kpi-icon--indigo">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <span class="kpi-label">Temps Moyen</span>
+      <span class="kpi-value kpi-value--indigo">{{ data.summary.avg_time_per_call }}</span>
     </div>
+
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-      <h4 class="text-sm font-bold text-slate-700 mb-4 uppercase">Répartition par Statut</h4>
-      <canvas baseChart 
-              [data]="{ labels: Object.keys(data.graphs.by_status), datasets: [{ data: Object.values(data.graphs.by_status) }] }"
-              [type]="doughnutChartType"></canvas>
+  <!-- Charts -->
+  <div class="charts-grid">
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-accent"></div>
+        <h4 class="chart-title">Répartition par Statut</h4>
+      </div>
+      <div class="chart-body chart-body--doughnut">
+        <canvas baseChart
+                [data]="{ labels: Object.keys(data.graphs.by_status), datasets: [{ data: Object.values(data.graphs.by_status) }] }"
+                [type]="doughnutChartType"></canvas>
+      </div>
     </div>
-    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-      <h4 class="text-sm font-bold text-slate-700 mb-4 uppercase">Répartition par Type</h4>
-      <canvas baseChart 
-              [data]="{ labels: Object.keys(data.graphs.by_type), datasets: [{ data: Object.values(data.graphs.by_type) }] }"
-              [type]="barChartType"></canvas>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-accent chart-accent--bar"></div>
+        <h4 class="chart-title">Répartition par Type</h4>
+      </div>
+      <div class="chart-body">
+        <canvas baseChart
+                [data]="{ labels: Object.keys(data.graphs.by_type), datasets: [{ data: Object.values(data.graphs.by_type) }] }"
+                [type]="barChartType"></canvas>
+      </div>
     </div>
+
   </div>
 
-  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-    <table class="w-full text-left">
-      <thead class="bg-slate-50 border-b">
-        <tr>
-          <th class="px-6 py-3 text-xs font-bold text-slate-400 uppercase">Heure</th>
-          <th class="px-6 py-3 text-xs font-bold text-slate-400 uppercase">Type</th>
-          <th class="px-6 py-3 text-xs font-bold text-slate-400 uppercase">Appelant</th>
-          <th class="px-6 py-3 text-xs font-bold text-slate-400 uppercase">Objet</th>
-          <th class="px-6 py-3 text-xs font-bold text-slate-400 uppercase">Statut</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100">
-        <tr *ngFor="let call of data.calls" class="hover:bg-slate-50">
-          <td class="px-6 py-4 text-sm font-medium">{{ call.time }}</td>
-          <td class="px-6 py-4 text-sm uppercase">{{ call.type }}</td>
-          <td class="px-6 py-4 text-sm font-semibold">{{ call.caller }}</td>
-          <td class="px-6 py-4 text-sm text-slate-500">{{ call.object }}</td>
-          <td class="px-6 py-4">
-            <span class="px-2 py-1 rounded text-[10px] font-bold uppercase" 
-                  [ngClass]="call.status === 'cloture' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'">
-              {{ call.status }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- Calls table -->
+  <div class="table-card">
+
+    <div class="table-card-header">
+      <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+      </svg>
+      <h3 class="table-card-title">Détail des appels</h3>
+      <span class="table-count">{{ data.calls.length }} appels</span>
+    </div>
+
+    <!-- Desktop table -->
+    <div class="table-wrap">
+      <table class="calls-table">
+        <thead>
+          <tr>
+            <th>Heure</th>
+            <th>Type</th>
+            <th>Appelant</th>
+            <th>Objet</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let call of data.calls" class="table-row">
+            <td class="td-time">{{ call.time }}</td>
+            <td class="td-type">{{ call.type }}</td>
+            <td class="td-caller">{{ call.caller }}</td>
+            <td class="td-object">{{ call.object }}</td>
+            <td>
+              <span class="call-status-badge"
+                    [ngClass]="call.status === 'cloture' ? 'call-status-badge--closed' : 'call-status-badge--open'">
+                {{ call.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="mobile-list">
+      <div *ngFor="let call of data.calls" class="mobile-item">
+        <div class="mobile-item-top">
+          <span class="td-time">{{ call.time }}</span>
+          <span class="call-status-badge"
+                [ngClass]="call.status === 'cloture' ? 'call-status-badge--closed' : 'call-status-badge--open'">
+            {{ call.status }}
+          </span>
+        </div>
+        <p class="td-caller">{{ call.caller }}</p>
+        <div class="mobile-item-bottom">
+          <span class="td-type">{{ call.type }}</span>
+          <span class="td-object">{{ call.object }}</span>
+        </div>
+      </div>
+    </div>
+
   </div>
+
 </div>

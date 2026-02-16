@@ -16,4 +16,7 @@ export abstract class SupervisorRepository {
   abstract getAgentActiveCalls(agentId: number): Observable<Call[]>;
   abstract updateCallUrgency(callId: number, urgency: string): Observable<void>;
   abstract notifyAgent(agentId: number, callId: string): Observable<void>;
+  abstract escalateComplaint(id: number): Observable<void>;
+  abstract validateResolution(id: number): Observable<void>;
+  abstract closeComplaint(id: number): Observable<void>;
 }

@@ -32,7 +32,7 @@ export interface SupervisorComplaint {
   complaint_id: string;
   category: string;
   severity: 'faible' | 'moyen' | 'eleve' | 'critique';
-  status: string;
+  status: 'ouverte' | 'en_analyse' | 'en_attente_client' | 'en_attente_interne' | 'resolue' | 'cloture';
   sla_deadline: string;
   sla_status: 'ok' | 'overdue';
   description: string;

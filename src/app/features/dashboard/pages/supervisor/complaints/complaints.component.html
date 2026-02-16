@@ -1,0 +1,183 @@
+<div class="complaints-page">
+
+  <div class="back-nav">
+    <button routerLink="/dashboard/supervisor/dashboard" class="back-btn">
+      <i class="bi bi-arrow-left"></i>
+      <span>Retour au Tableau de Bord</span>
+    </button>
+  </div>
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1 class="page-title">Réclamations Équipe</h1>
+      <p class="page-subtitle">Suivi et pilotage de la satisfaction client</p>
+    </div>
+    <select [(ngModel)]="filters.period" (change)="applyFilters()" class="period-select">
+      <option value="today">Aujourd'hui</option>
+      <option value="week">Cette semaine</option>
+      <option value="month">Ce mois</option>
+    </select>
+  </div>
+
+  <div class="kpi-grid" *ngIf="stats$ | async as stats">
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--indigo"></div>
+      <span class="kpi-label">Total</span>
+      <span class="kpi-value">{{ stats.total }}</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--blue"></div>
+      <span class="kpi-label">Ouvertes</span>
+      <span class="kpi-value kpi-value--blue">{{ stats.open }}</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--orange"></div>
+      <span class="kpi-label">En cours</span>
+      <span class="kpi-value kpi-value--orange">{{ stats.inProgress }}</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--green"></div>
+      <span class="kpi-label">Résolues</span>
+      <span class="kpi-value kpi-value--green">{{ stats.resolved }}</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-accent kpi-accent--red"></div>
+      <span class="kpi-label kpi-label--red">En retard</span>
+      <span class="kpi-value kpi-value--red">{{ stats.overdue }}</span>
+    </div>
+    <div class="kpi-card kpi-card--dark">
+      <span class="kpi-label kpi-label--light">Respect SLA</span>
+      <span class="kpi-value kpi-value--white">{{ stats.slaRate }}%</span>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-header">
+      <div class="chart-accent"></div>
+      <h3 class="chart-title">Évolution des Réclamations</h3>
+    </div>
+    <div class="chart-body">
+      <canvas id="complaintsChart"></canvas>
+    </div>
+  </div>
+
+  <div class="filter-panel">
+    <div class="filter-box">
+      <label class="filter-label">Gravité</label>
+      <select [(ngModel)]="filters.severity" (change)="applyFilters()" class="filter-select">
+        <option value="">Toutes</option>
+        <option value="critique">Critique</option>
+        <option value="eleve">Élevée</option>
+        <option value="moyen">Moyenne</option>
+      </select>
+    </div>
+    <div class="filter-box">
+      <label class="filter-label">Statut</label>
+      <select [(ngModel)]="filters.status" (change)="applyFilters()" class="filter-select">
+        <option value="">Tous</option>
+        <option value="ouverte">Ouverte</option>
+        <option value="en_cours">En cours</option>
+        <option value="resolue">Résolue</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-wrap">
+      <table class="complaints-table">
+        <thead>
+          <tr>
+            <th>N° Réclamation</th>
+            <th>Client</th>
+            <th>Catégorie</th>
+            <th>Gravité</th>
+            <th>Statut</th>
+            <th>Agent</th>
+            <th class="th-right">SLA</th>
+            <th class="th-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rec of complaints$ | async"
+              class="table-row"
+              [class.overdue-row]="rec.sla_status === 'overdue'">
+            <td class="td-id">{{ rec.complaint_id }}</td>
+            <td class="td-client">{{ rec.call.caller_name || 'Client Inconnu' }}</td>
+            <td class="td-category">{{ rec.category }}</td>
+            <td><span class="severity-badge" [class]="rec.severity">{{ rec.severity }}</span></td>
+            <td><span class="status-badge" [class]="rec.status">{{ rec.status }}</span></td>
+            <td class="td-agent">
+                {{ rec.assigned_agent?.name || rec.call.assigned_agent?.name || 'Non assigné' }}
+            </td>
+            <td class="td-sla" [class.td-sla--overdue]="rec.sla_status === 'overdue'">
+              {{ rec.sla_deadline | date:'dd/MM HH:mm' }}
+            </td>
+            <td class="td-actions">
+                <div class="action-group">
+                    <ng-container *ngIf="rec.status !== 'resolue' && rec.status !== 'cloture'">
+                    <button (click)="openReassignModal(rec)" class="action-btn" title="Réassigner">
+                        <i class="bi bi-person-gear"></i>
+                    </button>
+                    
+                    <button *ngIf="rec.status !== 'en_analyse'" (click)="onEscalate(rec.id)" class="action-btn action-btn--escalate" title="Escalader">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </button>
+                    </ng-container>
+
+                    <button *ngIf="rec.status !== 'resolue' && rec.status !== 'cloture'" 
+                            (click)="onValidate(rec.id)" 
+                            class="action-btn action-btn--validate" 
+                            title="Valider">
+                    <i class="bi bi-check-circle"></i>
+                    </button>
+
+                    <button *ngIf="rec.status === 'resolue'" 
+                            (click)="onClose(rec.id)" 
+                            class="action-btn action-btn--close" 
+                            title="Clôturer">
+                    <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mobile-list">
+      <div *ngFor="let rec of complaints$ | async"
+           class="mobile-item"
+           [class.mobile-item--overdue]="rec.sla_status === 'overdue'">
+        <div class="mobile-item-top">
+          <span class="td-id">{{ rec.complaint_id }}</span>
+          <div class="mobile-badges">
+            <span class="severity-badge" [class]="rec.severity">{{ rec.severity }}</span>
+            <span class="status-badge" [class]="rec.status">{{ rec.status }}</span>
+          </div>
+        </div>
+        <p class="mobile-client">{{ rec.call.caller_name || 'Client Inconnu' }}</p>
+        <p class="mobile-category">{{ rec.category }}</p>
+        <div class="mobile-item-bottom">
+          <span class="td-agent"><i class="bi bi-person"></i> {{ rec.assigned_agent?.name || 'Non assigné' }}</span>
+          <span class="td-sla" [class.td-sla--overdue]="rec.sla_status === 'overdue'">
+            <i class="bi bi-clock"></i> {{ rec.sla_deadline | date:'dd/MM HH:mm' }}
+          </span>
+        </div>
+        <div class="action-group action-group--mobile mt-2">
+          <button (click)="openReassignModal(rec)" class="action-btn"><i class="bi bi-person-gear"></i></button>
+          <button (click)="onEscalate(rec.id)" class="action-btn action-btn--escalate"><i class="bi bi-graph-up-arrow"></i></button>
+          <button (click)="onValidate(rec.id)" class="action-btn action-btn--validate"><i class="bi bi-check-circle"></i></button>
+          <button (click)="onClose(rec.id)" class="action-btn action-btn--close"><i class="bi bi-x-circle"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <app-reassign-modal 
+        *ngIf="showReassignModal"
+        [callId]="selectedComplaint?.call?.id?.toString() || ''"
+        [agents]="(facade.teamView$ | async) || []" 
+        (cancel)="showReassignModal = false"
+        (confirm)="onReassign($event)">
+    </app-reassign-modal>
+</div>
