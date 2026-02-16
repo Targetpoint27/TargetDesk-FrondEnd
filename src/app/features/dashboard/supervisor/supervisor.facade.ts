@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, forkJoin, throwError } from 'rxjs';
-import { finalize, tap, catchError } from 'rxjs/operators';
+import { finalize, tap, catchError, map } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SupervisorRepository } from '../../../domain/repositories/supervisor.repository';
 import { 
@@ -9,7 +9,7 @@ import {
   SupervisorComplaint, 
   ReassignCallRequest 
 } from '../../../domain/models/supervisor.model';
-import { Call } from '../../../domain/models/call.model';
+import { Call, CallUrgency } from '../../../domain/models/call.model';
 import { LoggingService } from '../../../core/logging/logging.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
@@ -35,6 +35,9 @@ export class SupervisorFacade {
 
   private agentCallsSubject = new BehaviorSubject<Call[]>([]);
   public agentCalls$ = this.agentCallsSubject.asObservable();
+
+  private pendingQueueSubject = new BehaviorSubject<Call[]>([]);
+  public pendingQueue$ = this.pendingQueueSubject.asObservable();
 
   constructor(
     private supervisorRepo: SupervisorRepository,
@@ -111,9 +114,9 @@ export class SupervisorFacade {
   }
 
   /**
- * Uses your existing API to fetch sessions for the drawer
- */
-loadAgentActiveCalls(agentId: number): void {
+    * Uses your existing API to fetch sessions for the drawer
+  */
+  loadAgentActiveCalls(agentId: number): void {
     this.supervisorRepo.getAgentActiveCalls(agentId).subscribe({
       // ✅ Added Call[] type to the parameter
       next: (calls: Call[]) => {
@@ -123,6 +126,66 @@ loadAgentActiveCalls(agentId: number): void {
       error: (err: any) => {
         this.loggingService.error('Failed to load agent calls', { error: err } as any);
       }
+    });
+  }
+
+  /**
+ * Loads and processes the "File à Traiter"
+ * Filter: 'a_traiter' or 'a_rappeler'
+ * Sort: Urgency (Desc) then CreatedAt (Asc)
+ */
+  public loadPendingQueue(): void {
+    this.loadingSubject.next(true);
+    
+    this.supervisorRepo.getMasterQueue().pipe(
+      map(calls => {
+        // ✅ Step 1: Filter by status
+        return calls.filter(c => c.status === 'a_traiter' || c.status === 'a_rappeler');
+      }),
+      map(calls => {
+        // ✅ Step 2: Multi-level Sorting
+        return calls.sort((a, b) => {
+          const priorityMap = { 'critique': 1, 'urgent': 2, 'normal': 3, 'faible': 4 };
+          
+          // Primary Sort: Urgency
+          const aPriority = priorityMap[a.urgency] || 3;
+          const bPriority = priorityMap[b.urgency] || 3;
+          
+          if (aPriority !== bPriority) {
+            return aPriority - bPriority; // Lower number (1) comes first
+          }
+          
+          // Secondary Sort: Time Elapsed (Oldest First)
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        });
+      }),
+      finalize(() => this.loadingSubject.next(false))
+    ).subscribe({
+      next: (processedCalls) => this.pendingQueueSubject.next(processedCalls),
+      error: (err) => this.loggingService.error('Failed to load pending queue', { error: err } as any)
+    });
+  }
+
+  /**
+   * ✅ Action: Update Urgency
+   */
+  public changeUrgency(callId: number, urgency: CallUrgency): void {
+    this.supervisorRepo.updateCallUrgency(callId, urgency).subscribe({
+      next: () => {
+        this.notificationService.success('Urgence mise à jour');
+        this.loadPendingQueue(); // Refresh the list
+      },
+      error: (err) => this.notificationService.error('Erreur lors du changement d\'urgence')
+    });
+  }
+
+  /**
+   * ✅ Action: Notify Agent (The "Nudge")
+   */
+  public nudgeAgent(agentId: number, callId: string): void {
+    this.supervisorRepo.notifyAgent(agentId, callId).subscribe({
+      next: () => this.notificationService.success('Agent notifié'),
+      error: (err) => this.notificationService.error('Erreur de notification')
     });
   }
 }

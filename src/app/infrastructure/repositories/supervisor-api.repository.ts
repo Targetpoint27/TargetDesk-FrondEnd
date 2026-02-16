@@ -50,4 +50,16 @@ export class SupervisorApiRepository extends SupervisorRepository {
   override getAgentActiveCalls(agentId: number): Observable<Call[]> {
     return this.apiService.get<Call[]>(`/call-center/supervisor/agents/${agentId}/calls`);
   }
+
+  override updateCallUrgency(callId: number, urgency: string): Observable<void> {
+    return this.apiService.patch<void>(`/call-center/supervisor/calls/${callId}/urgency`, { 
+      urgency 
+    });
+  }
+
+  override notifyAgent(agentId: number, callId: string): Observable<void> {
+    return this.apiService.post<void>(`/call-center/supervisor/agents/${agentId}/notify`, { 
+      call_id: callId 
+    });
+  }
 }

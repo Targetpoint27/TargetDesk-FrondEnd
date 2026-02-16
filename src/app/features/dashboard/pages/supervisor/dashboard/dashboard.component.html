@@ -20,7 +20,6 @@
     <div *ngFor="let agent of team$ | async" 
          class="agent-card clickable-card"
          (click)="viewAgentDetails(agent)">
-
       <div class="agent-card-top">
         <div class="agent-identity">
           <div class="agent-avatar">{{ agent.name.charAt(0) }}</div>
@@ -36,7 +35,6 @@
           {{ agent.load_status }}
         </span>
       </div>
-
       <div class="agent-stats">
         <div class="agent-stat">
           <span class="agent-stat-label">Appels / Jour</span>
@@ -48,77 +46,97 @@
           <span class="agent-stat-value agent-stat-value--blue">{{ agent.active_calls }}</span>
         </div>
       </div>
-
       <div class="agent-aht">
         <span class="agent-aht-label">Temps Moyen (AHT)</span>
         <span class="agent-aht-value">{{ agent.avg_handling_time }}</span>
       </div>
-
     </div>
   </div>
 
   <div class="queue-card">
     <div class="queue-header">
       <div class="queue-header-left">
-        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-        </svg>
-        <h3 class="queue-title">File d'Attente Départementale</h3>
+        <i class="bi bi-list-task text-gray-500"></i>
+        <h3 class="queue-title">File à Traiter</h3>
       </div>
-      <span class="queue-count">{{ (queue$ | async)?.length }} Appels</span>
+      <span class="queue-count">{{ (pendingQueue$ | async)?.length }} Appels en attente</span>
+    </div>
+
+    <div class="filter-bar p-4 bg-gray-50 border-b border-gray-200 flex flex-wrap gap-4">
+      <div class="filter-group">
+        <label class="filter-label">Urgence</label>
+        <select [(ngModel)]="filters.urgency" (change)="applyFilters()" class="filter-select">
+          <option value="">Toutes</option>
+          <option value="critique">Critique</option>
+          <option value="urgent">Urgent</option>
+          <option value="normal">Normal</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Assignation</label>
+        <select [(ngModel)]="filters.isAssigned" (change)="applyFilters()" class="filter-select">
+          <option value="">Tous</option>
+          <option value="false">Non assignés</option>
+          <option value="true">Assignés</option>
+        </select>
+      </div>
     </div>
 
     <div class="queue-table-wrap">
       <table class="queue-table">
         <thead>
           <tr>
-            <th>ID Appel</th>
+            <th>ID</th>
+            <th>Type</th>
             <th>Appelant</th>
+            <th>Objet</th>
             <th>Urgence</th>
-            <th>Assigné à</th>
-            <th class="th-right">Action</th>
+            <th>Timer</th>
+            <th>Agent</th>
+            <th class="th-right">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let call of queue$ | async" class="queue-row">
+          <tr *ngFor="let call of pendingQueue$ | async" 
+              class="queue-row" 
+              [class.row-overdue]="isOverdue(call.created_at)">
             <td class="td-call-id">{{ call.call_id }}</td>
+            <td><span class="text-xs uppercase font-bold text-gray-500">{{ call.type }}</span></td>
             <td class="td-caller">{{ call.caller_name || call.phone_number }}</td>
+            <td class="td-object text-truncate" title="{{ call.object }}">{{ call.object }}</td>
             <td>
-              <span class="urgency-pill" [class]="call.urgency">{{ call.urgency }}</span>
+              <select [value]="call.urgency" (change)="onUrgencyChange(call.id, $event)" class="urgency-selector" [class]="call.urgency">
+                <option value="normal">Normal</option>
+                <option value="urgent">Urgent</option>
+                <option value="critique">Critique</option>
+              </select>
             </td>
-            <td class="td-agent">{{ call.assigned_agent?.name || 'Non assigné' }}</td>
+            <td class="td-timer font-mono font-bold" [class.text-red-600]="isOverdue(call.created_at)">
+              {{ call.created_at | timeElapsed }}
+            </td>
+            <td class="td-agent">
+              <span *ngIf="call.assigned_agent; else unassigned" class="flex items-center gap-2">
+                <i class="bi bi-person-check-fill text-blue-500"></i>
+                {{ call.assigned_agent.name }}
+              </span>
+              <ng-template #unassigned>
+                <span class="text-orange-500 font-bold italic">Non assigné</span>
+              </ng-template>
+            </td>
             <td class="td-action">
-              <button (click)="openReassign(call.id.toString()); $event.stopPropagation()" class="reassign-btn">
-                <i class="bi bi-person-plus-fill"></i>
-                <span>Réassigner</span>
-              </button>
+              <div class="flex justify-end gap-2">
+                <button *ngIf="call.assigned_agent" (click)="onNudgeAgent(call.assigned_agent.id, call.call_id); $event.stopPropagation()" class="nudge-btn" title="Notifier l'agent">
+                  <i class="bi bi-bell-fill"></i>
+                </button>
+                <button (click)="openReassign(call.id.toString()); $event.stopPropagation()" class="reassign-btn">
+                  <i class="bi bi-person-plus-fill"></i>
+                  <span>{{ call.assigned_agent ? 'Réassigner' : 'Assigner' }}</span>
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
-    </div>
-
-    <div class="queue-mobile-list">
-      <div *ngFor="let call of queue$ | async" class="queue-mobile-item">
-        <div class="queue-mobile-top">
-          <span class="td-call-id">{{ call.call_id }}</span>
-          <span class="urgency-pill" [class]="call.urgency">{{ call.urgency }}</span>
-        </div>
-        <div class="queue-mobile-caller">
-          <i class="bi bi-telephone"></i>
-          {{ call.caller_name || call.phone_number }}
-        </div>
-        <div class="queue-mobile-bottom">
-          <span class="td-agent">
-            <i class="bi bi-person"></i>
-            {{ call.assigned_agent?.name || 'Non assigné' }}
-          </span>
-          <button (click)="openReassign(call.id.toString()); $event.stopPropagation()" class="reassign-btn">
-            <i class="bi bi-person-plus-fill"></i>
-            <span>Réassigner</span>
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -141,7 +159,6 @@
         <i class="bi bi-x-lg"></i>
       </button>
     </div>
-
     <div class="drawer-content">
       <div class="drawer-kpi-grid">
         <div class="kpi-box">
@@ -153,37 +170,29 @@
           <span class="kpi-value">{{ selectedAgent.avg_handling_time }}</span>
         </div>
       </div>
-
       <div class="drawer-section">
-  <h3 class="section-title">Missions en cours</h3>
-  
-  <ng-container *ngIf="(facade.agentCalls$ | async) as calls; else loadingCalls">
-    <div *ngFor="let call of calls" class="active-call-item">
-      <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl mb-2">
-        <div>
-          <p class="text-xs font-bold text-blue-600">{{ call.call_id }}</p>
-          <p class="text-sm text-slate-700">{{ call.caller_name || 'Inconnu' }}</p>
-        </div>
-        <span class="urgency-pill" [class]="call.urgency">{{ call.urgency }}</span>
+        <h3 class="section-title">Missions en cours</h3>
+        <ng-container *ngIf="(facade.agentCalls$ | async) as calls; else loadingCalls">
+          <div *ngFor="let call of calls" class="active-call-item">
+            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl mb-2">
+              <div>
+                <p class="text-xs font-bold text-blue-600">{{ call.call_id }}</p>
+                <p class="text-sm text-slate-700">{{ call.caller_name || 'Inconnu' }}</p>
+              </div>
+              <span class="urgency-pill" [class]="call.urgency">{{ call.urgency }}</span>
+            </div>
+          </div>
+          <p *ngIf="calls.length === 0" class="empty-state-text">Aucun appel actif pour le moment.</p>
+        </ng-container>
+        <ng-template #loadingCalls>
+          <p class="empty-state-text animate-pulse">Chargement...</p>
+        </ng-template>
       </div>
-    </div>
-    
-    <p *ngIf="calls.length === 0" class="empty-state-text">
-      Aucun appel actif pour le moment.
-    </p>
-  </ng-container>
-  
-  <ng-template #loadingCalls>
-    <p class="empty-state-text animate-pulse">Chargement des données de session...</p>
-  </ng-template>
-</div>
     </div>
   </div>
 </div>
 
-<div *ngIf="isReassignModalOpen"
-     class="modal-backdrop"
-     (click)="isReassignModalOpen = false">
+<div *ngIf="isReassignModalOpen" class="modal-backdrop" (click)="isReassignModalOpen = false">
   <div class="modal-panel" (click)="$event.stopPropagation()">
     <app-reassign-modal
       [callId]="activeCallId!"
