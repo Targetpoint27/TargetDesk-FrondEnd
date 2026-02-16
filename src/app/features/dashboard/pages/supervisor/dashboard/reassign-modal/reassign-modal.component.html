@@ -1,53 +1,71 @@
-<div class="p-6">
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-xl font-bold text-slate-800">Réassignation d'Appel</h2>
-    <button (click)="cancel.emit()" class="text-slate-400 hover:text-slate-600 transition-colors">
-      <i class="bi bi-x-lg"></i>
+<div class="reassign-modal">
+
+  <!-- Header -->
+  <div class="modal-header">
+    <div class="modal-header-left">
+      <div class="modal-header-icon">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <h2 class="modal-title">Réassignation d'Appel</h2>
+    </div>
+    <button (click)="cancel.emit()" class="modal-close-btn">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
     </button>
   </div>
 
-  <div class="space-y-4 mb-6">
-    <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Choisir l'agent cible</p>
-    
-    <div class="max-h-64 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
-      <div *ngFor="let agent of agents" 
-           (click)="selectedAgentId = agent.id"
-           [class.selected]="selectedAgentId === agent.id"
-           class="agent-option-card">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">
-              {{ agent.name.charAt(0) }}
-            </div>
-            <div>
-              <p class="text-sm font-bold text-slate-700">{{ agent.name }}</p>
-              <p class="text-[10px] text-slate-500">{{ agent.active_calls }} appels en cours</p>
+  <!-- Body -->
+  <div class="modal-body">
+
+    <!-- Agent list -->
+    <div class="section">
+      <p class="section-label">Choisir l'agent cible</p>
+      <div class="agents-list">
+        <div *ngFor="let agent of agents"
+             (click)="selectedAgentId = agent.id"
+             [class.selected]="selectedAgentId === agent.id"
+             class="agent-option-card">
+          <div class="agent-option-left">
+            <div class="agent-avatar">{{ agent.name.charAt(0) }}</div>
+            <div class="agent-info">
+              <p class="agent-name">{{ agent.name }}</p>
+              <p class="agent-calls">{{ agent.active_calls }} appels en cours</p>
             </div>
           </div>
-          <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase" 
-                [ngClass]="getLoadClass(agent.load_status)">
+          <span class="load-badge" [ngClass]="getLoadClass(agent.load_status)">
             {{ agent.load_status }}
           </span>
         </div>
       </div>
     </div>
+
+    <!-- Reason -->
+    <div class="section">
+      <label class="section-label">Motif de réassignation <span class="label-optional">(Optionnel)</span></label>
+      <textarea
+        [(ngModel)]="reason"
+        class="reason-textarea"
+        rows="3"
+        placeholder="Pourquoi changez-vous l'attribution ?"></textarea>
+    </div>
+
   </div>
 
-  <div class="mb-8">
-    <label class="block text-xs font-black text-slate-400 uppercase mb-2">Motif de réassignation (Optionnel)</label>
-    <textarea [(ngModel)]="reason" 
-              class="w-full p-4 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="Pourquoi changez-vous l'attribution ?"></textarea>
-  </div>
-
-  <div class="flex space-x-3">
-    <button (click)="cancel.emit()" class="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
-      Annuler
-    </button>
-    <button [disabled]="!selectedAgentId" 
-            (click)="onConfirm()"
-            class="flex-1 py-3 font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-lg shadow-blue-200 transition-all">
+  <!-- Footer -->
+  <div class="modal-footer">
+    <button (click)="cancel.emit()" class="btn-cancel">Annuler</button>
+    <button
+      [disabled]="!selectedAgentId"
+      (click)="onConfirm()"
+      class="btn-confirm">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
       Confirmer
     </button>
   </div>
+
 </div>

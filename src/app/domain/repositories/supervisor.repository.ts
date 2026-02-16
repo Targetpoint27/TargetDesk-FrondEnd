@@ -13,4 +13,5 @@ export abstract class SupervisorRepository {
   abstract getMasterQueue(): Observable<Call[]>;
   abstract getTeamComplaints(): Observable<SupervisorComplaint[]>;
   abstract reassignCall(callId: number, data: ReassignCallRequest): Observable<Call>;
+  abstract getAgentActiveCalls(agentId: number): Observable<Call[]>;
 }

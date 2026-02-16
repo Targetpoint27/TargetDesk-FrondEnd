@@ -1,29 +1,33 @@
-<div class="p-6 space-y-6" *ngIf="!(isLoading$ | async); else loading">
-  <div class="flex justify-between items-center">
-    <div>
-      <h1 class="text-2xl font-bold text-slate-800">Supervision d'Équipe</h1>
-      <p class="text-sm text-slate-500">Vue en temps réel de la charge et de la file d'attente</p>
+<div class="supervisor-page" *ngIf="!(isLoading$ | async); else loading">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1 class="page-title">Supervision d'Équipe</h1>
+      <p class="page-subtitle">Vue en temps réel de la charge et de la file d'attente</p>
     </div>
-    <div class="flex space-x-2">
-      <button class="btn btn-outline-primary btn-sm" routerLink="../stats">
-        <i class="bi bi-graph-up mr-1"></i> Statistiques
+    <div class="page-header-actions">
+      <button class="btn-stats" routerLink="../stats">
+        <i class="bi bi-graph-up"></i>
+        <span>Statistiques</span>
       </button>
-      <button class="btn btn-secondary btn-sm" (click)="ngOnInit()">
+      <button class="btn-refresh" (click)="ngOnInit()" title="Rafraîchir">
         <i class="bi bi-arrow-clockwise"></i>
       </button>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div *ngFor="let agent of team$ | async" class="agent-card">
-      <div class="flex justify-between items-start mb-4">
-        <div class="flex items-center">
-          <div class="avatar-circle">
-            {{ agent.name.charAt(0) }}
-          </div>
-          <div class="ml-3">
-            <h4 class="text-sm font-bold text-slate-800 mb-0">{{ agent.name }}</h4>
-            <span class="status-indicator" [class.active]="agent.status === 'active'">
+  <div class="agents-grid">
+    <div *ngFor="let agent of team$ | async" 
+         class="agent-card clickable-card"
+         (click)="viewAgentDetails(agent)">
+
+      <div class="agent-card-top">
+        <div class="agent-identity">
+          <div class="agent-avatar">{{ agent.name.charAt(0) }}</div>
+          <div class="agent-info">
+            <h4 class="agent-name">{{ agent.name }}</h4>
+            <span class="agent-status" [class.agent-status--active]="agent.status === 'active'">
+              <span class="status-dot"></span>
               {{ agent.status === 'active' ? 'En ligne' : 'Hors ligne' }}
             </span>
           </div>
@@ -33,69 +37,156 @@
         </span>
       </div>
 
-      <div class="stats-row">
-        <div class="stat-item">
-          <span class="label">Appels/Jour</span>
-          <span class="value">{{ agent.calls_today }}</span>
+      <div class="agent-stats">
+        <div class="agent-stat">
+          <span class="agent-stat-label">Appels / Jour</span>
+          <span class="agent-stat-value">{{ agent.calls_today }}</span>
         </div>
-        <div class="stat-item">
-          <span class="label text-blue-500">Actifs</span>
-          <span class="value">{{ agent.active_calls }}</span>
+        <div class="agent-stat-divider"></div>
+        <div class="agent-stat">
+          <span class="agent-stat-label agent-stat-label--blue">Actifs</span>
+          <span class="agent-stat-value agent-stat-value--blue">{{ agent.active_calls }}</span>
         </div>
       </div>
-      
-      <div class="mt-3 text-center">
-        <p class="text-[10px] text-slate-400 uppercase font-bold mb-0">Temps Moyen (AHT)</p>
-        <p class="text-xs font-black text-slate-700">{{ agent.avg_handling_time }}</p>
+
+      <div class="agent-aht">
+        <span class="agent-aht-label">Temps Moyen (AHT)</span>
+        <span class="agent-aht-value">{{ agent.avg_handling_time }}</span>
       </div>
+
     </div>
   </div>
 
-  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-    <div class="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-      <h3 class="text-xs font-black text-slate-500 uppercase tracking-wider">File d'Attente Départementale</h3>
-      <span class="badge-count">{{ (queue$ | async)?.length }} Appels</span>
+  <div class="queue-card">
+    <div class="queue-header">
+      <div class="queue-header-left">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+        </svg>
+        <h3 class="queue-title">File d'Attente Départementale</h3>
+      </div>
+      <span class="queue-count">{{ (queue$ | async)?.length }} Appels</span>
     </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
-        <thead class="bg-white border-b border-slate-50">
+
+    <div class="queue-table-wrap">
+      <table class="queue-table">
+        <thead>
           <tr>
-            <th class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase">ID Appel</th>
-            <th class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase">Appelant</th>
-            <th class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase">Urgence</th>
-            <th class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase">Assigné à</th>
-            <th class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase text-right">Action</th>
+            <th>ID Appel</th>
+            <th>Appelant</th>
+            <th>Urgence</th>
+            <th>Assigné à</th>
+            <th class="th-right">Action</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-50">
-          <tr *ngFor="let call of queue$ | async" class="hover:bg-slate-50 transition-colors">
-            <td class="px-6 py-4 text-xs font-bold text-blue-600">{{ call.call_id }}</td>
-            <td class="px-6 py-4 text-xs font-medium">{{ call.caller_name || call.phone_number }}</td>
-            <td class="px-6 py-4">
-              <span class="urgency-pill" [class]="call.urgency">
-                {{ call.urgency }}
-              </span>
+        <tbody>
+          <tr *ngFor="let call of queue$ | async" class="queue-row">
+            <td class="td-call-id">{{ call.call_id }}</td>
+            <td class="td-caller">{{ call.caller_name || call.phone_number }}</td>
+            <td>
+              <span class="urgency-pill" [class]="call.urgency">{{ call.urgency }}</span>
             </td>
-            <td class="px-6 py-4 text-xs text-slate-500">
-              {{ call.assigned_agent?.name || 'Non assigné' }}
-            </td>
-            <td class="px-6 py-4 text-right">
-              <button (click)="openReassign(call.id.toString())" class="reassign-btn">
-                <i class="bi bi-person-plus-fill mr-1"></i> Réassigner
+            <td class="td-agent">{{ call.assigned_agent?.name || 'Non assigné' }}</td>
+            <td class="td-action">
+              <button (click)="openReassign(call.id.toString()); $event.stopPropagation()" class="reassign-btn">
+                <i class="bi bi-person-plus-fill"></i>
+                <span>Réassigner</span>
               </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <div class="queue-mobile-list">
+      <div *ngFor="let call of queue$ | async" class="queue-mobile-item">
+        <div class="queue-mobile-top">
+          <span class="td-call-id">{{ call.call_id }}</span>
+          <span class="urgency-pill" [class]="call.urgency">{{ call.urgency }}</span>
+        </div>
+        <div class="queue-mobile-caller">
+          <i class="bi bi-telephone"></i>
+          {{ call.caller_name || call.phone_number }}
+        </div>
+        <div class="queue-mobile-bottom">
+          <span class="td-agent">
+            <i class="bi bi-person"></i>
+            {{ call.assigned_agent?.name || 'Non assigné' }}
+          </span>
+          <button (click)="openReassign(call.id.toString()); $event.stopPropagation()" class="reassign-btn">
+            <i class="bi bi-person-plus-fill"></i>
+            <span>Réassigner</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="drawer-overlay" *ngIf="selectedAgent" (click)="selectedAgent = null">
+  <div class="agent-drawer" (click)="$event.stopPropagation()">
+    <div class="drawer-header">
+      <div class="drawer-agent-badge">
+        <div class="agent-avatar">{{ selectedAgent.name.charAt(0) }}</div>
+        <div>
+          <h2 class="drawer-title">{{ selectedAgent.name }}</h2>
+          <span class="agent-status" [class.agent-status--active]="selectedAgent.status === 'active'">
+            <span class="status-dot"></span>
+            {{ selectedAgent.status === 'active' ? 'En ligne' : 'Hors ligne' }}
+          </span>
+        </div>
+      </div>
+      <button class="btn-close" (click)="selectedAgent = null">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="drawer-content">
+      <div class="drawer-kpi-grid">
+        <div class="kpi-box">
+          <span class="kpi-label">Appels Aujourd'hui</span>
+          <span class="kpi-value text-indigo-600">{{ selectedAgent.calls_today }}</span>
+        </div>
+        <div class="kpi-box">
+          <span class="kpi-label">AHT Actuel</span>
+          <span class="kpi-value">{{ selectedAgent.avg_handling_time }}</span>
+        </div>
+      </div>
+
+      <div class="drawer-section">
+  <h3 class="section-title">Missions en cours</h3>
+  
+  <ng-container *ngIf="(facade.agentCalls$ | async) as calls; else loadingCalls">
+    <div *ngFor="let call of calls" class="active-call-item">
+      <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl mb-2">
+        <div>
+          <p class="text-xs font-bold text-blue-600">{{ call.call_id }}</p>
+          <p class="text-sm text-slate-700">{{ call.caller_name || 'Inconnu' }}</p>
+        </div>
+        <span class="urgency-pill" [class]="call.urgency">{{ call.urgency }}</span>
+      </div>
+    </div>
+    
+    <p *ngIf="calls.length === 0" class="empty-state-text">
+      Aucun appel actif pour le moment.
+    </p>
+  </ng-container>
+  
+  <ng-template #loadingCalls>
+    <p class="empty-state-text animate-pulse">Chargement des données de session...</p>
+  </ng-template>
+</div>
+    </div>
   </div>
 </div>
 
-<div *ngIf="isReassignModalOpen" 
-     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
-    <app-reassign-modal 
-      [callId]="activeCallId!" 
+<div *ngIf="isReassignModalOpen"
+     class="modal-backdrop"
+     (click)="isReassignModalOpen = false">
+  <div class="modal-panel" (click)="$event.stopPropagation()">
+    <app-reassign-modal
+      [callId]="activeCallId!"
       [agents]="(team$ | async) || []"
       (confirm)="handleReassignment($event)"
       (cancel)="isReassignModalOpen = false">
@@ -104,8 +195,8 @@
 </div>
 
 <ng-template #loading>
-  <div class="flex flex-col items-center justify-center h-64">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-4 text-slate-500">Initialisation du centre de supervision...</p>
+  <div class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Initialisation du centre de supervision...</p>
   </div>
 </ng-template>

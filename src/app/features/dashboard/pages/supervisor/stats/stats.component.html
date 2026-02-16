@@ -1,48 +1,94 @@
-<div class="p-6 space-y-6" *ngIf="stats$ | async as data">
-  <div class="flex justify-between items-center">
-    <div>
-      <h1 class="text-2xl font-bold text-slate-800">Statistiques d'Équipe</h1>
-      <p class="text-sm text-slate-500">Performance globale et respect des SLAs</p>
+<div class="stats-page" *ngIf="stats$ | async as data">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1 class="page-title">Statistiques d'Équipe</h1>
+      <p class="page-subtitle">Performance globale et respect des SLAs</p>
     </div>
-    <div class="flex bg-white rounded-lg p-1 border border-slate-200 shadow-sm">
+    <div class="period-switcher">
       <button (click)="loadStats('today')" [class.active]="currentPeriod === 'today'" class="period-btn">Aujourd'hui</button>
-      <button (click)="loadStats('week')" [class.active]="currentPeriod === 'week'" class="period-btn">Semaine</button>
+      <button (click)="loadStats('week')"  [class.active]="currentPeriod === 'week'"  class="period-btn">Semaine</button>
       <button (click)="loadStats('month')" [class.active]="currentPeriod === 'month'" class="period-btn">Mois</button>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+  <!-- KPI cards -->
+  <div class="kpi-grid">
+
     <div class="stat-card">
-      <span class="label">Total Appels</span>
-      <span class="value">{{ data.kpis.total_calls }}</span>
+      <div class="stat-card-icon stat-card-icon--indigo">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+        </svg>
+      </div>
+      <span class="stat-label">Total Appels</span>
+      <span class="stat-value">{{ data.kpis.total_calls }}</span>
+      <div class="stat-accent stat-accent--indigo"></div>
     </div>
-    <div class="stat-card border-l-4 border-red-500">
-      <span class="label">Appels Manqués</span>
-      <span class="value text-red-600">{{ data.kpis.missed_calls }}</span>
+
+    <div class="stat-card">
+      <div class="stat-card-icon stat-card-icon--red">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+      <span class="stat-label">Appels Manqués</span>
+      <span class="stat-value stat-value--red">{{ data.kpis.missed_calls }}</span>
+      <div class="stat-accent stat-accent--red"></div>
     </div>
-    <div class="stat-card border-l-4 border-emerald-500">
-      <span class="label">Taux de Réponse</span>
-      <span class="value text-emerald-600">{{ data.kpis.response_rate }}</span>
+
+    <div class="stat-card">
+      <div class="stat-card-icon stat-card-icon--green">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <span class="stat-label">Taux de Réponse</span>
+      <span class="stat-value stat-value--green">{{ data.kpis.response_rate }}</span>
+      <div class="stat-accent stat-accent--green"></div>
     </div>
-    <div class="stat-card border-l-4 border-blue-500">
-      <span class="label">Conformité SLA</span>
-      <span class="value text-blue-600">{{ data.kpis.sla_compliance }}</span>
+
+    <div class="stat-card">
+      <div class="stat-card-icon stat-card-icon--blue">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <span class="stat-label">Conformité SLA</span>
+      <span class="stat-value stat-value--blue">{{ data.kpis.sla_compliance }}</span>
+      <div class="stat-accent stat-accent--blue"></div>
     </div>
+
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-      <h3 class="text-sm font-black text-slate-700 uppercase mb-6">Évolution du Volume</h3>
-      <canvas baseChart 
-              [data]="getEvolutionData(data.graphs.volume_evolution)" 
-              [type]="lineChartType"></canvas>
+  <!-- Charts -->
+  <div class="charts-grid">
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-card-accent"></div>
+        <h3 class="chart-title">Évolution du Volume</h3>
+      </div>
+      <div class="chart-wrap">
+        <canvas baseChart
+                [data]="getEvolutionData(data.graphs.volume_evolution)"
+                [type]="lineChartType"></canvas>
+      </div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-      <h3 class="text-sm font-black text-slate-700 uppercase mb-6">Distribution des Statuts</h3>
-      <canvas baseChart 
-            [data]="getDistributionData(data.graphs.status_distribution)" 
-            [type]="barChartType">
-      </canvas>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-card-accent chart-card-accent--bar"></div>
+        <h3 class="chart-title">Distribution des Statuts</h3>
+      </div>
+      <div class="chart-wrap">
+        <canvas baseChart
+                [data]="getDistributionData(data.graphs.status_distribution)"
+                [type]="barChartType"></canvas>
+      </div>
     </div>
+
+  </div>
+
 </div>

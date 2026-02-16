@@ -1,130 +1,155 @@
-<!-- Modal Overlay -->
-<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="handleClose()">
-  
-  <!-- Modal Panel -->
-  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden" (click)="$event.stopPropagation()">
-    
-    <!-- Header - BLUE THEME -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <div>
-            <h2 class="text-xl font-bold text-white">Clôturer l'Appel</h2>
-            <p class="text-blue-100 text-sm">{{ call.call_id }}</p>
-          </div>
-        </div>
-        
-        <button 
-          (click)="handleClose()"
-          class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-    </div>
+<!-- Backdrop -->
+<div class="modal-backdrop" (click)="handleClose()"></div>
 
-    <!-- Alert Banner -->
-    <div class="px-6 py-4 bg-amber-50 border-b border-amber-100">
-      <div class="flex items-start gap-3">
-        <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+<!-- Panel -->
+<div class="modal-panel" (click)="$event.stopPropagation()">
+
+  <!-- Header -->
+  <div class="modal-header">
+    <div class="modal-header-left">
+      <div class="modal-header-icon">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        <div class="flex-1">
-          <p class="text-sm font-semibold text-amber-900">Attention</p>
-          <p class="text-sm text-amber-700 mt-1">
-            Cette action est irréversible. L'appel sera marqué comme clôturé et ne pourra plus être modifié.
-          </p>
-        </div>
+      </div>
+      <div>
+        <h2 class="modal-title">Clôturer l'Appel</h2>
+        <p class="modal-subtitle">{{ call.call_id }}</p>
       </div>
     </div>
+    <button (click)="handleClose()" class="modal-close-btn">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
 
-    <!-- Form Content -->
-    <form [formGroup]="closeForm" (ngSubmit)="handleSubmit()" class="p-6 space-y-6 max-h-[calc(90vh-280px)] overflow-y-auto">
-      
-      <!-- Call Summary (Read-only) -->
-      <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
-        <p class="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-2">Résumé de l'appel</p>
-        <p class="text-sm text-blue-800">{{ call.summary }}</p>
-      </div>
-
-      <!-- Resolution Summary -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-2">
-          Résumé de la résolution
-          <span class="text-red-500">*</span>
-        </label>
-        <textarea
-          formControlName="resolution_summary"
-          rows="6"
-          [class.border-red-300]="isFieldInvalid('resolution_summary')"
-          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none bg-white text-gray-900"
-          placeholder="Décrivez comment l'appel a été résolu, les actions prises, et tout détail important..."></textarea>
-        <p *ngIf="isFieldInvalid('resolution_summary')" class="mt-1 text-sm text-red-600">
-          {{ getFieldError('resolution_summary') }}
-        </p>
-        <p class="mt-1 text-xs text-gray-500">Minimum 10 caractères</p>
-      </div>
-
-      <!-- Final Result -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-3">
-          Résultat final
-          <span class="text-red-500">*</span>
-        </label>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label 
-            *ngFor="let option of finalResultOptions"
-            class="relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all hover:border-gray-300"
-            [class.border-blue-500]="closeForm.get('final_result')?.value === option.value"
-            [class.bg-blue-50]="closeForm.get('final_result')?.value === option.value"
-            [class.border-gray-200]="closeForm.get('final_result')?.value !== option.value">
-            <input
-              type="radio"
-              formControlName="final_result"
-              [value]="option.value"
-              class="sr-only">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">{{ option.icon }}</span>
-              <div>
-                <p class="font-semibold text-gray-900 text-sm">{{ option.label }}</p>
-              </div>
-            </div>
-            <svg 
-              *ngIf="closeForm.get('final_result')?.value === option.value"
-              class="w-5 h-5 text-blue-600 absolute top-3 right-3" 
-              fill="currentColor" 
-              viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-          </label>
-        </div>
-        <p *ngIf="isFieldInvalid('final_result')" class="mt-2 text-sm text-red-600">
-          {{ getFieldError('final_result') }}
-        </p>
-      </div>
-    </form>
-
-    <!-- Footer Actions - BLUE THEME -->
-    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-3">
-      <button
-        type="button"
-        (click)="handleClose()"
-        class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors">
-        Annuler
-      </button>
-      <button
-        type="submit"
-        (click)="handleSubmit()"
-        [disabled]="closeForm.invalid || isSubmitting"
-        class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg">
-        {{ isSubmitting ? 'Clôture en cours...' : 'Clôturer l\'appel' }}
-      </button>
+  <!-- Warning Banner -->
+  <div class="warning-banner">
+    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" class="warning-icon">
+      <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+    </svg>
+    <div>
+      <p class="warning-title">Action irréversible</p>
+      <p class="warning-text">L'appel sera marqué comme clôturé et ne pourra plus être modifié.</p>
     </div>
   </div>
+
+  <!-- Form -->
+  <form [formGroup]="closeForm" (ngSubmit)="handleSubmit()" class="modal-body">
+
+    <!-- Call summary read-only -->
+    <div class="summary-block">
+      <p class="summary-label">Résumé de l'appel</p>
+      <p class="summary-text">{{ call.summary }}</p>
+    </div>
+
+    <!-- Resolution summary -->
+    <div class="form-group">
+      <label class="form-label">
+        Résumé de la résolution
+        <span class="form-required">*</span>
+      </label>
+      <textarea
+        formControlName="resolution_summary"
+        rows="5"
+        class="form-textarea"
+        [class.form-input--error]="isFieldInvalid('resolution_summary')"
+        placeholder="Décrivez comment l'appel a été résolu, les actions prises, et tout détail important..."></textarea>
+      <div class="form-hint-row">
+        <p *ngIf="isFieldInvalid('resolution_summary')" class="form-error">
+          {{ getFieldError('resolution_summary') }}
+        </p>
+        <p class="form-hint">Minimum 10 caractères</p>
+      </div>
+    </div>
+
+    <!-- Final result -->
+    <div class="form-group">
+      <label class="form-label">
+        Résultat final
+        <span class="form-required">*</span>
+      </label>
+      <div class="result-grid">
+
+        <label class="result-option"
+               [class.result-option--selected]="closeForm.get('final_result')?.value === 'resolu_satisfait'">
+          <input type="radio" formControlName="final_result" value="resolu_satisfait" class="result-radio-input">
+          <span class="result-icon result-icon--green">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </span>
+          <span class="result-label">{{ finalResultOptions[0].label }}</span>
+          <svg *ngIf="closeForm.get('final_result')?.value === 'resolu_satisfait'"
+               class="result-check" width="15" height="15" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        </label>
+
+        <label class="result-option"
+               [class.result-option--selected]="closeForm.get('final_result')?.value === 'resolu_insatisfait'">
+          <input type="radio" formControlName="final_result" value="resolu_insatisfait" class="result-radio-input">
+          <span class="result-icon result-icon--amber">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </span>
+          <span class="result-label">{{ finalResultOptions[1].label }}</span>
+          <svg *ngIf="closeForm.get('final_result')?.value === 'resolu_insatisfait'"
+               class="result-check" width="15" height="15" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        </label>
+
+        <label class="result-option"
+               [class.result-option--selected]="closeForm.get('final_result')?.value === 'transfere'">
+          <input type="radio" formControlName="final_result" value="transfere" class="result-radio-input">
+          <span class="result-icon result-icon--blue">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+            </svg>
+          </span>
+          <span class="result-label">{{ finalResultOptions[2].label }}</span>
+          <svg *ngIf="closeForm.get('final_result')?.value === 'transfere'"
+               class="result-check" width="15" height="15" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        </label>
+
+        <label class="result-option"
+               [class.result-option--selected]="closeForm.get('final_result')?.value === 'non_resolu'">
+          <input type="radio" formControlName="final_result" value="non_resolu" class="result-radio-input">
+          <span class="result-icon result-icon--red">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </span>
+          <span class="result-label">{{ finalResultOptions[3].label }}</span>
+          <svg *ngIf="closeForm.get('final_result')?.value === 'non_resolu'"
+               class="result-check" width="15" height="15" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        </label>
+
+      </div>
+      <p *ngIf="isFieldInvalid('final_result')" class="form-error">
+        {{ getFieldError('final_result') }}
+      </p>
+    </div>
+
+  </form>
+
+  <!-- Footer -->
+  <div class="modal-footer">
+    <button type="button" (click)="handleClose()" class="btn-cancel">Annuler</button>
+    <button
+      type="button"
+      (click)="handleSubmit()"
+      [disabled]="closeForm.invalid || isSubmitting"
+      class="btn-submit btn-submit--green">
+      {{ isSubmitting ? 'Clôture en cours...' : "Clôturer l'appel" }}
+    </button>
+  </div>
+
 </div>

@@ -46,4 +46,8 @@ export class SupervisorApiRepository extends SupervisorRepository {
     return this.apiService.put<ApiResponse<Call>>(`${this.BASE_PATH}/calls/${callId}/reassign`, data)
       .pipe(map(res => res.data));
   }
+
+  override getAgentActiveCalls(agentId: number): Observable<Call[]> {
+    return this.apiService.get<Call[]>(`/call-center/supervisor/agents/${agentId}/calls`);
+  }
 }

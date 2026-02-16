@@ -33,6 +33,9 @@ export class SupervisorFacade {
   private loadingSubject = new BehaviorSubject<boolean>(false);
   public isLoading$ = this.loadingSubject.asObservable();
 
+  private agentCallsSubject = new BehaviorSubject<Call[]>([]);
+  public agentCalls$ = this.agentCallsSubject.asObservable();
+
   constructor(
     private supervisorRepo: SupervisorRepository,
     private loggingService: LoggingService,
@@ -104,6 +107,22 @@ export class SupervisorFacade {
     this.supervisorRepo.getTeamComplaints().subscribe({
       next: (complaints) => this.complaintsSubject.next(complaints),
       error: (err) => this.loggingService.error('SupervisorFacade: Complaints load failed', { error: err } as any)
+    });
+  }
+
+  /**
+ * Uses your existing API to fetch sessions for the drawer
+ */
+loadAgentActiveCalls(agentId: number): void {
+    this.supervisorRepo.getAgentActiveCalls(agentId).subscribe({
+      // ✅ Added Call[] type to the parameter
+      next: (calls: Call[]) => {
+        this.agentCallsSubject.next(calls);
+      },
+      // ✅ Added any or Error type to the parameter
+      error: (err: any) => {
+        this.loggingService.error('Failed to load agent calls', { error: err } as any);
+      }
     });
   }
 }

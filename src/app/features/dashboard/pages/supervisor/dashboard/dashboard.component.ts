@@ -21,15 +21,23 @@ export class SupervisorDashboardComponent implements OnInit {
 
   public isReassignModalOpen = false;
   public activeCallId: string | null = null;
+  public selectedAgent: AgentTeamView | null = null;
 
-  constructor(private supervisorFacade: SupervisorFacade) {
-    this.team$ = this.supervisorFacade.teamView$;
-    this.queue$ = this.supervisorFacade.masterQueue$;
-    this.isLoading$ = this.supervisorFacade.isLoading$;
+  // ✅ Changed to 'public' so the HTML can access it.
+  // ✅ Renamed to 'facade' to match your HTML usage: (facade.agentCalls$ | async)
+  constructor(public facade: SupervisorFacade) {
+    this.team$ = this.facade.teamView$;
+    this.queue$ = this.facade.masterQueue$;
+    this.isLoading$ = this.facade.isLoading$;
   }
 
   ngOnInit(): void {
-    this.supervisorFacade.loadDashboardData();
+    this.facade.loadDashboardData();
+  }
+
+  viewAgentDetails(agent: AgentTeamView): void {
+    this.selectedAgent = agent;
+    this.facade.loadAgentActiveCalls(agent.id); 
   }
 
   openReassign(callId: string): void {
@@ -39,7 +47,7 @@ export class SupervisorDashboardComponent implements OnInit {
 
   handleReassignment(event: {agentId: number, reason: string}): void {
     if (this.activeCallId) {
-      this.supervisorFacade.reassignCall(this.activeCallId, event.agentId, event.reason)
+      this.facade.reassignCall(this.activeCallId, event.agentId, event.reason)
         .subscribe({
           next: () => {
             this.isReassignModalOpen = false;
@@ -50,6 +58,7 @@ export class SupervisorDashboardComponent implements OnInit {
   }
 
   getLoadClass(status: string): string {
+    if (!status) return 'bg-green-100 text-green-700 border-green-200';
     switch (status.toLowerCase()) {
       case 'rouge': return 'bg-red-100 text-red-700 border-red-200';
       case 'orange': return 'bg-orange-100 text-orange-700 border-orange-200';
